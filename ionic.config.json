@@ -1,0 +1,8 @@
+{
+  "name": "appoint",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "vue-vite",
+  "id": "1bed4161"
+}
