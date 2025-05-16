@@ -1,0 +1,59 @@
+
+services:
+  db:
+    image: mariadb:lts
+    container_name: app-mariadb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MARIADB_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MARIADB_DATABASE}
+      MYSQL_USER: ${MARIADB_USER}
+      MYSQL_PASSWORD: ${MARIADB_PASSWORD}
+    ports:
+      - "3306:3306"
+    volumes:
+      - mariadb_data:/var/lib/mysql
+    networks:
+      - app-network
+#backend:
+#  build: ./backend
+#  container_name: app-backend
+#  restart: always
+#  environment:
+#    ASPNETCORE_ENVIRONMENT: Development # O Production según el entorno
+#    DATABASE_HOST: mariadb
+#    DATABASE_PORT: 3306
+#    DATABASE_NAME: ${MARIADB_DATABASE}
+#    DATABASE_USER: ${MARIADB_USER}
+#    DATABASE_PASSWORD: ${MARIADB_PASSWORD}
+#    # Otras variables de entorno para el backend
+#    # WHATSAPP_API_KEY: ${WHATSAPP_API_KEY}
+#    # ONESIGNAL_APP_ID: ${ONESIGNAL_APP_ID}
+#  ports:
+#    - "5000:5000" # Puerto para la API del backend
+#  depends_on:
+#    - mariadb
+#  networks:
+#    - app-network
+#
+#  frontend:
+#    build: ./frontend
+#    container_name: app-frontend
+#    restart: always
+#    environment:
+#      NEXT_PUBLIC_BACKEND_API_URL: http://localhost:5000 # Ajusta si es necesario
+#      # Otras variables de entorno para el frontend
+#    ports:
+#      - "3000:3000" # Puerto para la aplicación Next.js
+#    depends_on:
+#      - backend
+#    networks:
+#      - app-network
+
+networks:
+  app-network:
+    driver: bridge
+
+volumes:
+  mariadb_data:
+    driver: local    
