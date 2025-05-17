@@ -62,6 +62,17 @@ public class InitialMariaDbDatabaseSchema : AutoReversingMigration
             .WithColumn("role_name").AsString(50)
             .WithColumn("permission_id").AsInt32();
 
+        string hashedPassword = BCrypt.Net.BCrypt.HashPassword("Test123"); // ¡No uses contraseñas tan simples en producción!
+
+        Insert.IntoTable("users")
+            .Row(new
+            {
+                username = "testuser",
+                password = hashedPassword,
+                role = "administrador",
+                created_at = SystemMethods.CurrentDateTime,
+                updated_at = SystemMethods.CurrentDateTime
+            });
     }
 
     // public override void Down()

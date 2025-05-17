@@ -1,7 +1,6 @@
 using System.Data;
 using appoint.Migrations;
 using appoint.Services;
-using Microsoft.AspNetCore.OpenApi;
 using MySqlConnector;
 
 namespace appoint
@@ -13,10 +12,11 @@ namespace appoint
             MigrationRunner.ConfigureMigrationServices(services, connectionString);
 
             // Add application services
-            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IDbConnection>(sp => new MySqlConnection(connectionString));
+            services.AddScoped<IUserService, UserService>();
             services.AddScoped<IConfigurationService, ConfigurationService>();
-
+            services.AddScoped<IPermissionService, PermissionService>();
+            
             services.AddControllers();
 
             // Configure CORS
@@ -30,7 +30,8 @@ namespace appoint
                             .AllowAnyMethod();
                     });
             });
-
+            // Configure Authentication
+            services.AddAuthentication();
             // Configure Authorization Policies
             services.AddAuthorization(options =>
             {

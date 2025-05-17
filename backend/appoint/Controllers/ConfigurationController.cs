@@ -30,7 +30,7 @@ public class ConfigurationController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] UpdateConfigurationRequest request)
+    public async Task<IActionResult> Post([FromBody] ConfigurationRequest request)
     {
         if (!ModelState.IsValid)
         {

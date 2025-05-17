@@ -20,7 +20,7 @@ public class ConfigurationService : IConfigurationService
         return configurations.ToDictionary(c => c.SettingName, c => c.SettingValue);
     }
 
-    public async Task UpdateConfigurationAsync(UpdateConfigurationRequest request)
+    public async Task UpdateConfigurationAsync(ConfigurationRequest request)
     {
         // Ejemplo básico: podrías querer hacer esto de forma más dinámica
         await UpdateSettingAsync("nombreEmpresa", request.NombreEmpresa);

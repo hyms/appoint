@@ -1,11 +1,11 @@
 // 'use client'
 import axios from 'axios';
-import { useAuth } from './app';
+import { useAuth } from './useAuth';
 
-const useApi = () => {
+export const useApi = () => {
     const { authToken } = useAuth();
     //const baseURL= process.env.NEXT_PUBLIC_BACKEND_API_URL, //url
-    const baseURL= 'http://localhost:5147';
+    const baseURL= 'http://localhost:5000';
 
     const api = axios.create({
         baseURL: baseURL,
@@ -41,6 +41,7 @@ const useApi = () => {
 
     const post = async (url, data = {}, config = {}) => {
         try {
+            console.log(authToken);
             const response = await api.post(url, data, config);
             return handleResponse(response);
         } catch (error) {

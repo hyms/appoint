@@ -10,7 +10,8 @@ public interface IUserService
     string GenerateJwtToken(UserModel user);
     Task<IEnumerable<UserModel>> GetAllUsersAsync();
     Task<UserModel> GetUserByIdAsync(int id);
-    Task<UserModel> CreateUserAsync(CreateUserRequest request);
-    Task<UserModel> UpdateUserAsync(int id, UpdateUserRequest request);
+    Task<UserModel> CreateUserAsync(UserRequest request);
+    Task<UserModel> UpdateUserAsync(int id, UserRequest request);
     Task<bool> DeleteUserAsync(int id);
+    public bool VerifyPassword(string plainTextPassword, string hashedPassword);
 }

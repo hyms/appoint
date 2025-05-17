@@ -1,6 +1,6 @@
 namespace appoint.Domain;
 
-public class UpdateConfigurationRequest
+public class ConfigurationRequest
 {
     public string NombreEmpresa { get; set; }
     public string DireccionEmpresa { get; set; }

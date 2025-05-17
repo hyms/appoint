@@ -1,12 +1,12 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
-import { Layout, Typography, Form, Input, Button, message } from 'antd';
-import { SettingOutlined } from '@ant-design/icons';
-import useApi from '../../hooks/useApi'; // Ajusta la ruta de importación
+import React, {useState, useEffect} from 'react';
+import {Layout, Typography, Form, Input, Button, message} from 'antd';
+import {SettingOutlined} from '@ant-design/icons';
+import {useApi} from '../lib/useApi'; // Ajusta la ruta de importación
 
-const { Content } = Layout;
-const { Title } = Typography;
+const {Content} = Layout;
+const {Title} = Typography;
 
 const ConfiguracionPage = () => {
     const [form] = Form.useForm();
@@ -55,10 +55,10 @@ const ConfiguracionPage = () => {
     };
 
     return (
-        <Content style={{ margin: '24px 16px 0', overflow: 'initial' }}>
-            <div style={{ padding: 24, textAlign: 'left' }}>
-                <Title level={2} icon={<SettingOutlined />}>Configuración del Sistema</Title>
-                <div style={{ marginTop: 24 }}>
+        <Content style={{margin: '24px 16px 0', overflow: 'initial'}}>
+            <div style={{padding: 24, textAlign: 'left'}}>
+                <Title level={2} icon={<SettingOutlined/>}>Configuración del Sistema</Title>
+                <div style={{marginTop: 24}}>
                     <Form
                         form={form}
                         layout="vertical"
@@ -76,37 +76,37 @@ const ConfiguracionPage = () => {
                         <Form.Item
                             label="Nombre de la Empresa"
                             name="nombreEmpresa"
-                            rules={[{ required: true, message: 'Por favor, ingresa el nombre de la empresa!' }]}
+                            rules={[{required: true, message: 'Por favor, ingresa el nombre de la empresa!'}]}
                         >
-                            <Input />
+                            <Input/>
                         </Form.Item>
 
                         <Form.Item
                             label="Dirección de la Empresa"
                             name="direccionEmpresa"
                         >
-                            <Input />
+                            <Input/>
                         </Form.Item>
 
                         <Form.Item
                             label="Teléfono de la Empresa"
                             name="telefonoEmpresa"
                         >
-                            <Input />
+                            <Input/>
                         </Form.Item>
 
                         <Form.Item
                             label="Clave API de WhatsApp"
                             name="whatsappApiKey"
                         >
-                            <Input.Password /> {/* Usar Input.Password si es sensible */}
+                            <Input.Password/> {/* Usar Input.Password si es sensible */}
                         </Form.Item>
 
                         <Form.Item
                             label="ID de Aplicación OneSignal"
                             name="onesignalAppId"
                         >
-                            <Input />
+                            <Input/>
                         </Form.Item>
 
                         {/* Agrega más campos de configuración aquí */}

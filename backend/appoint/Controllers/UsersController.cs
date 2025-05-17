@@ -37,7 +37,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPost]
-    public async Task<IActionResult> Post([FromBody] CreateUserRequest request)
+    public async Task<IActionResult> Post([FromBody] UserRequest request)
     {
         if (!ModelState.IsValid)
         {
@@ -48,7 +48,7 @@ public class UsersController : ControllerBase
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(int id, [FromBody] UpdateUserRequest request)
+    public async Task<IActionResult> Put(int id, [FromBody] UserRequest request)
     {
         if (!ModelState.IsValid)
         {
