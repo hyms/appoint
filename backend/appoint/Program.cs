@@ -1,20 +1,22 @@
-using appoint.Services;
+using appoint;
+using appoint.Migrations;
+using Serilog;
+
+Log.Logger = new LoggerConfiguration()
+    .CreateBootstrapLogger();
 
 var builder = WebApplication.CreateBuilder(args);
 
-// Add services to the container.
-builder.Services.AddTransient<IUserService,UserService>();
-builder.Services.AddControllers();
-builder.Services.AddCors(options =>
-{
-    options.AddPolicy("AllowLocalhost",
-        builder =>
-        {
-            builder.WithOrigins("*") 
-                .AllowAnyHeader()
-                .AllowAnyMethod();
-        });
-});
+builder.Services.AddSerilog((services, lc) => lc
+    .ReadFrom.Configuration(builder.Configuration)
+    .ReadFrom.Services(services)
+    .Enrich.FromLogContext()
+    .WriteTo.Console());
+
+string connectionString = builder.Configuration.GetConnectionString("DefaultConnection")!;
+
+// Configure Services in ServiceExtensions
+builder.Services.ConfigureServices(connectionString);
 
 var app = builder.Build();
 
@@ -22,7 +24,6 @@ var app = builder.Build();
 if (!app.Environment.IsDevelopment())
 {
     app.UseExceptionHandler("/Home/Error");
-    // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
 
@@ -38,5 +39,9 @@ app.MapControllerRoute(
     pattern: "{controller=Home}/{action=Index}/{id?}");
 
 app.UseCors("AllowLocalhost");
+
+// migrations
+var serviceProvider = app.Services.CreateScope().ServiceProvider;
+MigrationRunner.RunMigrations(serviceProvider);
 
 app.Run();

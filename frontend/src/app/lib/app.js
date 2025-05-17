@@ -5,8 +5,15 @@ import {useRouter} from 'next/navigation';
 import 'antd/dist/reset.css'; // Importa los estilos de Ant Design
 
 // Crear un contexto para la autenticación
-const AuthContext = createContext(null);
-
+const AuthContext = createContext({
+    authToken: null,
+    isAuthenticated: false,
+    userRole: null,
+    userPermissions: [], // Array de permisos
+    login: () => {},
+    logout: () => {},
+    setPermissions: () => {}, // Función para actualizar los permisos
+});
 export function AuthProvider({children}) {
     const [authToken, setAuthToken] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -30,10 +37,21 @@ export function AuthProvider({children}) {
         }
     }, [router]);
 
-    const login = (token) => {
-        localStorage.setItem('authToken', token);
-        setAuthToken(token);
-        setIsAuthenticated(true);
+    const login = async (credentials) => {
+        // ... tu lógica de login
+        if (response.ok) {
+            const data = await response.json();
+            localStorage.setItem('authToken', data.token);
+            setAuthToken(data.token);
+            setIsAuthenticated(true);
+            setUserRole(data.role);
+            // Si el backend devuelve permisos en el login:
+            setPermissions(data.permissions);
+            // O podrías hacer una llamada adicional para obtener los permisos basados en el rol
+            const permissionsResponse = await fetch(`/api/permissions/${data.role}`);
+            const permissionsData = await permissionsResponse.json();
+            setPermissions(permissionsData.permissions);
+        }
     };
 
     const logout = () => {
