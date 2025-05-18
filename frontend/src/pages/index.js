@@ -3,15 +3,14 @@
 import React from 'react';
 import { Layout, Typography, Row, Col, Card, Button } from 'antd';
 import { CalendarOutlined, UserAddOutlined, ScheduleOutlined, BellOutlined,SettingOutlined } from '@ant-design/icons';
-import { useAuth } from './lib/useAuth'; // Asegúrate de la ruta correcta
-import AppLayout from './components/AppLayout';
+import { useAuth } from '@/hooks/useAuth';
+import AppLayout from '@/components/AppLayout';
 
 const { Content } = Layout;
 const { Title } = Typography;
 
 const WelcomePage = () => {
-    // Aquí podrías obtener el rol del usuario autenticado usando tu contexto de autenticación (useAuth)
-    const { user } = useAuth(); // Utiliza el hook para obtener el rol
+    const { user } = useAuth(); //for roles
 
     return (
         <AppLayout>

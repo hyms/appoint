@@ -1,18 +1,13 @@
 import React, {useState, useEffect, createContext, useContext} from 'react';
 import {useRouter} from 'next/navigation';
-import 'antd/dist/reset.css'; // Importa los estilos de Ant Design
 import {useApi} from './useApi';
 
-// Crear un contexto para la autenticación
 const AuthContext = createContext({
     authToken: null,
     isAuthenticated: false,
-    userPermissions: null,
     user: null,
-    login: async () => {
-    },
-    logout: () => {
-    },
+    login: async () => {},
+    logout: () => {},
 });
 
 export function AuthProvider({children}) {

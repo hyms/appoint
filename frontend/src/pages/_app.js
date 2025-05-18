@@ -1,10 +1,9 @@
 import {useEffect, useState} from "react";
-import {useRouter} from "next/navigation";
-import {AuthProvider} from "./lib/useAuth";
+import {useRouter} from "next/router";
+import {AuthProvider} from "@/hooks/useAuth";
 import {Spin} from "antd";
-import AppLayout from "./components/AppLayout";
 
-function MyApp({ Component, pageProps }) {
+function MyApp({Component, pageProps}) {
     const [loading, setLoading] = useState(false);
     const router = useRouter();
 
@@ -25,7 +24,6 @@ function MyApp({ Component, pageProps }) {
         router.events.on('routeChangeComplete', handleRouteChangeComplete);
         router.events.on('routeChangeError', handleRouteChangeError);
 
-        // Limpiar los listeners al desmontar el componente
         return () => {
             router.events.off('routeChangeStart', handleRouteChangeStart);
             router.events.off('routeChangeComplete', handleRouteChangeComplete);
@@ -35,10 +33,8 @@ function MyApp({ Component, pageProps }) {
 
     return (
         <AuthProvider>
-            <Spin spinning={loading} fullscreen />
-            <AppLayout>
-                <Component {...pageProps} />
-            </AppLayout>
+            <Spin spinning={loading} fullscreen/>
+            <Component {...pageProps} />
         </AuthProvider>
     );
 }

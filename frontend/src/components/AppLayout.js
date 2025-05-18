@@ -1,5 +1,3 @@
-'use client';
-
 import React, {useState} from 'react';
 import {Layout, Menu, Button, Drawer} from 'antd';
 import {
@@ -8,17 +6,17 @@ import {
     CalendarOutlined,
     LogoutOutlined,
     MenuOutlined,
-    AppstoreOutlined
+    AppstoreOutlined, // Ejemplo de otro icono
+    SubmenuOutlined, KeyOutlined, SettingOutlined, UsergroupAddOutlined, MedicineBoxOutlined, WhatsAppOutlined, // Ejemplo de icono para submenú
 } from '@ant-design/icons';
-import '@ant-design/v5-patch-for-react-19';
-import {useRouter} from 'next/navigation';
+import {useRouter} from 'next/router'; // Importa useRouter de 'next/router'
 import Link from 'next/link';
-import {useAuth} from '../lib/useAuth'; // Asegúrate de la ruta correcta
+import {useAuth} from '@/hooks/useAuth'; // Asegúrate de la ruta correcta
 
-const { Header, Content, Footer, Sider } = Layout;
+const {Header, Content, Footer, Sider} = Layout;
 const AppLayout = ({children}) => {
-    const { user, logout } = useAuth();
-    const router = useRouter();
+    const {user, logout} = useAuth();
+    const router = useRouter(); // Utiliza useRouter de 'next/router'
     const [collapsed, setCollapsed] = useState(false);
     const [openDrawer, setOpenDrawer] = useState(false);
 
@@ -31,41 +29,65 @@ const AppLayout = ({children}) => {
     };
 
     const handleLogout = () => {
-        logout(true);
-        onCloseDrawer();
+        logout();
+        onCloseDrawer(); // Cerrar el drawer después de cerrar sesión
     };
-
 
     const menuItems = [
         {
-            key: '/dashboard',
+            key: '/', // Ruta al Dashboard (index.js en pages)
             icon: <HomeOutlined/>,
             label: <Link href="/">Dashboard</Link>,
         },
         ...(user?.role === 'administrador'
                 ? [
                     {
+                        key: '/admin/doctors', // Nueva ruta para Doctores
+                        icon: <UsergroupAddOutlined/>,
+                        label: <Link href="/admin/doctors">Doctores</Link>,
+                    },
+                    {
+                        key: '/admin/specialties', // Nueva ruta para Especialidades
+                        icon: <MedicineBoxOutlined/>,
+                        label: <Link href="/admin/specialties">Especialidades</Link>,
+                    },
+                    {
                         key: '/admin/users',
                         icon: <UserOutlined/>,
                         label: <Link href="/admin/users">Usuarios</Link>,
                     },
+                    {
+                        key: '/admin/permissions', // Nueva ruta para Permisos
+                        icon: <KeyOutlined/>,
+                        label: <Link href="/admin/permissions">Permisos</Link>,
+                    },
+                    {
+                        key: '/admin/configuration', // Nueva ruta para Configuración
+                        icon: <SettingOutlined/>,
+                        label: <Link href="/admin/configuration">Configuración</Link>,
+                    },
                 ]
                 : []
         ),
-        ...(user?.role === 'secretaria'
+        ...(user?.role === 'secretaria' || user?.role === 'administrador' // Mostrar a secretaria y médico
+                ? [
+                    {
+                        key: '/whatsapp', // Nueva ruta para WhatsApp
+                        icon: <WhatsAppOutlined/>,
+                        label: <Link href="/whatsapp">WhatsApp</Link>,
+                    },
+                ]
+                : []
+        ),
+        ...(user?.role === 'secretaria' || user?.role === 'medico' || user?.role === 'administrador' // Mostrar a secretaria y médico
                 ? [
                     {
                         key: '/appointments',
                         icon: <CalendarOutlined/>,
                         label: <Link href="/appointments">Citas</Link>,
                     },
-                ]
-                : []
-        ),
-        ...(user?.role === 'medico'
-                ? [
                     {
-                        key: '/patients',
+                        key: '/patients', // Nueva ruta para Pacientes
                         icon: <UserOutlined/>,
                         label: <Link href="/patients">Pacientes</Link>,
                     },
@@ -98,18 +120,17 @@ const AppLayout = ({children}) => {
             className: 'mobile-only',
         },
     ];
+
     return (
         <Layout style={{minHeight: '100vh'}}>
-            <Sider collapsed={collapsed} onCollapse={(value) => setCollapsed(value)}  collapsedWidth="0" breakpoint="lg">
-                <div
-                    style={{
-                        height: 32,
-                        margin: 16,
-                        background: 'rgba(255, 255, 255, 0.2)',
-                    }}
+            <Sider collapsed={collapsed} onCollapse={(value) => setCollapsed(value)} collapsedWidth="0" breakpoint="lg">
+                <div style={{height: 32, margin: 16, background: 'rgba(255, 255, 255, 0.2)'}}/>
+                <Menu
+                    theme="dark"
+                    defaultSelectedKeys={[router.pathname === '/' ? '/' : router.pathname]}
+                    mode="inline"
+                    items={menuItems}
                 />
-                <Menu theme="dark" defaultSelectedKeys={[router.pathname === '/' ? '/' : router.pathname]}
-                      mode="inline" items={menuItems}/>
             </Sider>
             <Layout className="site-layout">
                 {/*<Header*/}
@@ -134,7 +155,7 @@ const AppLayout = ({children}) => {
                 <Content>
                     {children}
                 </Content>
-                <Footer style={{ textAlign: 'center' }}>
+                <Footer style={{textAlign: 'center'}}>
                     ©{new Date().getFullYear()} Created by copito
                 </Footer>
             </Layout>
