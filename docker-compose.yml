@@ -37,14 +37,11 @@ services:
 #    - app-network
 #
 #  frontend:
-#    build: ./frontend
-#    container_name: app-frontend
+#    build: ./FrontQuasar
+#    container_name: app-frontquasar
 #    restart: always
-#    environment:
-#      NEXT_PUBLIC_BACKEND_API_URL: http://localhost:5000 # Ajusta si es necesario
-#      # Otras variables de entorno para el frontend
 #    ports:
-#      - "3000:3000" # Puerto para la aplicación Next.js
+#      - "8080:80" # Host port 8080 maps to Nginx container port 80
 #    depends_on:
 #      - backend
 #    networks:
