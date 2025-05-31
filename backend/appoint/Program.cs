@@ -77,6 +77,17 @@ builder.Services.AddScoped<IAppointmentDataService, AppointmentDataService>(); /
 //     return new TwilioRestClient(accountSid, authToken);
 // });
 
+//services.Configure<Models.WhatsAppOptions>(options =>
+//{
+//    options.ApiKey = "YOUR_WHATSAPP_API_KEY"; // Reemplaza con tu API Key de WhatsApp
+//});
+
+//services.Configure<Models.OneSignalOptions>(options =>
+//{
+//    options.AppId = "YOUR_ONESIGNAL_APP_ID"; // Reemplaza con tu App ID de OneSignal
+//    options.RestApiKey = "YOUR_ONESIGNAL_REST_API_KEY"; // Reemplaza con tu REST API Key de OneSignal
+//});
+
 // Configuración de CORS para permitir peticiones desde el frontend Vue.js.
 builder.Services.AddCors(options =>
 {
