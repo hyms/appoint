@@ -1,9 +1,10 @@
 using Google.Cloud.Dialogflow.V2;
-using Google.Apis.Auth.OAuth2;
-using Microsoft.Extensions.Options; // Para IOptions
-using appoint.Models;
+using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
+using System;
+using appoint.Services;
 
-namespace appoint.Services
+namespace AppointmentApp.Backend.Services
 {
     public class DialogflowService : IDialogflowService
     {

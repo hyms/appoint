@@ -1,19 +1,11 @@
-// File: Controllers/DialogflowFulfillmentController.cs
-// Descripción: Controlador para manejar los webhooks de Fulfillment de Google Dialogflow.
-// Refactorizado para inyectar y usar servicios de datos.
-
-using Microsoft.AspNetCore.Mvc;
-using Google.Cloud.Dialogflow.V2;
-using System.Threading.Tasks;
-using System.Linq;
-using System.Text.Json;
 using System.Globalization;
-using AppointmentApp.Backend.Services; // Importa los nuevos servicios
-using AppointmentApp.Backend.Models; // Importa los modelos de datos
-using System;
-using System.Collections.Generic;
+using appoint.Models;
+using appoint.Services;
+using Google.Cloud.Dialogflow.V2;
+using Google.Protobuf.WellKnownTypes;
+using Microsoft.AspNetCore.Mvc;
 
-namespace AppointmentApp.Backend.Controllers
+namespace appoint.Controllers
 {
     [ApiController]
     [Route("api/dialogflow-fulfillment")] // Esta es la URL que configurarás en la sección "Fulfillment" de Dialogflow
@@ -105,7 +97,7 @@ namespace AppointmentApp.Backend.Controllers
                             // Llama al servicio de citas para obtener horas disponibles
                             var availableHours = await _appointmentDataService.GetAvailableHoursAsync(
                                 requestedDate.Value, doctor?.Id, location?.Id);
-
+                        
                             if (availableHours != null && availableHours.Any())
                             {
                                 string doctorInfo = doctor != null ? $" con el Dr. {doctor.Name}" : "";
@@ -127,7 +119,7 @@ namespace AppointmentApp.Backend.Controllers
                         // --- Lógica para listar doctores ---
                         string specialty = GetStringParameter(request.QueryResult.Parameters, "specialty");
                         IEnumerable<Doctor> doctors;
-
+                    
                         if (!string.IsNullOrEmpty(specialty))
                         {
                             doctors = await _doctorService.GetDoctorsBySpecialtyAsync(specialty);

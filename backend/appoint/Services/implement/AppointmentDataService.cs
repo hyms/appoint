@@ -1,6 +1,6 @@
-namespace appoint.Services;
+namespace appoint.Services.implement;
 
-public class AppointmentDataService
+public class AppointmentDataService:IAppointmentDataService
 {
     private readonly Dictionary<DateTime, List<string>> _mockAvailability = new Dictionary<DateTime, List<string>>();
 

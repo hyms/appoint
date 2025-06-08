@@ -1,6 +1,8 @@
+using appoint.Models;
+
 namespace appoint.Services;
 
-public class LocationService
+public class LocationService:ILocationService
 {
     private readonly List<Location> _locations = new List<Location>
     {

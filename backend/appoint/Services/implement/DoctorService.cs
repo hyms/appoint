@@ -1,6 +1,8 @@
+using appoint.Models;
+
 namespace appoint.Services;
 
-public class DoctorService
+public class DoctorService:IDoctorService
 {
     private readonly List<Doctor> _doctors = new List<Doctor>
     {
