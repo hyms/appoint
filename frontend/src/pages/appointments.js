@@ -1,21 +1,20 @@
-'use client';
-
-import React, { useState, useEffect } from 'react';
-import { Typography, Table, Button, message } from 'antd';
-import { useApi } from '@/hooks/useApi';
-import { useAuth } from '@/hooks/useAuth';
-import { EyeOutlined, CloseOutlined, CheckOutlined } from '@ant-design/icons';
+import React, {useState, useEffect} from 'react';
+import {Typography, Table, Button, message} from 'antd';
+import {useApi} from '@/hooks/useApi';
+import {useAuth} from '@/hooks/useAuth';
+import {EyeOutlined, CloseOutlined, CheckOutlined} from '@ant-design/icons';
+import AppLayout from '@/components/AppLayout';
 import AppointmentDetailsModal from '@/components/appointments/AppointmentDetailsModal';
 import CancelAppointmentModal from '@/components/appointments/CancelAppointmentModal';
 import RecordAppointmentModal from '@/components/appointments/RecordAppointmentModal';
 import RegisterAppointmentButton from '@/components/appointments/RegisterAppointmentButton';
 import RegisterAppointmentModal from '@/components/appointments/RegisterAppointmentModal'; // Importa el modal de registro
 
-const { Title } = Typography;
+const {Title} = Typography;
 
 const AppointmentsPage = () => {
-    const { user } = useAuth();
-    const { get, del, put, loading } = useApi();
+    const {user} = useAuth();
+    const {get, del, put, loading} = useApi();
     const [appointments, setAppointments] = useState([]);
     const [selectedAppointment, setSelectedAppointment] = useState(null);
     const [isDetailsModalVisible, setIsDetailsModalVisible] = useState(false);
@@ -79,7 +78,7 @@ const AppointmentsPage = () => {
     const handleCancelAppointment = async (reason) => {
         if (selectedAppointment) {
             try {
-                const response = await del(`/api/appointments/${selectedAppointment.id}`, { data: { cancellationReason: reason } }); // Reemplaza con tu endpoint de cancelación
+                const response = await del(`/api/appointments/${selectedAppointment.id}`, {data: {cancellationReason: reason}}); // Reemplaza con tu endpoint de cancelación
                 if (response?.errorCode === null) {
                     message.success('Cita cancelada exitosamente.');
                     fetchAppointments();
@@ -98,7 +97,7 @@ const AppointmentsPage = () => {
     const handleRecordAppointment = async (summary) => {
         if (selectedAppointment) {
             try {
-                const response = await put(`/api/appointments/${selectedAppointment.id}/record`, { summary }); // Reemplaza con tu endpoint para marcar como realizada
+                const response = await put(`/api/appointments/${selectedAppointment.id}/record`, {summary}); // Reemplaza con tu endpoint para marcar como realizada
                 if (response?.errorCode === null) {
                     message.success('Cita marcada como realizada exitosamente.');
                     fetchAppointments();
@@ -138,16 +137,19 @@ const AppointmentsPage = () => {
             key: 'actions',
             render: (text, record) => (
                 <>
-                    <Button icon={<EyeOutlined />} onClick={() => showDetailsModal(record)} size="small" style={{ marginRight: 8 }}>
+                    <Button icon={<EyeOutlined/>} onClick={() => showDetailsModal(record)} size="small"
+                            style={{marginRight: 8}}>
                         Ver
                     </Button>
                     {(user?.role === 'secretaria' || user?.role === 'administrador') && record.status !== 'cancelado' && (
-                        <Button icon={<CloseOutlined />} onClick={() => showCancelModal(record)} size="small" danger style={{ marginRight: 8 }}>
+                        <Button icon={<CloseOutlined/>} onClick={() => showCancelModal(record)} size="small" danger
+                                style={{marginRight: 8}}>
                             Cancelar
                         </Button>
                     )}
                     {(user?.role === 'medico' || user?.role === 'administrador') && record.status !== 'cancelado' && record.status !== 'realizada' && (
-                        <Button icon={<CheckOutlined />} onClick={() => showRecordModal(record)} size="small" type="primary">
+                        <Button icon={<CheckOutlined/>} onClick={() => showRecordModal(record)} size="small"
+                                type="primary">
                             Realizada
                         </Button>
                     )}
@@ -158,38 +160,40 @@ const AppointmentsPage = () => {
     ];
 
     return (
-        <div>
-            <Title level={2}>Gestión de Citas</Title>
-            {(user?.role === 'secretaria' || user?.role === 'administrador') && (
-                <RegisterAppointmentButton onClick={showRegisterModal} />
-            )}
-            <Table dataSource={appointments} columns={columns} loading={loading} rowKey="id" />
+        <AppLayout>
+            <div>
+                <Title level={2}>Gestión de Citas</Title>
+                {(user?.role === 'secretaria' || user?.role === 'administrador') && (
+                    <RegisterAppointmentButton onClick={showRegisterModal}/>
+                )}
+                <Table dataSource={appointments} columns={columns} loading={loading} rowKey="id"/>
 
-            <AppointmentDetailsModal
-                visible={isDetailsModalVisible}
-                onCancel={hideDetailsModal}
-                appointment={selectedAppointment}
-            />
+                <AppointmentDetailsModal
+                    visible={isDetailsModalVisible}
+                    onCancel={hideDetailsModal}
+                    appointment={selectedAppointment}
+                />
 
-            <CancelAppointmentModal
-                visible={isCancelModalVisible}
-                onCancel={hideCancelModal}
-                onConfirm={handleCancelAppointment}
-            />
+                <CancelAppointmentModal
+                    visible={isCancelModalVisible}
+                    onCancel={hideCancelModal}
+                    onConfirm={handleCancelAppointment}
+                />
 
-            <RecordAppointmentModal
-                visible={isRecordModalVisible}
-                onCancel={hideRecordModal}
-                onConfirm={handleRecordAppointment}
-                appointment={selectedAppointment}
-            />
+                <RecordAppointmentModal
+                    visible={isRecordModalVisible}
+                    onCancel={hideRecordModal}
+                    onConfirm={handleRecordAppointment}
+                    appointment={selectedAppointment}
+                />
 
-            <RegisterAppointmentModal
-                visible={isRegisterModalVisible}
-                onCancel={hideRegisterModal}
-                onAppointmentCreated={fetchAppointments}
-            />
-        </div>
+                <RegisterAppointmentModal
+                    visible={isRegisterModalVisible}
+                    onCancel={hideRegisterModal}
+                    onAppointmentCreated={fetchAppointments}
+                />
+            </div>
+        </AppLayout>
     );
 };
 

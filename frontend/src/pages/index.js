@@ -1,5 +1,3 @@
-'use client';
-
 import React from 'react';
 import { Layout, Typography, Row, Col, Card, Button } from 'antd';
 import { CalendarOutlined, UserAddOutlined, ScheduleOutlined, BellOutlined,SettingOutlined } from '@ant-design/icons';

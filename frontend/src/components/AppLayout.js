@@ -7,11 +7,18 @@ import {
     LogoutOutlined,
     MenuOutlined,
     AppstoreOutlined, // Ejemplo de otro icono
-    SubmenuOutlined, KeyOutlined, SettingOutlined, UsergroupAddOutlined, MedicineBoxOutlined, WhatsAppOutlined, // Ejemplo de icono para submenú
+    SubmenuOutlined,
+    KeyOutlined,
+    SettingOutlined,
+    UsergroupAddOutlined,
+    MedicineBoxOutlined,
+    WhatsAppOutlined,
+    AreaChartOutlined, // Ejemplo de icono para submenú
 } from '@ant-design/icons';
 import {useRouter} from 'next/router'; // Importa useRouter de 'next/router'
 import Link from 'next/link';
-import {useAuth} from '@/hooks/useAuth'; // Asegúrate de la ruta correcta
+import {useAuth} from '@/hooks/useAuth';
+import OneSignalAlertHandler from "@/components/OneSignalAlertHandler"; // Asegúrate de la ruta correcta
 
 const {Header, Content, Footer, Sider} = Layout;
 const AppLayout = ({children}) => {
@@ -65,6 +72,31 @@ const AppLayout = ({children}) => {
                         key: '/admin/configuration', // Nueva ruta para Configuración
                         icon: <SettingOutlined/>,
                         label: <Link href="/admin/configuration">Configuración</Link>,
+                    },
+                    {
+                        key: '/admin/reports/patients', // Reporte de Pacientes
+                        icon: <UserOutlined />,
+                        label: <Link href="/reports/patients">Pacientes</Link>,
+                    },
+                    {
+                        key: '/admin/reports/doctors', // Reporte de Doctores
+                        icon: <UsergroupAddOutlined />,
+                        label: <Link href="/reports/doctors">Doctores</Link>,
+                    },
+                    {
+                        key: '/admin/reports/appointments', // Reporte de Citas
+                        icon: <CalendarOutlined />,
+                        label: <Link href="/reports/appointments">Citas</Link>,
+                    },
+                    {
+                        key: '/admin/reports/whatsapp', // Nuevo Reporte de WhatsApp
+                        icon: <WhatsAppOutlined />,
+                        label: <Link href="/reports/whatsapp">WhatsApp</Link>,
+                    },
+                    {
+                        key: '/admin/reports/system', // Nuevo Reporte del Sistema
+                        icon: <AreaChartOutlined />,
+                        label: <Link href="/reports/system">Sistema</Link>,
                     },
                 ]
                 : []
@@ -154,6 +186,7 @@ const AppLayout = ({children}) => {
                 {/*</Header>*/}
                 <Content>
                     {children}
+                    <OneSignalAlertHandler />
                 </Content>
                 <Footer style={{textAlign: 'center'}}>
                     ©{new Date().getFullYear()} Created by copito
