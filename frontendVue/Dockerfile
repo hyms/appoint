@@ -5,10 +5,11 @@ RUN npm install
 COPY . .
 RUN npm run build
 
+
 FROM node:lts-alpine AS runner
 WORKDIR /app
-COPY --from=builder /app/build ./
-COPY --from=builder /app/public ./public
-ENV NEXT_PUBLIC_BACKEND_API_URL=${NEXT_PUBLIC_BACKEND_API_URL} # Asegúrate de que esta variable esté definida en el entorno de Docker
+COPY --from=builder /app/dist ./dist
+RUN npm install -g serve
+ENV VITE_BACKEND_API_URL=${VITE_BACKEND_API_URL}
 EXPOSE 80
-CMD ["npm", "start"]
+CMD ["serve", "-s", "dist", "-l", "80"]

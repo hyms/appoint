@@ -1,15 +1,7 @@
-// src/api/index.ts
 import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
-import { useAuthStore } from '@/store/auth'; // Importa tu store de autenticación
+import { useAuthStore } from '@/stores/auth';
 
-// Configura la URL base para tu API.
-// NOTA: Para producción, es recomendable usar variables de entorno de Vite:
-// const API_BASE_URL: string = import.meta.env.VITE_BACKEND_API_URL || 'https://localhost:7196/api/Auth';
-// Para este ejemplo, usaremos la URL que pasaste de Next.js para el backend de Auth.
-// Asegúrate de que esta URL base coincida con la URL de tu API de .NET 8
-// si usas la de Next.js (http://localhost:5000), tu backend de .NET 8 DEBE escuchar en ese puerto.
-// Si tu backend .NET 8 está en https://localhost:7196, usa esa URL.
-const API_BASE_URL: string = 'http://localhost:5000/api/Auth'; // Ajusta según tu configuración de backend .NET 8
+const API_BASE_URL: string = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000/api/Auth';
 
 const api: AxiosInstance = axios.create({
   baseURL: API_BASE_URL,
