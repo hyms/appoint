@@ -114,7 +114,8 @@ public static class ServiceCollectionExtensions
         services.AddScoped<ISettingsService, SettingsService>();
         services.AddScoped<IRoleService, RoleService>();
         services.AddScoped<IServiceService, ServiceService>();
-        
+        services.AddScoped<IServiceCategoryRepository, ServiceCategoryRepository>();
+        services.AddScoped<IServiceRepository, ServiceRepository>();
         
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
