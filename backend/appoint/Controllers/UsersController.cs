@@ -51,7 +51,7 @@ public class UsersController : ControllerBase
         
         // Verifica si ya existe un usuario con el mismo email
         // Esto es importante para evitar duplicados, ya que Email es UNIQUE
-        var existingUser = await _userService.GetUserByUsernameAsync(request.Username);
+        var existingUser = await _userService.GetUserByEmailAsync(request.Email);
         if (existingUser != null)
         {
             return Conflict(new ApiResponse("User with this email already exists", 409));
@@ -72,9 +72,9 @@ public class UsersController : ControllerBase
         }
 
         // Antes de actualizar, si el email cambia, verifica que el nuevo email no esté ya en uso por otro usuario
-        if (request.Username != null) // Solo si el email se está actualizando
+        if (request.Email != null) // Solo si el email se está actualizando
         {
-            var userByNewEmail = await _userService.GetUserByUsernameAsync(request.Username);
+            var userByNewEmail = await _userService.GetUserByEmailAsync(request.Email);
             if (userByNewEmail != null && userByNewEmail.Id != id)
             {
                 return Conflict(new ApiResponse("Another user with this email already exists", 409));
@@ -106,12 +106,12 @@ public class UsersController : ControllerBase
     public async Task<IActionResult> Authenticate([FromBody] LoginRequest request)
     {
         // Asumiendo que LoginRequest tiene Email y Password
-        if (string.IsNullOrEmpty(request.Username) || string.IsNullOrEmpty(request.Password))
+        if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
         {
             return BadRequest(new ApiResponse("Email and password are required.", 400));
         }
 
-        var user = await _userService.Authenticate(request.Username, request.Password);
+        var user = await _userService.Authenticate(request.Email, request.Password);
 
         if (user == null)
         {
@@ -124,7 +124,7 @@ public class UsersController : ControllerBase
         return Ok(new ApiResponse<AuthenticatedUserResponse>(new AuthenticatedUserResponse
         {
             Id = user.Id,
-            Username = user.Username,
+            Email = user.Email,
             Role = user.Role,
             Token = token
         }, "Authentication successful"));

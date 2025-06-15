@@ -26,10 +26,10 @@ public class UserService : IUserService
         _configuration = configuration;
     }
 
-    public async Task<UserModel> Authenticate(string username, string password) // Cambiar modelUsername a Username
+    public async Task<UserModel> Authenticate(string Email, string password) // Cambiar modelEmail a Email
     {
-        // Obtener el usuario por Username
-        var user = await GetUserByUsernameAsync(username); // Cambiar GetUserByUsernameAsync a GetUserByUsernameAsync
+        // Obtener el usuario por Email
+        var user = await GetUserByEmailAsync(Email); // Cambiar GetUserByEmailAsync a GetUserByEmailAsync
 
         // Check if user exists and password is correct
         if (user == null || !VerifyPassword(password, user.PasswordHash)) // Usar PasswordHash de UserModel
@@ -38,7 +38,7 @@ public class UserService : IUserService
         }
 
         // Authentication successful, return the user (sin el PasswordHash)
-        return new UserModel() { Id = user.Id, Username = user.Username, Role = user.Role };
+        return new UserModel() { Id = user.Id, Email = user.Email, Role = user.Role };
     }
 
     public string GenerateJwtToken(UserModel user)
@@ -46,7 +46,7 @@ public class UserService : IUserService
         var claims = new List<Claim>
         {
             new Claim(ClaimTypes.NameIdentifier, user.Id.ToString()),
-            new Claim(ClaimTypes.Name, user.Username), // Usar ClaimTypes.Username
+            new Claim(ClaimTypes.Name, user.Email), // Usar ClaimTypes.Email
             new Claim(ClaimTypes.Role, user.Role)
             // Puedes añadir más claims aquí, como los permisos del usuario
         };
@@ -73,8 +73,8 @@ public class UserService : IUserService
 
     public async Task<IEnumerable<UserModel>> GetAllUsersAsync()
     {
-        // Seleccionar solo las columnas necesarias, incluyendo Username
-        const string sql = "SELECT Id, Username, Role, FirstName, LastName FROM Users";
+        // Seleccionar solo las columnas necesarias, incluyendo Email
+        const string sql = "SELECT Id, Email, Role, FirstName, LastName FROM Users";
         using (IDbConnection connection = _sqlDataAccess.GetConnection())
         {
             return await connection.QueryAsync<UserModel>(sql, new { });
@@ -85,19 +85,19 @@ public class UserService : IUserService
     {
         const string
             sql =
-                "SELECT Id, Username, Role, PasswordHash FROM Users WHERE Id = @Id"; // Incluir PasswordHash para Authenticate
+                "SELECT Id, Email, Role, PasswordHash FROM Users WHERE Id = @Id"; // Incluir PasswordHash para Authenticate
         using (IDbConnection connection = _sqlDataAccess.GetConnection())
         {
             return (await connection.QueryFirstOrDefaultAsync<UserModel>(sql, new { Id = id }))!;
         }
     }
 
-    public async Task<UserModel> GetUserByUsernameAsync(string username) // Nuevo método para buscar por Username
+    public async Task<UserModel> GetUserByEmailAsync(string Email) // Nuevo método para buscar por Email
     {
-        const string sql = "SELECT Id, Username, PasswordHash, Role FROM Users WHERE Username = @Username";
+        const string sql = "SELECT Id, Email, PasswordHash, Role FROM Users WHERE Email = @Email";
         using (IDbConnection connection = _sqlDataAccess.GetConnection())
         {
-            return (await connection.QueryFirstOrDefaultAsync<UserModel>(sql, new { Username = username }))!;
+            return (await connection.QueryFirstOrDefaultAsync<UserModel>(sql, new { Email = Email }))!;
         }
     }
 
@@ -106,10 +106,10 @@ public class UserService : IUserService
         string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
         Guid newUserId = Guid.NewGuid(); // Generar un nuevo GUID para el ID
 
-        // Ajustar la consulta SQL para insertar un GUID y usar Username en lugar de Username
+        // Ajustar la consulta SQL para insertar un GUID y usar Email en lugar de Email
         const string sql = @"
-            INSERT INTO Users (Id, Username, PasswordHash, Role, CreatedAt, UpdatedAt, FirstName, LastName, Type, Contact, RegionCode, BloodGroup, Gender, Dob)
-            VALUES (@Id, @Username, @PasswordHash, @Role, @CreatedAt, @UpdatedAt, @FirstName, @LastName, @Type, @Contact, @RegionCode, @BloodGroup, @Gender, @Dob);";
+            INSERT INTO Users (Id, Email, PasswordHash, Role, CreatedAt, UpdatedAt, FirstName, LastName, Type, Contact, RegionCode, BloodGroup, Gender, Dob)
+            VALUES (@Id, @Email, @PasswordHash, @Role, @CreatedAt, @UpdatedAt, @FirstName, @LastName, @Type, @Contact, @RegionCode, @BloodGroup, @Gender, @Dob);";
 
         // Asegúrate de que tu UserRequest tenga todas las propiedades que necesita el INSERT
         // O pasa un objeto anónimo con todos los campos requeridos
@@ -118,7 +118,7 @@ public class UserService : IUserService
             await connection.ExecuteAsync(sql, new
             {
                 Id = newUserId,
-                Username = request.Username,
+                Email = request.Email,
                 PasswordHash = hashedPassword,
                 Role = request.Role,
                 CreatedAt = DateTime.UtcNow,
@@ -135,7 +135,7 @@ public class UserService : IUserService
                 Dob = (DateTime?)null
             });
 
-            return new UserModel() { Id = newUserId, Username = request.Username, Role = request.Role };
+            return new UserModel() { Id = newUserId, Email = request.Email, Role = request.Role };
         }
     }
 
@@ -149,22 +149,22 @@ public class UserService : IUserService
             passwordToUpdate = BCrypt.Net.BCrypt.HashPassword(request.Password);
         }
 
-        // Ajustar SQL para usar Username en lugar de Username
+        // Ajustar SQL para usar Email en lugar de Email
         const string sql = @"
             UPDATE Users 
-            SET Username = @Username, PasswordHash = @PasswordHash, Role = @Role, UpdatedAt = @UpdatedAt
+            SET Email = @Email, PasswordHash = @PasswordHash, Role = @Role, UpdatedAt = @UpdatedAt
             WHERE Id = @Id;";
         using (IDbConnection connection = _sqlDataAccess.GetConnection())
         {
             await connection.ExecuteAsync(sql, new
             {
-                Username = request.Username,
+                Email = request.Email,
                 PasswordHash = passwordToUpdate,
                 Role = request.Role,
                 UpdatedAt = DateTime.UtcNow,
                 Id = id
             });
-            return new UserModel() { Id = id, Username = request.Username!, Role = request.Role };
+            return new UserModel() { Id = id, Email = request.Email!, Role = request.Role };
         }
     }
 

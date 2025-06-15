@@ -19,7 +19,7 @@ public interface IUserService
     Task<UserModel> GetUserByIdAsync(Guid id); // Cambio de int a Guid
 
     // Método para obtener un usuario por su email
-    Task<UserModel> GetUserByUsernameAsync(string username); // Nuevo método, reemplazando GetUserByUsernameAsync
+    Task<UserModel> GetUserByEmailAsync(string email); // Nuevo método, reemplazando GetUserByUsernameAsync
 
     // Método para crear un nuevo usuario
     Task<UserModel> CreateUserAsync(UserRequest request);
