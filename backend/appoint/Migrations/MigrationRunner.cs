@@ -10,7 +10,9 @@ public static class MigrationRunner
             .ConfigureRunner(rb => rb
                 .AddMySql8() // O la versión específica de MySQL/MariaDB que estés usando (ej., AddMySql8)
                 .WithGlobalConnectionString(connectionString)
-                .ScanIn(typeof(InitialMariaDbDatabaseSchema).Assembly).For.Migrations())
+                .ScanIn(typeof(ConsolidatedInitialSchema).Assembly)
+                // .ScanIn(typeof(ConsolidatedInitialSchema).Assembly)
+                .For.Migrations())
             .AddLogging(lb => lb.AddFluentMigratorConsole());
     }
 
