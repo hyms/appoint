@@ -30,6 +30,7 @@ public class ApiResponse<T>
 }
 public class ApiResponse : ApiResponse<object>
 {
+    public ApiResponse(object data, int? errorCode = null,string message = "Error") : base(data, message, errorCode) { }
     public ApiResponse(object data, string message = "Success", int? errorCode = null) : base(data, message, errorCode) { }
     public ApiResponse(string message, int errorCode) : base(message, errorCode) { }
     public ApiResponse(string message = "Success", int? errorCode = null) : base(message, errorCode) { }

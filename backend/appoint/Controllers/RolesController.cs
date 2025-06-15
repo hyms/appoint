@@ -76,7 +76,7 @@ public class RolesController : ControllerBase
         if (!ModelState.IsValid)
         {
             // Devuelve errores de validación del modelo
-            return BadRequest(new ApiResponse(JsonSerializer.Serialize( ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()), 400));
+            return BadRequest(new ApiResponse(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList(), 400));
         }
 
         try
@@ -114,7 +114,7 @@ public class RolesController : ControllerBase
     {
         if (!ModelState.IsValid)
         {
-            return BadRequest(new ApiResponse(JsonSerializer.Serialize(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList()), 400));
+            return BadRequest(new ApiResponse(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList(), 400));
         }
 
         try
