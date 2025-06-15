@@ -3,7 +3,7 @@ using System;
 
 namespace appoint.Migrations;
 
-[Migration(202506150845)]
+[Migration(20240615001)]
 public class ConsolidatedInitialSchema : Migration
 {
     public override void Up()
