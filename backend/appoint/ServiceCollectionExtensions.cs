@@ -3,7 +3,10 @@ using System.Text;
 using appoint.Infrastructure;
 using appoint.Infrastructure.Data;
 using appoint.Migrations;
+using appoint.Repository;
+using appoint.Repository.impl;
 using appoint.Services;
+using appoint.Services.implement;
 using AppointmentApp.Backend.Services;
 using Google.Apis.Auth.OAuth2;
 using Google.Cloud.Dialogflow.V2;
@@ -108,25 +111,11 @@ public static class ServiceCollectionExtensions
         // Configuración de Dapper y SqlDataAccess
         services.AddSingleton<ISqlDataAccess, SqlDataAccess>();
 
-        // Registrar los repositorios y servicios de la capa de aplicación/dominio
-        // services.AddScoped<IAppointmentRepository, AppointmentRepository>();
-        // services.AddScoped<IPatientRepository, PatientRepository>();
-        // services.AddScoped<IPatientVisitRepository, PatientVisitRepository>();
-        // services.AddScoped<IDoctorRepository, DoctorRepository>();
-        // services.AddScoped<IServiceRepository, ServiceRepository>();
-        // services.AddScoped<IRoleRepository, RoleRepository>();
-        // services.AddScoped<IPermissionRepository, PermissionRepository>();
-        // services.AddScoped<IAddressRepository, AddressRepository>();
-        // services.AddScoped<ISpecializationRepository, SpecializationRepository>();
-        // services.AddScoped<IDoctorHolidayRepository, DoctorHolidayRepository>();
-        // services.AddScoped<IDoctorSessionRepository, DoctorSessionRepository>();
-        // services.AddScoped<ISessionWeekDayRepository, SessionWeekDayRepository>();
-        // services.AddScoped<INotificationRepository, NotificationRepository>();
-        // services.AddScoped<IPrescriptionRepository, PrescriptionRepository>();
-        // services.AddScoped<ISettingsRepository, SettingsRepository>();
-        // services.AddScoped<IVisitRepository, VisitRepository>();
-        // services.AddScoped<IVisitNoteRepository, VisitNoteRepository>();
-        // services.AddScoped<IVisitObservationRepository, VisitObservationRepository>();
+        services.AddScoped<ISettingsService, SettingsService>();
+        services.AddScoped<IRoleService, RoleService>();
+        
+        services.AddScoped<IRoleRepository, RoleRepository>();
+        services.AddScoped<IPermissionRepository, PermissionRepository>();
 
 
         // Configuración de Twilio (descomentar si se usa).

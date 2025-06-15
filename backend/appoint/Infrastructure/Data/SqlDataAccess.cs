@@ -8,62 +8,36 @@ namespace appoint.Infrastructure.Data;
 public class SqlDataAccess : ISqlDataAccess
 {
     private readonly IConfiguration _config;
-    private readonly string _connectionString;
+    private readonly string _connectionStringName;
 
     public SqlDataAccess(IConfiguration config)
     {
         _config = config;
-        // Obtener la cadena de conexión del appsettings.json
-        _connectionString = _config.GetConnectionString("DefaultConnection");
-        if (string.IsNullOrEmpty(_connectionString))
+        // Asumiendo que tu cadena de conexión se llama "DefaultConnection" en appsettings.json
+        _connectionStringName = "DefaultConnection"; 
+    }
+
+    // NUEVO: Implementación del método GetConnection()
+    public IDbConnection GetConnection()
+    {
+        string connectionString = _config.GetConnectionString(_connectionStringName);
+        // Asegúrate de usar la clase de conexión correcta para tu base de datos
+        return new MySqlConnection(connectionString); // O new NpgsqlConnection(connectionString), etc.
+    }
+
+    public async Task<IEnumerable<T>> LoadData<T, TU>(string sql, TU parameters)
+    {
+        using (IDbConnection connection = GetConnection()) // Usa GetConnection() aquí también
         {
-            throw new InvalidOperationException("La cadena de conexión 'DefaultConnection' no está configurada.");
+            return await connection.QueryAsync<T>(sql, parameters);
         }
     }
 
-    // Método para crear y abrir una conexión a la base de datos
-    private IDbConnection CreateConnection()
+    public async Task SaveData<T>(string sql, T parameters)
     {
-        // Usa MySqlConnection para MySQL, SqlConnection para SQL Server, etc.
-        var connection = new MySqlConnection(_connectionString);
-        connection.Open(); // Abre la conexión
-        return connection;
-    }
-
-    public async Task<IEnumerable<T>> LoadData<T, U>(string storedProcedure, U parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        return await connection.QueryAsync<T>(storedProcedure, parameters, commandType: CommandType.StoredProcedure);
-    }
-
-    public async Task SaveData<T>(string storedProcedure, T parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        await connection.ExecuteAsync(storedProcedure, parameters, commandType: CommandType.StoredProcedure);
-    }
-
-    public async Task<int> ExecuteScalar<T>(string storedProcedure, T parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        return await connection.ExecuteScalarAsync<int>(storedProcedure, parameters, commandType: CommandType.StoredProcedure);
-    }
-
-    // Implementaciones de los métodos para SQL directo (sin Stored Procedures)
-    public async Task<T> QueryFirstOrDefaultAsync<T, U>(string sql, U parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        return await connection.QueryFirstOrDefaultAsync<T>(sql, parameters);
-    }
-
-    public async Task<IEnumerable<T>> QueryAsync<T, U>(string sql, U parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        return await connection.QueryAsync<T>(sql, parameters);
-    }
-
-    public async Task<int> ExecuteAsync<T>(string sql, T parameters, string connectionId = "DefaultConnection")
-    {
-        using IDbConnection connection = CreateConnection();
-        return await connection.ExecuteAsync(sql, parameters);
+        using (IDbConnection connection = GetConnection()) // Usa GetConnection() aquí también
+        {
+            await connection.ExecuteAsync(sql, parameters);
+        }
     }
 }

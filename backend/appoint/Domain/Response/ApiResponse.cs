@@ -1,4 +1,4 @@
-namespace appoint.Domain;
+namespace appoint.Domain.Response;
 
 public class ApiResponse<T>
 {

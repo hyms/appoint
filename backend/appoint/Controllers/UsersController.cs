@@ -4,6 +4,7 @@ using appoint.Domain; // Asegúrate de que esta referencia sea correcta si defin
 using appoint.Models;
 using appoint.Services;
 using System;
+using appoint.Domain.Response;
 using UserRequest = appoint.Domain.UserRequest; // Añadir para Guid
 
 namespace appoint.Controllers;

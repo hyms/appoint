@@ -1,13 +1,17 @@
+using System.Data;
+
 namespace appoint.Infrastructure;
 
 // Interfaz que define las operaciones básicas de acceso a datos
 public interface ISqlDataAccess
 {
-    Task<IEnumerable<T>> LoadData<T, TU>(string storedProcedure, TU parameters, string connectionId = "DefaultConnection");
-    Task SaveData<T>(string storedProcedure, T parameters, string connectionId = "DefaultConnection");
-    Task<int> ExecuteScalar<T>(string storedProcedure, T parameters, string connectionId = "DefaultConnection");
-    // Puedes añadir más métodos según tus necesidades, como QueryFirstOrDefaultAsync sin SP
-    Task<T> QueryFirstOrDefaultAsync<T, TU>(string sql, TU parameters, string connectionId = "DefaultConnection");
-    Task<IEnumerable<T>> QueryAsync<T, TU>(string sql, TU parameters, string connectionId = "DefaultConnection");
-    Task<int> ExecuteAsync<T>(string sql, T parameters, string connectionId = "DefaultConnection");
+    // Método para cargar datos (lista de objetos)
+    Task<IEnumerable<T>> LoadData<T, TU>(string sql, TU parameters);
+
+    // Método para guardar datos (insertar, actualizar, eliminar)
+    Task SaveData<T>(string sql, T parameters);
+
+    // NUEVO: Método para obtener la conexión de base de datos directamente.
+    // Esto permite usar métodos avanzados de Dapper como QueryMultiple o Query<T1,T2,TReturn>.
+    IDbConnection GetConnection();
 }

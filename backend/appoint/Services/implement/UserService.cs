@@ -1,3 +1,4 @@
+using System.Data;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
@@ -6,6 +7,7 @@ using appoint.Infrastructure;
 using appoint.Models;
 using Dapper;
 using Microsoft.IdentityModel.Tokens;
+
 // Asegúrate de que User (entidad de dominio) esté aquí
 // Añadir este using para IConfiguration
 
@@ -15,7 +17,7 @@ namespace appoint.Services.implement;
 
 public class UserService : IUserService
 {
-    private readonly ISqlDataAccess _sqlDataAccess; 
+    private readonly ISqlDataAccess _sqlDataAccess;
     private readonly IConfiguration _configuration;
 
     public UserService(ISqlDataAccess sqlDataAccess, IConfiguration configuration)
@@ -23,6 +25,7 @@ public class UserService : IUserService
         _sqlDataAccess = sqlDataAccess;
         _configuration = configuration;
     }
+
     public async Task<UserModel> Authenticate(string username, string password) // Cambiar modelUsername a Username
     {
         // Obtener el usuario por Username
@@ -49,7 +52,8 @@ public class UserService : IUserService
         };
 
         // Asumiendo que has ajustado appsettings.json a la sección "Jwt"
-        var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!)); // Leer de Jwt:Key
+        var secretKey =
+            new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:SecretKey"]!)); // Leer de Jwt:Key
         var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256Signature);
 
         var tokenDescriptor = new SecurityTokenDescriptor
@@ -57,7 +61,7 @@ public class UserService : IUserService
             Subject = new ClaimsIdentity(claims),
             Expires = DateTime.UtcNow.AddHours(2), // Adjust the expiration time as needed
             SigningCredentials = signingCredentials,
-            Issuer = _configuration["Jwt:Issuer"],    // Asegúrate de que esto esté en tu appsettings.json
+            Issuer = _configuration["Jwt:Issuer"], // Asegúrate de que esto esté en tu appsettings.json
             Audience = _configuration["Jwt:Audience"] // Asegúrate de que esto esté en tu appsettings.json
         };
 
@@ -71,19 +75,30 @@ public class UserService : IUserService
     {
         // Seleccionar solo las columnas necesarias, incluyendo Username
         const string sql = "SELECT Id, Username, Role, FirstName, LastName FROM Users";
-        return await _sqlDataAccess.QueryAsync<UserModel,object>(sql,new{});
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            return await connection.QueryAsync<UserModel>(sql, new { });
+        }
     }
 
     public async Task<UserModel> GetUserByIdAsync(Guid id) // Cambio de int a Guid
     {
-        const string sql = "SELECT Id, Username, Role, PasswordHash FROM Users WHERE Id = @Id"; // Incluir PasswordHash para Authenticate
-        return await _sqlDataAccess.QueryFirstOrDefaultAsync<UserModel,object>(sql, new { Id = id });
+        const string
+            sql =
+                "SELECT Id, Username, Role, PasswordHash FROM Users WHERE Id = @Id"; // Incluir PasswordHash para Authenticate
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            return (await connection.QueryFirstOrDefaultAsync<UserModel>(sql, new { Id = id }))!;
+        }
     }
 
     public async Task<UserModel> GetUserByUsernameAsync(string username) // Nuevo método para buscar por Username
     {
         const string sql = "SELECT Id, Username, PasswordHash, Role FROM Users WHERE Username = @Username";
-        return await _sqlDataAccess.QueryFirstOrDefaultAsync<UserModel,object>(sql, new { Username = username });
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            return (await connection.QueryFirstOrDefaultAsync<UserModel>(sql, new { Username = username }))!;
+        }
     }
 
     public async Task<UserModel> CreateUserAsync(UserRequest request)
@@ -98,27 +113,30 @@ public class UserService : IUserService
 
         // Asegúrate de que tu UserRequest tenga todas las propiedades que necesita el INSERT
         // O pasa un objeto anónimo con todos los campos requeridos
-        await _sqlDataAccess.ExecuteAsync(sql, new 
-        { 
-            Id = newUserId, 
-            Username = request.Username, 
-            PasswordHash = hashedPassword, 
-            Role = request.Role, 
-            CreatedAt = DateTime.UtcNow, 
-            UpdatedAt = DateTime.UtcNow,
-            // Aquí debes añadir los valores para FirstName, LastName, Type, Contact, RegionCode, BloodGroup, Gender, Dob.
-            // Si UserRequest no los tiene, deberás ajustarlo o pasarlos como null/valores por defecto.
-            FirstName = "Default", // Placeholder, ajusta esto
-            LastName = "User",     // Placeholder, ajusta esto
-            Type = request.Role,   // A menudo el tipo es el mismo que el rol, si no, ajusta
-            Contact = (string)null!,
-            RegionCode = (string)null!,
-            BloodGroup = (string)null!,
-            Gender = (int?)null,
-            Dob = (DateTime?)null
-        });
-        
-        return new UserModel() { Id = newUserId, Username = request.Username, Role = request.Role };
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            await connection.ExecuteAsync(sql, new
+            {
+                Id = newUserId,
+                Username = request.Username,
+                PasswordHash = hashedPassword,
+                Role = request.Role,
+                CreatedAt = DateTime.UtcNow,
+                UpdatedAt = DateTime.UtcNow,
+                // Aquí debes añadir los valores para FirstName, LastName, Type, Contact, RegionCode, BloodGroup, Gender, Dob.
+                // Si UserRequest no los tiene, deberás ajustarlo o pasarlos como null/valores por defecto.
+                FirstName = "Default", // Placeholder, ajusta esto
+                LastName = "User", // Placeholder, ajusta esto
+                Type = request.Role, // A menudo el tipo es el mismo que el rol, si no, ajusta
+                Contact = (string)null!,
+                RegionCode = (string)null!,
+                BloodGroup = (string)null!,
+                Gender = (int?)null,
+                Dob = (DateTime?)null
+            });
+
+            return new UserModel() { Id = newUserId, Username = request.Username, Role = request.Role };
+        }
     }
 
     public async Task<UserModel> UpdateUserAsync(Guid id, UserRequest request) // Cambio de int a Guid
@@ -136,23 +154,28 @@ public class UserService : IUserService
             UPDATE Users 
             SET Username = @Username, PasswordHash = @PasswordHash, Role = @Role, UpdatedAt = @UpdatedAt
             WHERE Id = @Id;";
-
-        await _sqlDataAccess.ExecuteAsync(sql, new 
-        { 
-            Username = request.Username, 
-            PasswordHash = passwordToUpdate, 
-            Role = request.Role, 
-            UpdatedAt = DateTime.UtcNow, 
-            Id = id 
-        });
-        return new UserModel() { Id = id, Username = request.Username!, Role = request.Role };
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            await connection.ExecuteAsync(sql, new
+            {
+                Username = request.Username,
+                PasswordHash = passwordToUpdate,
+                Role = request.Role,
+                UpdatedAt = DateTime.UtcNow,
+                Id = id
+            });
+            return new UserModel() { Id = id, Username = request.Username!, Role = request.Role };
+        }
     }
 
     public async Task<bool> DeleteUserAsync(Guid id) // Cambio de int a Guid
     {
         const string sql = "DELETE FROM Users WHERE Id = @Id;";
-        int rowsAffected = await _sqlDataAccess.ExecuteAsync(sql, new { Id = id });
-        return rowsAffected > 0;
+        using (IDbConnection connection = _sqlDataAccess.GetConnection())
+        {
+            int rowsAffected = await connection.ExecuteAsync(sql, new { Id = id });
+            return rowsAffected > 0;
+        }
     }
 
     // Método para verificar la contraseña durante el login
