@@ -13,7 +13,7 @@ public class ConsolidatedInitialSchema : Migration
             .WithColumn("Id").AsGuid().NotNullable().PrimaryKey()
             .WithColumn("Username").AsString(255).NotNullable().Unique()
             .WithColumn("PasswordHash").AsString(255).NotNullable()
-            .WithColumn("Role").AsString(50).NotNullable()
+            // .WithColumn("Role").AsString(50).NotNullable()
             .WithColumn("FirstName").AsString(100).NotNullable()
             .WithColumn("LastName").AsString(100).NotNullable()
             .WithColumn("Type").AsString(50).NotNullable()
