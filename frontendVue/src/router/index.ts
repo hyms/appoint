@@ -1,6 +1,7 @@
 // src/router/index.ts
-import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router';
-import { useAuthStore } from '@/store/auth'; // Importa tu store de Pinia
+import { createRouter, createWebHistory } from 'vue-router';
+import type { RouteRecordRaw } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'; // Importa tu store de Pinia
 
 // Define las rutas para la aplicación.
 // RouteRecordRaw es el tipo para las definiciones de ruta en Vue Router.
@@ -10,7 +11,7 @@ const routes: Array<RouteRecordRaw> = [
     name: 'Login',
     // Carga perezosa del componente Login.vue.
     // Esto crea un chunk JavaScript separado para esta ruta, que solo se carga cuando se visita la ruta.
-    component: () => import('@/views/Login.vue'),
+    component: () => import('@/views/LoginView.vue'),
     // Metadatos de la ruta: indica que esta ruta NO requiere autenticación.
     meta: { requiresAuth: false }
   },
@@ -18,7 +19,7 @@ const routes: Array<RouteRecordRaw> = [
     path: '/', // Esta será la ruta de tu dashboard principal
     name: 'Dashboard',
     // Carga perezosa del componente Dashboard.vue.
-    component: () => import('@/views/Dashboard.vue'),
+    component: () => import('@/views/DashboardView.vue'),
     // Metadatos de la ruta: indica que esta ruta SÍ requiere autenticación.
     meta: { requiresAuth: true }
   },

@@ -1,5 +1,6 @@
 using appoint.Models; 
-using appoint.Domain; 
+using appoint.Domain;
+using appoint.Domain.Request;
 
 namespace appoint.Services;
 

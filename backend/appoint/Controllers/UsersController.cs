@@ -5,7 +5,7 @@ using appoint.Models;
 using appoint.Services;
 using System;
 using appoint.Domain.Response;
-using UserRequest = appoint.Domain.UserRequest; // Añadir para Guid
+using UserRequest = appoint.Domain.Request.UserRequest; // Añadir para Guid
 
 namespace appoint.Controllers;
 
@@ -15,118 +15,185 @@ namespace appoint.Controllers;
 public class UsersController : ControllerBase
 {
     private readonly IUserService _userService;
+    private readonly ILogger<UsersController> _logger; // Inyectar ILogger
 
-    public UsersController(IUserService userService)
+    public UsersController(IUserService userService, ILogger<UsersController> logger) // Añadir ILogger al constructor
     {
         _userService = userService;
+        _logger = logger; // Asignar el logger
     }
 
     [HttpGet]
     public async Task<IActionResult> Get()
     {
-        var users = await _userService.GetAllUsersAsync();
-        return Ok(new ApiResponse<IEnumerable<UserModel>>(users, "Users retrieved successfully"));
+        _logger.LogInformation("Attempting to retrieve all users.");
+        try
+        {
+            var users = await _userService.GetAllUsersAsync();
+            _logger.LogInformation("Successfully retrieved {UserCount} users.", users.Count());
+            return Ok(new ApiResponse<IEnumerable<UserModel>>(users, "Users retrieved successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving all users.");
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
     }
 
     [HttpGet("{id}")]
-    public async Task<IActionResult> Get(Guid id) // CAMBIO: int id a Guid id
+    public async Task<IActionResult> Get(Guid id)
     {
-        var user = await _userService.GetUserByIdAsync(id);
-        if (user == null)
+        _logger.LogInformation("Attempting to retrieve user with ID: {UserId}", id);
+        try
         {
-            return NotFound(new ApiResponse("User not found", 404));
+            var user = await _userService.GetUserByIdAsync(id);
+            if (user == null)
+            {
+                _logger.LogWarning("User with ID: {UserId} not found.", id);
+                return NotFound(new ApiResponse("User not found", 404));
+            }
+            _logger.LogInformation("Successfully retrieved user with ID: {UserId}", id);
+            return Ok(new ApiResponse<UserModel>(user, "User retrieved successfully"));
         }
-        return Ok(new ApiResponse<UserModel>(user, "User retrieved successfully"));
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error retrieving user with ID: {UserId}", id);
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
     }
 
     [HttpPost]
     public async Task<IActionResult> Post([FromBody] UserRequest request)
     {
+        _logger.LogInformation("Attempting to create a new user with email: {Email}", request.Email);
+
         if (!ModelState.IsValid)
         {
-            // Una mejor práctica sería devolver errores de validación específicos
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            _logger.LogWarning("Invalid ModelState for user creation: {Errors}", string.Join("; ", errors));
             return BadRequest(new ApiResponse(string.Join("; ", errors), 400));
         }
         
-        // Verifica si ya existe un usuario con el mismo email
-        // Esto es importante para evitar duplicados, ya que Email es UNIQUE
-        var existingUser = await _userService.GetUserByEmailAsync(request.Email);
-        if (existingUser != null)
+        try
         {
-            return Conflict(new ApiResponse("User with this email already exists", 409));
-        }
+            var existingUser = await _userService.GetUserByEmailAsync(request.Email);
+            if (existingUser != null)
+            {
+                _logger.LogWarning("User creation failed: Email '{Email}' already exists.", request.Email);
+                return Conflict(new ApiResponse("User with this email already exists", 409));
+            }
 
-        var newUser = await _userService.CreateUserAsync(request);
-        // CreatedAtAction requiere un objeto anónimo con la propiedad del ID
-        return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new ApiResponse<UserModel>(newUser, "User created successfully"));
+            var newUser = await _userService.CreateUserAsync(request);
+            _logger.LogInformation("Successfully created new user with ID: {UserId} and email: {Email}", newUser.Id, newUser.Email);
+            return CreatedAtAction(nameof(Get), new { id = newUser.Id }, new ApiResponse<UserModel>(newUser, "User created successfully"));
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error creating user with email: {Email}", request.Email);
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
     }
 
     [HttpPut("{id}")]
-    public async Task<IActionResult> Put(Guid id, [FromBody] UserRequest request) // CAMBIO: int id a Guid id
+    public async Task<IActionResult> Put(Guid id, [FromBody] UserRequest request)
     {
+        _logger.LogInformation("Attempting to update user with ID: {UserId}. New email: {NewEmail}", id, request.Email);
+
         if (!ModelState.IsValid)
         {
             var errors = ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList();
+            _logger.LogWarning("Invalid ModelState for user update (ID: {UserId}): {Errors}", id, string.Join("; ", errors));
             return BadRequest(new ApiResponse(string.Join("; ", errors), 400));
         }
 
-        // Antes de actualizar, si el email cambia, verifica que el nuevo email no esté ya en uso por otro usuario
-        if (request.Email != null) // Solo si el email se está actualizando
+        try
         {
-            var userByNewEmail = await _userService.GetUserByEmailAsync(request.Email);
-            if (userByNewEmail != null && userByNewEmail.Id != id)
+            if (request.Email != null)
             {
-                return Conflict(new ApiResponse("Another user with this email already exists", 409));
+                var userByNewEmail = await _userService.GetUserByEmailAsync(request.Email);
+                if (userByNewEmail != null && userByNewEmail.Id != id)
+                {
+                    _logger.LogWarning("User update failed (ID: {UserId}): New email '{NewEmail}' already exists for another user (ID: {ExistingUserId}).", id, request.Email, userByNewEmail.Id);
+                    return Conflict(new ApiResponse("Another user with this email already exists", 409));
+                }
             }
-        }
 
-        var updatedUser = await _userService.UpdateUserAsync(id, request);
-        if (updatedUser == null)
-        {
-            return NotFound(new ApiResponse("User not found", 404));
+            var updatedUser = await _userService.UpdateUserAsync(id, request);
+            if (updatedUser == null)
+            {
+                _logger.LogWarning("User update failed: User with ID: {UserId} not found.", id);
+                return NotFound(new ApiResponse("User not found", 404));
+            }
+            _logger.LogInformation("Successfully updated user with ID: {UserId}", id);
+            return Ok(new ApiResponse<UserModel>(updatedUser, "User updated successfully"));
         }
-        return Ok(new ApiResponse<UserModel>(updatedUser, "User updated successfully"));
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error updating user with ID: {UserId}", id);
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
     }
 
     [HttpDelete("{id}")]
-    public async Task<IActionResult> Delete(Guid id) // CAMBIO: int id a Guid id
+    public async Task<IActionResult> Delete(Guid id)
     {
-        var deleted = await _userService.DeleteUserAsync(id);
-        if (!deleted)
+        _logger.LogInformation("Attempting to delete user with ID: {UserId}", id);
+        try
         {
-            return NotFound(new ApiResponse("User not found", 404));
+            var deleted = await _userService.DeleteUserAsync(id);
+            if (!deleted)
+            {
+                _logger.LogWarning("User deletion failed: User with ID: {UserId} not found.", id);
+                return NotFound(new ApiResponse("User not found", 404));
+            }
+            _logger.LogInformation("Successfully deleted user with ID: {UserId}", id);
+            return Ok(new ApiResponse("User deleted successfully"));
         }
-        return Ok(new ApiResponse("User deleted successfully"));
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error deleting user with ID: {UserId}", id);
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
     }
 
-    // Nuevo endpoint para autenticación (login)
-    [AllowAnonymous] // Permitir acceso sin autenticación previa
-    [HttpPost("authenticate")] // Ruta específica para la autenticación
+    [AllowAnonymous]
+    [HttpPost("auth")]
     public async Task<IActionResult> Authenticate([FromBody] LoginRequest request)
     {
-        // Asumiendo que LoginRequest tiene Email y Password
+        _logger.LogInformation("Authentication attempt for email: {Email}", request.Email);
+
         if (string.IsNullOrEmpty(request.Email) || string.IsNullOrEmpty(request.Password))
         {
+            _logger.LogWarning("Authentication failed for email '{Email}': Email or password is missing.", request.Email);
             return BadRequest(new ApiResponse("Email and password are required.", 400));
         }
 
-        var user = await _userService.Authenticate(request.Email, request.Password);
-
-        if (user == null)
+        try
         {
-            return Unauthorized(new ApiResponse("Invalid credentials.", 401));
+            var user = await _userService.Authenticate(request.Email, request.Password);
+
+            if (user == null)
+            {
+                _logger.LogWarning("Authentication failed for email '{Email}': Invalid credentials.", request.Email);
+                return Unauthorized(new ApiResponse("Invalid credentials.", 401));
+            }
+
+            var token = _userService.GenerateJwtToken(user);
+            _logger.LogInformation("Authentication successful for user ID: {UserId}", user.Id);
+
+            return Ok(new ApiResponse<AuthenticatedUserResponse>(new AuthenticatedUserResponse
+            {
+                UserId = user.Id,
+                Email = user.Email,
+                Role = user.Type, // Aquí mapeas el Type del UserModel al Role del DTO
+                Permissions = user.Permissions ?? new List<string>(), // Asumes que user.Permissions existe o es una lista vacía
+                Token = token
+            }, "Authentication successful"));
         }
-
-        var token = _userService.GenerateJwtToken(user);
-
-        // Puedes devolver el token y los datos básicos del usuario
-        return Ok(new ApiResponse<AuthenticatedUserResponse>(new AuthenticatedUserResponse
+        catch (Exception ex)
         {
-            Id = user.Id,
-            Email = user.Email,
-            Role = user.Role,
-            Token = token
-        }, "Authentication successful"));
+            _logger.LogError(ex, "Error during authentication for email: {Email}", request.Email);
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred during authentication: {ex.Message}", 500));
+        }
     }
 }

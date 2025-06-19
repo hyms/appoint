@@ -25,11 +25,10 @@ public class UserModel
     public int? Gender { get; set; }
     public DateTime? Dob { get; set; }
 
-    // --- CAMPO BranchId FK A LA TABLA BRANCHES ---
+    public List<string> Permissions { get; set; } = new List<string>();
     public Guid BranchId { get; set; } // Cada usuario debe estar relacionado a una sucursal
     public BranchModel? Branch { get; set; } // Propiedad de navegación para la sucursal asociada
 
-    // --- CAMPO PARA NOTIFICACIONES POR EMAIL ---
     public bool EmailNotificationEnabled { get; set; }
 
     public DateTime CreatedAt { get; set; }

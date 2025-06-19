@@ -1,7 +1,6 @@
 using System.ComponentModel.DataAnnotations;
 
-namespace appoint.Domain;
-
+namespace appoint.Domain.Request;
 public class UserRequest
 {
     [Required(ErrorMessage = "Email is required.")]
@@ -39,4 +38,9 @@ public class UserRequest
     public int? Gender { get; set; }
 
     public DateTime? Dob { get; set; } // Fecha de Nacimiento
+
+    // CRÍTICO: Necesitamos el BranchId para crear/actualizar un usuario
+    // Ya que cada usuario debe estar asociado a una sucursal.
+    [Required(ErrorMessage = "Branch ID is required.")]
+    public Guid BranchId { get; set; }
 }

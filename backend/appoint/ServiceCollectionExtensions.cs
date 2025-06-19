@@ -1,5 +1,7 @@
 using System.Data;
 using System.Text;
+using System.Text.Json;
+using System.Text.Json.Serialization;
 using appoint.Infrastructure;
 using appoint.Infrastructure.Data;
 using appoint.Migrations;
@@ -13,6 +15,7 @@ using Google.Cloud.Dialogflow.V2;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using MySqlConnector;
+using Serilog;
 
 // Si estás usando Twilio, deberás descomentar estas líneas y añadir el paquete NuGet.
 // using Twilio.Clients;
@@ -27,7 +30,16 @@ public static class ServiceCollectionExtensions
                                                         IWebHostEnvironment env)
     {
         // Añadir controladores
-        services.AddControllers(); //.AddNewtonsoftJson(); // Si lo necesitas, descomenta .AddNewtonsoftJson()
+        services.AddControllers().AddJsonOptions(options =>
+        {
+            // Configura el serializador JSON.
+            // JsonStringEnumConverter asegura que los enums se serialicen como strings, no como enteros.
+            options.JsonSerializerOptions.Converters.Add(new JsonStringEnumConverter());
+            // PropertyNameCaseInsensitive = true permite que la deserialización ignore mayúsculas/minúsculas.
+            options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+            // PropertyNamingPolicy = JsonNamingPolicy.CamelCase asegura que se esperen nombres de propiedades en camelCase.
+            options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
+        });
 
         // Configuración de la autenticación JWT.
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
@@ -152,13 +164,14 @@ public static class ServiceCollectionExtensions
         {
             options.AddDefaultPolicy(policy =>
             {
-                // En desarrollo, puedes permitir localhost:8080.
-                // En producción, asegúrate de especificar el dominio real de tu frontend.
+                // En desarrollo, especificamos el origen exacto y permitimos credenciales.
+                // Eliminar el "*" si se usa AllowCredentials().
                 if (env.IsDevelopment())
                 {
-                    policy.WithOrigins("http://localhost:8080", "http://127.0.0.1:8080") // Asegura que 127.0.0.1 también esté cubierto
+                    policy.WithOrigins("http://localhost:5173") // Origen exacto de tu frontend Vue
                         .AllowAnyHeader()
-                        .AllowAnyMethod();
+                        .AllowAnyMethod()
+                        .AllowCredentials(); // Permitir credenciales para JWT en headers
                 }
                 else
                 {
@@ -170,7 +183,11 @@ public static class ServiceCollectionExtensions
                 }
             });
         });
-
+        services.AddSerilog((s, lc) => lc
+            .ReadFrom.Configuration(configuration)
+            .ReadFrom.Services(s)
+            .Enrich.FromLogContext()
+        );
         return services;
     }
 }

@@ -1,13 +1,16 @@
-import axios, { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
+import axios from 'axios';
+import type { AxiosInstance, AxiosResponse, AxiosError } from 'axios';
 import { useAuthStore } from '@/stores/auth';
 
-const API_BASE_URL: string = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000/api/Auth';
+// --- CAMBIO AQUÍ: Incluir '/Users' en la URL base ---
+const API_BASE_URL: string = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
 
 const api: AxiosInstance = axios.create({
+  withCredentials: true,
   baseURL: API_BASE_URL,
   headers: {
-    'Content-Type': 'application/json',
-  },
+    'Content-Type': 'application/json'
+  }
 });
 
 // Interceptor de solicitudes: Añade el token JWT a todas las peticiones

@@ -64,9 +64,10 @@ export const useAuthStore = defineStore('auth', {
         // La URL completa para el login ya está configurada en '@/api/index.ts' como baseURL,
         // por lo que solo necesitamos la ruta relativa para este endpoint.
         // Asegúrate de que el backend de Auth está en la URL que especificaste para baseURL en api/index.ts.
-        const response = await api.post('/login', credentials);
+        const response = await api.post('/users/auth', credentials);
 
-        const { token, userId, email: userEmail, role, permissions } = response.data;
+        const { data } = response.data;
+        const { token, userId, email: userEmail, role, permissions } = data;
 
         // Estructura UserInfo para el store
         const newUserInfo: UserInfo = {

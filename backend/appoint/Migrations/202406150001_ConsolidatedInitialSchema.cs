@@ -27,7 +27,7 @@ public class ConsolidatedInitialSchema : Migration
         // 2. Crear tabla 'Users' (ahora 'Branches' ya existe)
         Create.Table("Users")
             .WithColumn("Id").AsGuid().NotNullable().PrimaryKey()
-            .WithColumn("Username").AsString(255).NotNullable().Unique()
+            .WithColumn("Email").AsString(255).NotNullable().Unique()
             .WithColumn("PasswordHash").AsString(255).NotNullable()
             // .WithColumn("Role").AsString(50).NotNullable() // ELIMINADA: Rol gestionado por UserRoles
             .WithColumn("FirstName").AsString(100).NotNullable()
