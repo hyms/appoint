@@ -22,19 +22,19 @@ public class StaffCreateRequest
     public string Password { get; set; }
 
     [Compare("Password", ErrorMessage = "Password and confirmation password do not match.")]
-    public string PasswordConfirmation { get; set; } // Para la validación 'same' de Laravel
+    public string PasswordConfirmation { get; set; }
 
     [StringLength(50)]
     public string? Contact { get; set; }
 
     [Required(ErrorMessage = "Gender is required.")]
     [Range(0, 1, ErrorMessage = "Gender must be 0 for Male or 1 for Female.")]
-    public int Gender { get; set; } // 0: Male, 1: Female
+    public int Gender { get; set; }
 
     [Required(ErrorMessage = "Role is required.")]
-    public Guid RoleId { get; set; } // Se asume que el rol se selecciona por ID
-    // OJO: Si tu Laravel permitía elegir un 'role' como string directamente,
-    // pero tu DB tiene una tabla Roles, es mejor pasar el GUID del rol.
+    public Guid RoleId { get; set; }
 
-    // No hay campo 'profile' (para archivo) directamente en el DTO, se gestionaría aparte.
+    // --- ID DE LA SUCURSAL ASOCIADA ---
+    [Required(ErrorMessage = "Branch is required.")]
+    public Guid BranchId { get; set; }
 }

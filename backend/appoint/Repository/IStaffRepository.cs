@@ -1,3 +1,4 @@
+using appoint.Domain.Response;
 using appoint.Models;
 
 namespace appoint.Repository;

@@ -25,8 +25,9 @@ public class StaffUpdateRequest
     public int Gender { get; set; }
 
     [Required(ErrorMessage = "Role is required.")]
-    public Guid RoleId { get; set; } // Se asume que el rol se actualiza por ID
+    public Guid RoleId { get; set; }
 
-    // No hay campo 'profile' (para archivo) directamente en el DTO, se gestionaría aparte.
-    // Contraseña no se incluye aquí, se maneja con UpdateChangePasswordRequest
+    // --- ID DE LA SUCURSAL ASOCIADA ---
+    [Required(ErrorMessage = "Branch is required.")]
+    public Guid BranchId { get; set; }
 }

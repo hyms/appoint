@@ -65,7 +65,7 @@ public class StaffsController : ControllerBase
         {
             return NotFound(new ApiResponse($"Staff member with ID '{id}' not found.", 404));
         }
-        return Ok(new ApiResponse<StaffDetailsResponse>(staffDetails, "Staff member details retrieved successfully"));
+        return Ok(new ApiResponse((StaffDetailsResponse)staffDetails));
     }
 
     /// <summary>

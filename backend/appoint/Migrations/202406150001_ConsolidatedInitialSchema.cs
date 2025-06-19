@@ -23,6 +23,8 @@ public class ConsolidatedInitialSchema : Migration
             .WithColumn("BloodGroup").AsString(10).Nullable()
             .WithColumn("Gender").AsInt32().Nullable()
             .WithColumn("Dob").AsDateTime().Nullable()
+            .WithColumn("BranchId").AsGuid().NotNullable() // Cada usuario debe estar relacionado a una sucursal
+            .ForeignKey("FK_Users_BranchId_Branches_Id", "Branches", "Id") // Clave Foránea
             .WithColumn("CreatedAt").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime)
             .WithColumn("UpdatedAt").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
@@ -53,30 +55,28 @@ public class ConsolidatedInitialSchema : Migration
             .ToTable("Permissions").InSchema("dbo").PrimaryColumn("Id");
 
         // 3. CreateAddressesTable
-        Create.Table("Addresses")
+        Create.Table("Branches") // Renombrado de Locations a Branches
             .WithColumn("Id").AsGuid().NotNullable().PrimaryKey()
-            .WithColumn("Address1").AsString(255).NotNullable()
-            .WithColumn("Address2").AsString(255).Nullable()
-            .WithColumn("CountryId").AsGuid().Nullable()
-            .WithColumn("StateId").AsGuid().Nullable()
-            .WithColumn("CityId").AsGuid().Nullable()
+            .WithColumn("Name").AsString(255).NotNullable().Unique()
+            .WithColumn("AddressLine1").AsString(255).NotNullable()
+            .WithColumn("AddressLine2").AsString(255).Nullable()
+            .WithColumn("City").AsString(100).NotNullable()
+            .WithColumn("State").AsString(100).NotNullable()
+            .WithColumn("Country").AsString(100).NotNullable()
             .WithColumn("PostalCode").AsString(20).Nullable()
+            .WithColumn("PhoneNumber").AsString(50).Nullable()
+            .WithColumn("Email").AsString(225).Nullable()
+            .WithColumn("IsActive").AsBoolean().NotNullable().WithDefaultValue(true)
             .WithColumn("CreatedAt").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime)
             .WithColumn("UpdatedAt").AsDateTime().NotNullable().WithDefault(SystemMethods.CurrentDateTime);
 
         // 4. CreatePatientsAndDoctorsTables (Specialization REMOVIDA de Doctors)
-        Create.Table("Patients")
-            .WithColumn("Id").AsGuid().NotNullable().PrimaryKey()
-            .WithColumn("UserId").AsGuid().NotNullable().Unique()
-                .ForeignKey("FK_Patients_UserId_Users_Id", "Users", "Id")
-            .WithColumn("AddressId").AsGuid().Nullable()
-                .ForeignKey("FK_Patients_AddressId_Addresses_Id", "Addresses", "Id")
-            .WithColumn("PatientUniqueId").AsString(50).NotNullable().Unique();
-
+        // Tabla Patients
         Create.Table("Doctors")
             .WithColumn("Id").AsGuid().NotNullable().PrimaryKey()
             .WithColumn("UserId").AsGuid().NotNullable().Unique()
-                .ForeignKey("FK_Doctors_UserId_Users_Id", "Users", "Id");
+            .ForeignKey("FK_Doctors_UserId_Users_Id", "Users", "Id")
+            .WithColumn("Specialization").AsString(255).Nullable(); // Recordatorio: esta columna se eliminará para usar tabla de pivote DoctorSpecializations
         // Columna Specialization REMOVIDA de Doctors aquí, se manejará con tabla pivote
 
         // 5. CreateServicesTable
@@ -278,13 +278,18 @@ public class ConsolidatedInitialSchema : Migration
         Delete.Table("SessionWeekDays");
         Delete.Table("DoctorHolidays");
         Delete.Table("DoctorSessions");
+        
+        Delete.ForeignKey("FK_Patients_UserId_Users_Id").OnTable("Patients");
+        Delete.ForeignKey("FK_Doctors_UserId_Users_Id").OnTable("Doctors");
+        
         Delete.Table("Patients");
         Delete.Table("Doctors");
         Delete.Table("Services");
         Delete.Table("Specializations");
-        Delete.Table("Addresses");
+        Delete.Table("Branches");
         Delete.Table("Permissions");
         Delete.Table("Roles");
+        Delete.ForeignKey("FK_Users_BranchId_Branches_Id").OnTable("Users"); // Eliminar FK primero
         Delete.Table("Users");
     }
 }

@@ -17,13 +17,13 @@ public interface IDoctorRepository
     // Obtener un doctor por el ID de usuario asociado
     Task<DoctorModel?> GetDoctorByUserIdAsync(Guid userId);
 
-    // Crear un nuevo doctor (implicará crear un usuario y una dirección también)
-    Task<Guid> AddDoctorAsync(DoctorModel doctor, UserModel user, AddressModel? address, IEnumerable<Guid>? specializationIds);
+    // Crear un nuevo doctor (implicará crear un usuario y un registro de doctor, la sucursal viene en UserModel)
+    Task<Guid> AddDoctorAsync(DoctorModel doctor, UserModel user, IEnumerable<Guid>? specializationIds);
 
-    // Actualizar un doctor existente (implicará actualizar usuario y dirección)
-    Task UpdateDoctorAsync(DoctorModel doctor, UserModel user, AddressModel? address, IEnumerable<Guid>? specializationIds);
+    // Actualizar un doctor existente (implicará actualizar usuario y registro de doctor, la sucursal viene en UserModel)
+    Task UpdateDoctorAsync(DoctorModel doctor, UserModel user, IEnumerable<Guid>? specializationIds);
 
-    // Eliminar un doctor por su ID (implicará eliminar el usuario asociado, dirección, etc.)
+    // Eliminar un doctor por su ID (implicará eliminar el usuario asociado, etc.)
     Task DeleteDoctorAsync(Guid doctorId);
 
     // Actualizar el estado de un doctor (User.Status)

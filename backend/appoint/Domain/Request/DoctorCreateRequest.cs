@@ -4,7 +4,7 @@ namespace appoint.Domain.Request;
 
 public class DoctorCreateRequest
 {
-    // Campos de Usuario (esenciales para crear la cuenta de usuario)
+    // Campos de Usuario
     [Required(ErrorMessage = "First name is required.")]
     [StringLength(100)]
     public string FirstName { get; set; }
@@ -22,36 +22,27 @@ public class DoctorCreateRequest
     [StringLength(255, MinimumLength = 6, ErrorMessage = "Password must be at least 6 characters long.")]
     public string Password { get; set; }
 
+    // --- ID DE LA SUCURSAL ASOCIADA ---
+    [Required(ErrorMessage = "Branch is required.")]
+    public Guid BranchId { get; set; }
+
     // Campos específicos de Doctor
     [Range(0, 100, ErrorMessage = "Experience must be between 0 and 100 years.")]
     public int? Experience { get; set; }
 
     [Required(ErrorMessage = "Specializations are required.")]
-    public List<Guid>? SpecializationIds { get; set; } = new List<Guid>(); // Lista de GUIDs de Especializaciones
+    public List<Guid>? SpecializationIds { get; set; } = new List<Guid>();
 
     [Required(ErrorMessage = "Gender is required.")]
     [Range(0, 1, ErrorMessage = "Gender must be 0 for Male or 1 for Female.")]
-    public int Gender { get; set; } // 0: Male, 1: Female
+    public int Gender { get; set; }
 
     public string? Contact { get; set; }
     public string? RegionCode { get; set; }
     public string? BloodGroup { get; set; }
     public DateTime? Dob { get; set; }
 
-    // Campos de Dirección (el doctor tiene una dirección)
-    [Required(ErrorMessage = "Address line 1 is required.")]
-    [StringLength(255)]
-    public string Address1 { get; set; }
-
-    [StringLength(255)]
-    public string? Address2 { get; set; }
-
-    public Guid? CountryId { get; set; }
-    public Guid? StateId { get; set; }
-    public Guid? CityId { get; set; }
-
-    [StringLength(20)]
-    public string? PostalCode { get; set; }
+    // No hay campos de dirección individual para el usuario/doctor, la dirección es de la sucursal.
 
     // URLs de redes sociales
     [StringLength(255)]
