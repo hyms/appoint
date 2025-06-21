@@ -1,24 +1,12 @@
 // src/store/auth.ts
 import { defineStore } from 'pinia';
 import api from '@/api'; // Importa tu instancia de Axios configurada
-import router from '@/router'; // Importa el router para redirecciones
-
-interface UserInfo {
-  userId: string;
-  email: string;
-  role: string;
-  permissions: string[];
-  // Si tu objeto 'user' de Next.js tenía otras propiedades aparte de userId, email, role,
-  // asegúrate de agregarlas aquí en la interfaz y en el método login.
-  // Por ejemplo, si tenía un 'name':
-  // name?: string;
-}
+import router from '@/router';
+import type { Role, UserInfo, Permissions } from '@/Types'; // Asegúrate de importar Permissions también
 
 interface AuthState {
   token: string | null;
   userInfo: UserInfo | null;
-  // userPermissions: string[] | null; // Ya está dentro de userInfo.permissions
-  // isAuthenticated: boolean; // Se gestiona a través de un getter para derivarlo de 'token'
 }
 
 export const useAuthStore = defineStore('auth', {
@@ -54,16 +42,13 @@ export const useAuthStore = defineStore('auth', {
   },
   getters: {
     isAuthenticated: (state) => !!state.token && !!state.userInfo,
-    userRole: (state) => state.userInfo?.role || null,
-    userPermissions: (state) => state.userInfo?.permissions || [],
+    userRole:  (state) => state.userInfo?.role,
+    userPermissions: (state) => state.userInfo?.permissions,
     getUserInfo: (state) => state.userInfo,
   },
   actions: {
     async login(credentials: { email: string; password: string }): Promise<boolean> {
       try {
-        // La URL completa para el login ya está configurada en '@/api/index.ts' como baseURL,
-        // por lo que solo necesitamos la ruta relativa para este endpoint.
-        // Asegúrate de que el backend de Auth está en la URL que especificaste para baseURL en api/index.ts.
         const response = await api.post('/users/auth', credentials);
 
         const { data } = response.data;
@@ -74,7 +59,8 @@ export const useAuthStore = defineStore('auth', {
           userId: userId,
           email: userEmail,
           role: role,
-          permissions: permissions || [], // Asegurarse de que sea un array
+          permissions: permissions || [], // Asegurarse de que sea un array, se asume que 'permissions' del backend ya es string[] o lo mapeas.
+                                          // Si el backend envía `Permissions[]` como string, no necesita `.map(p => p as Permissions)`
         };
 
         this.token = token;
@@ -83,15 +69,11 @@ export const useAuthStore = defineStore('auth', {
         localStorage.setItem('jwtToken', token);
         localStorage.setItem('userInfo', JSON.stringify(newUserInfo));
 
-        // Redirigir al dashboard al inicio de sesión exitoso
-        await router.push('/');
+        await router.push('/'); // Redirigir al dashboard al inicio de sesión exitoso
 
         return true;
       } catch (error: any) {
-        // El interceptor de Axios ya maneja 401/403 y hace logout si es necesario.
-        // Aquí solo limpiamos el estado local por si acaso y re-lanzamos el error
-        // para que el componente que llama pueda mostrar un mensaje al usuario.
-        this.logout();
+        this.logout(); // Limpiar el estado local y localStorage
         console.error('Error during login action:', error.response?.data || error.message);
         throw error; // Propagar el error para que el componente que llama lo maneje
       }
@@ -107,7 +89,6 @@ export const useAuthStore = defineStore('auth', {
     hasPermission(permission: string): boolean {
       return this.userInfo?.permissions.includes(permission) || false;
     },
-    // Método para verificar si el usuario tiene un rol específico
     hasRole(role: string): boolean {
       return this.userInfo?.role === role;
     }

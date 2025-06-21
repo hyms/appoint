@@ -7,7 +7,7 @@
   <v-layout full-height>
     <!-- Diálogo para Doctor (si el usuario es doctor) -->
     <!-- Asegúrate de que la ruta a DialogDoctor es correcta -->
-    <DialogDoctor v-if="authStore.hasRole('Doctor')" v-model="dialogDoctor"></DialogDoctor>
+<!--    <DialogDoctor v-if="authStore.hasRole('Doctor')" v-model="dialogDoctor"></DialogDoctor>-->
 
     <!-- Navigation Drawer (Sidebar) -->
     <v-navigation-drawer
@@ -18,7 +18,8 @@
     >
       <!-- Navigation Header -->
       <template v-slot:prepend>
-        <v-list-item lines="two" class="vertical-nav-header d-flex text-center justify-content-center">
+        <v-list-item lines="two"
+                     class="vertical-nav-header d-flex text-center justify-content-center">
           <h2 class="d-flex align-center app-title text-primary">APPOINT CLINIC</h2>
         </v-list-item>
       </template>
@@ -66,7 +67,7 @@
     <!-- App Bar (Top Navbar) -->
     <v-app-bar :elevation="2" color="white">
       <v-app-bar-nav-icon @click.stop="isDrawerOpen = !isDrawerOpen"></v-app-bar-nav-icon>
-      <v-toolbar-title>{{ titlePage || $route.meta.title || labels.menu.dashboard }}</v-toolbar-title>
+      <v-toolbar-title>{{ titlePage || labels.menu.dashboard }}</v-toolbar-title>
       <v-spacer></v-spacer>
       <Notifications></Notifications>
       <MenuUser></MenuUser>
@@ -104,31 +105,32 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, watch } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth';
-import MenuUser from '@/components/MenuUser.vue';
-import Notifications from '@/components/Notifications.vue';
+import { ref, computed, onMounted, watch } from 'vue'
+import { useRouter, useRoute } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
+import MenuUser from '@/components/MenuUser.vue'
+import Notifications from '@/components/Notifications.vue'
 // import DialogDoctor from '@/views/doctor_sessions/form.vue';
-import type { MenuItem } from '@/Types';
+import type { MenuItem } from '@/Types'
+import { Role } from '@/Types'
 
 // Definición de la interfaz para los elementos del menú
 
-const router = useRouter();
-const route = useRoute();
-const authStore = useAuthStore();
+const router = useRouter()
+const route = useRoute()
+const authStore = useAuthStore()
 
 const props = defineProps({
   loading: { type: Boolean, default: false },
   titlePage: { type: String, default: '' },
-  back: { type : Boolean, default: false }
-});
+  back: { type: Boolean, default: false }
+})
 
-const isDrawerOpen = ref(true);
-const open = ref<string[]>([]);
-const dialogDoctor = ref(false);
+const isDrawerOpen = ref(true)
+const open = ref<string[]>([])
+const dialogDoctor = ref(false)
 
-const currentRoutePath = computed(() => route.path);
+const currentRoutePath = computed(() => route.path)
 
 const labels = {
   menu: {
@@ -141,216 +143,191 @@ const labels = {
     services: 'Servicios',
     service_categories: 'Categorías Servicio',
     settings: 'Configuración',
-    clinic_schedules: 'Horarios Clínica',
+    clinic_schedules: 'Horarios Clínica'
   },
   setting: {
     general_details: 'Detalles Generales',
     general: 'General',
-    contact_information: 'Información de Contacto',
+    contact_information: 'Información de Contacto'
   },
   doctor_session: {
-    my_schedule: 'Mi Horario',
+    my_schedule: 'Mi Horario'
   },
   holiday: {
     holiday: 'Días Feriados',
-    doctor_holiday: 'Días Feriados Doctor',
+    doctor_holiday: 'Días Feriados Doctor'
   },
   common: {
-    back: 'Volver',
+    back: 'Volver'
   },
   btn: {
-    save_changes: 'Guardar Cambios',
+    save_changes: 'Guardar Cambios'
   }
-};
+}
 
-const menuItems = ref<MenuItem[]>([
-  // Admin Dashboard
-  (() => {
-    if (authStore.hasPermission('manage_admin_dashboard')) {
-      return {
-        label: labels.menu.dashboard,
-        url: '/',
-        activate: ['/', '/admin/dashboard'],
-        icon: 'mdi-view-dashboard', // MDI Icon
-        subItems: [],
-      };
-    }
-    return null;
-  })(),
+const menuItems = ref<MenuItem[]>([])
 
-  // Staffs
-  (() => {
-    if (authStore.hasPermission('manage_staff')) {
-      return {
-        label: labels.menu.staffs,
-        url: '/admin/staffs',
-        activate: ['/admin/staffs'],
-        icon: 'mdi-account-group', // MDI Icon
-        subItems: [],
-      };
-    }
-    return null;
-  })(),
+function loadMenu() {
+// Admin Dashboard
+  if (authStore.hasRole(Role.admin.toString())) {
+    menuItems.value.push({
+      label: labels.menu.dashboard,
+      url: '/',
+      activate: ['/', '/admin/dashboard'],
+      icon: 'mdi-view-dashboard', // MDI Icon
+      subItems: []
+    })
+  }
 
-  // Doctor-specific menu
-  (() => {
-    if (authStore.hasRole('Doctor')) {
-      const items: MenuItem[] = [
-        {
-          label: labels.menu.dashboard,
-          url: '/doctors/dashboard',
-          activate: ['/doctors/dashboard'],
-          icon: 'mdi-view-dashboard', // MDI Icon
-          subItems: [],
-        },
-      ];
-      if (authStore.hasPermission('manage_appointments')) {
-        items.push({
-          label: labels.menu.appointments,
-          url: '/doctors/appointments',
-          activate: ['/doctors/appointments'],
-          icon: 'mdi-calendar-check', // MDI Icon
-          subItems: [],
-        });
-      }
-      items.push({
-        label: labels.doctor_session.my_schedule,
-        url: '',
-        activate: ['/doctors/doctor-schedule-edit'],
-        icon: 'mdi-calendar', // MDI Icon
-        subItems: [],
-        onClick: () => { dialogDoctor.value = true; }
-      });
-      items.push({
-        label: labels.holiday.holiday,
-        url: '/doctors/holidays',
-        activate: ['/doctors/holidays'],
-        icon: 'mdi-beach', // MDI Icon
-        subItems: [],
-      });
-      return items;
-    }
-    return null;
-  })(),
+// Staffs
+  if (authStore.hasPermission('manage_staff')) {
+    menuItems.value.push({
+      label: labels.menu.staffs,
+      url: '/admin/staffs',
+      activate: ['/admin/staffs'],
+      icon: 'mdi-account-group', // MDI Icon
+      subItems: []
+    })
+  }
 
-  // Patient-specific menu
-  (() => {
-    if (authStore.hasRole('Patient')) {
-      return [
-        {
-          label: labels.menu.dashboard,
-          url: '/patients/dashboard',
-          activate: ['/patients/dashboard'],
-          icon: 'mdi-view-dashboard', // MDI Icon
-          subItems: [],
-        },
-        {
-          label: labels.menu.appointments,
-          url: '/patients/appointments',
-          activate: ['/patients/appointments', '/patients/patient-appointments-calendar', '/patients/doctors'],
-          icon: 'mdi-calendar', // MDI Icon
-          subItems: [],
-        },
-      ];
-    }
-    return null;
-  })(),
 
-  // Doctors (Admin side)
-  (() => {
-    if (authStore.hasPermission('manage_doctors')) {
-      return {
-        label: labels.menu.doctors,
-        url: '',
-        activate: ['/admin/doctors', '/doctors/doctor-sessions', '/admin/doctor-sessions'],
-        icon: 'mdi-doctor', // MDI Icon
-        subItems: [
-          { label: labels.menu.doctors, url: '/admin/doctors' },
-          { label: labels.menu.doctor_sessions, url: '/admin/doctor-sessions' },
-        ],
-      };
-    }
-    return null;
-  })(),
-
-  // Patients (Admin side)
-  (() => {
-    if (authStore.hasPermission('manage_patients')) {
-      return {
-        label: labels.menu.patients,
-        url: '/admin/patients',
-        activate: ['/admin/patients'],
-        icon: 'mdi-account-heart', // MDI Icon
-        subItems: [],
-      };
-    }
-    return null;
-  })(),
-
-  // Appointments (Admin side - if not Doctor/Patient)
-  (() => {
-    if (!authStore.hasRole('Doctor') && !authStore.hasRole('Patient') && authStore.hasPermission('manage_appointments')) {
-      return {
+// Doctor-specific menu
+  if (authStore.hasRole('Doctor')) {
+    menuItems.value.push({
+      label: labels.menu.dashboard,
+      url: '/doctors/dashboard',
+      activate: ['/doctors/dashboard'],
+      icon: 'mdi-view-dashboard', // MDI Icon
+      subItems: []
+    })
+    if (authStore.hasPermission('manage_appointments')) {
+      menuItems.value.push({
         label: labels.menu.appointments,
-        url: '/admin/appointments',
-        activate: ['/admin/appointments', '/admin/admin-appointments-calendar', '/admin/prescriptions', '/admin/prescription-medicine-show'],
+        url: '/doctors/appointments',
+        activate: ['/doctors/appointments'],
         icon: 'mdi-calendar-check', // MDI Icon
-        subItems: [],
-      };
+        subItems: []
+      })
     }
-    return null;
-  })(),
+    menuItems.value.push({
+      label: labels.doctor_session.my_schedule,
+      url: '',
+      activate: ['/doctors/doctor-schedule-edit'],
+      icon: 'mdi-calendar', // MDI Icon
+      subItems: [],
+      onClick: () => {
+        dialogDoctor.value = true
+      }
+    })
+    menuItems.value.push({
+      label: labels.holiday.holiday,
+      url: '/doctors/holidays',
+      activate: ['/doctors/holidays'],
+      icon: 'mdi-beach', // MDI Icon
+      subItems: []
+    })
+  }
 
-  // Services (Admin side)
-  (() => {
-    if (authStore.hasPermission('manage_services')) {
-      return {
-        label: labels.menu.services,
-        url: '',
-        activate: ['/admin/services', '/admin/service-categories'],
-        icon: 'mdi-medical-bag', // MDI Icon
-        subItems: [
-          { label: labels.menu.services, url: '/admin/services' },
-          { label: labels.menu.service_categories, url: '/admin/service-categories' },
-        ],
-      };
-    }
-    return null;
-  })(),
+// Patient-specific menu
 
-  // Settings (Admin side)
-  (() => {
-    if (authStore.hasPermission('manage_settings')) {
-      return {
-        label: labels.menu.settings,
-        url: '/settings/general',
-        activate: ['/admin/settings', '/admin/clinic-schedules', '/admin/holidays', '/settings/general'],
-        icon: 'mdi-cog', // MDI Icon
-        subItems: [
-          { label: labels.setting.general, url: '/settings/general' },
-          { label: labels.setting.contact_information, url: '/admin/settings-contact' },
-          { label: labels.menu.clinic_schedules, url: '/admin/clinic-schedules' },
-          { label: labels.holiday.doctor_holiday, url: '/admin/holidays' },
-        ],
-      };
-    }
-    return null;
-  })(),
-].filter(Boolean) as MenuItem[]);
+  if (authStore.hasRole('Patient')) {
+    menuItems.value.push({
+      label: labels.menu.dashboard,
+      url: '/patients/dashboard',
+      activate: ['/patients/dashboard'],
+      icon: 'mdi-view-dashboard', // MDI Icon
+      subItems: []
+    })
+    menuItems.value.push({
+      label: labels.menu.appointments,
+      url: '/patients/appointments',
+      activate: ['/patients/appointments', '/patients/patient-appointments-calendar', '/patients/doctors'],
+      icon: 'mdi-calendar', // MDI Icon
+      subItems: []
+    })
+  }
+
+// Doctors (Admin side)
+  if (authStore.hasPermission('manage_doctors')) {
+    menuItems.value.push({
+      label: labels.menu.doctors,
+      url: '',
+      activate: ['/admin/doctors', '/doctors/doctor-sessions', '/admin/doctor-sessions'],
+      icon: 'mdi-doctor', // MDI Icon
+      subItems: [
+        { label: labels.menu.doctors, url: '/admin/doctors' },
+        { label: labels.menu.doctor_sessions, url: '/admin/doctor-sessions' }
+      ]
+    })
+  }
+
+// Patients (Admin side)
+
+  if (authStore.hasPermission('manage_patients')) {
+    menuItems.value.push({
+      label: labels.menu.patients,
+      url: '/admin/patients',
+      activate: ['/admin/patients'],
+      icon: 'mdi-account-heart', // MDI Icon
+      subItems: []
+    })
+  }
+
+// Appointments (Admin side - if not Doctor/Patient)
+  if (!authStore.hasRole('Doctor') && !authStore.hasRole('Patient') && authStore.hasPermission('manage_appointments')) {
+    menuItems.value.push({
+      label: labels.menu.appointments,
+      url: '/admin/appointments',
+      activate: ['/admin/appointments', '/admin/admin-appointments-calendar', '/admin/prescriptions', '/admin/prescription-medicine-show'],
+      icon: 'mdi-calendar-check', // MDI Icon
+      subItems: []
+    })
+  }
+
+// Services (Admin side)
+  if (authStore.hasPermission('manage_services')) {
+    menuItems.value.push({
+      label: labels.menu.services,
+      url: '',
+      activate: ['/admin/services', '/admin/service-categories'],
+      icon: 'mdi-medical-bag', // MDI Icon
+      subItems: [
+        { label: labels.menu.services, url: '/admin/services' },
+        { label: labels.menu.service_categories, url: '/admin/service-categories' }
+      ]
+    })
+  }
+
+// Settings (Admin side)
+  if (authStore.hasPermission('manage_settings')) {
+    menuItems.value.push({
+      label: labels.menu.settings,
+      url: '/settings/general',
+      activate: ['/admin/settings', '/admin/clinic-schedules', '/admin/holidays', '/settings/general'],
+      icon: 'mdi-cog', // MDI Icon
+      subItems: [
+        { label: labels.setting.general, url: '/settings/general' },
+        { label: labels.setting.contact_information, url: '/admin/settings-contact' },
+        { label: labels.menu.clinic_schedules, url: '/admin/clinic-schedules' },
+        { label: labels.holiday.doctor_holiday, url: '/admin/holidays' }
+      ]
+    })
+  }
+}
 
 watch(currentRoutePath, (newPath) => {
   menuItems.value.forEach((item: MenuItem) => {
     if (item.subItems && item.subItems.length > 0) {
       if (item.subItems.some(subItem => subItem.url === newPath)) {
-        open.value = [item.label];
+        open.value = [item.label]
       }
     }
-  });
-}, { immediate: true });
+  })
+}, { immediate: true })
 
 onMounted(() => {
-  // Any mounting logic for the layout
-});
+  loadMenu()
+})
 </script>
 
 <style lang="scss" scoped>
@@ -367,10 +344,27 @@ onMounted(() => {
   height: 64px;
 }
 
-.fs-1 { font-size: calc(1.2625rem + .15vw) !important }
-.fs-2 { font-size: 1.25rem !important }
-.fs-3 { font-size: 1.125rem !important }
-.fs-4 { font-size: 1rem !important }
-.fs-5 { font-size: .938rem !important }
-.fs-6 { font-size: .875rem !important }
+.fs-1 {
+  font-size: calc(1.2625rem + .15vw) !important
+}
+
+.fs-2 {
+  font-size: 1.25rem !important
+}
+
+.fs-3 {
+  font-size: 1.125rem !important
+}
+
+.fs-4 {
+  font-size: 1rem !important
+}
+
+.fs-5 {
+  font-size: .938rem !important
+}
+
+.fs-6 {
+  font-size: .875rem !important
+}
 </style>
