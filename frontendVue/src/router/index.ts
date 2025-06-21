@@ -1,69 +1,159 @@
 // src/router/index.ts
 import { createRouter, createWebHistory } from 'vue-router';
 import type { RouteRecordRaw } from 'vue-router';
-import { useAuthStore } from '@/stores/auth'; // Importa tu store de Pinia
+import { useAuthStore } from '@/stores/auth'; // Import your Pinia store
 
-// Define las rutas para la aplicación.
-// RouteRecordRaw es el tipo para las definiciones de ruta en Vue Router.
+// Importa Dashboard.vue para que todas las rutas temporales apunten aquí
+import DashboardView from '@/views/DashboardView.vue';
+
+// Define the routes for the application.
 const routes: Array<RouteRecordRaw> = [
   {
     path: '/login',
     name: 'Login',
-    // Carga perezosa del componente Login.vue.
-    // Esto crea un chunk JavaScript separado para esta ruta, que solo se carga cuando se visita la ruta.
     component: () => import('@/views/LoginView.vue'),
-    // Metadatos de la ruta: indica que esta ruta NO requiere autenticación.
     meta: { requiresAuth: false }
   },
   {
-    path: '/', // Esta será la ruta de tu dashboard principal
+    path: '/',
     name: 'Dashboard',
-    // Carga perezosa del componente Dashboard.vue.
-    component: () => import('@/views/DashboardView.vue'),
-    // Metadatos de la ruta: indica que esta ruta SÍ requiere autenticación.
+    component: DashboardView, // Apunta directamente al DashboardView
     meta: { requiresAuth: true }
   },
-  // Captura cualquier otra ruta no definida y redirige.
-  // Si el usuario está autenticado, redirige al dashboard.
-  // Si no está autenticado, redirige a la página de login.
+  // *** RUTAS PARA LOS MENUS - TODAS APUNTAN TEMPORALMENTE A DASHBOARDVIEW ***
   {
-    path: '/:pathMatch(.*)*', // Patrón para capturar todas las rutas no coincidentes
+    path: '/settings/general',
+    name: 'GeneralSettings',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/staffs',
+    name: 'AdminStaffs',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/doctors/dashboard',
+    name: 'DoctorDashboard',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/doctors/appointments',
+    name: 'DoctorAppointments',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/doctors/holidays',
+    name: 'DoctorHolidays',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/patients/dashboard',
+    name: 'PatientDashboard',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/patients/appointments',
+    name: 'PatientAppointments',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/doctors',
+    name: 'AdminDoctors',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/doctor-sessions',
+    name: 'AdminDoctorSessions',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/patients',
+    name: 'AdminPatients',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/appointments',
+    name: 'AdminAppointments',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/services',
+    name: 'AdminServices',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/service-categories',
+    name: 'AdminServiceCategories',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/clinic-schedules',
+    name: 'AdminClinicSchedules',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/holidays', // Duplicado con DoctorHolidays, pero para Admin
+    name: 'AdminHolidays',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/admin/settings-contact',
+    name: 'AdminSettingsContact',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  {
+    path: '/profile/edit', // Ruta de perfil de usuario
+    name: 'ProfileEdit',
+    component: DashboardView, // Temporalmente a DashboardView
+    meta: { requiresAuth: true }
+  },
+  // *** FIN RUTAS TEMPORALES ***
+
+  {
+    path: '/:pathMatch(.*)*',
     redirect: (to) => {
-      const authStore = useAuthStore(); // Obtiene la instancia del store de autenticación
+      const authStore = useAuthStore();
       if (authStore.isAuthenticated) {
-        return { name: 'Dashboard' }; // Redirige al dashboard si está autenticado
+        return { name: 'Dashboard' };
       } else {
-        return { name: 'Login' }; // Redirige al login si no está autenticado
+        return { name: 'Login' };
       }
     }
   }
 ];
 
-// Crea la instancia del router.
 const router = createRouter({
-  history: createWebHistory(), // Utiliza la historia del navegador HTML5 (sin '#' en la URL)
-  routes, // Asigna las rutas definidas
+  history: createWebHistory(),
+  routes,
 });
 
-// Guardia de navegación global (middleware)
-// Se ejecuta antes de cada navegación de ruta.
 router.beforeEach((to, from, next) => {
-  const authStore = useAuthStore(); // Accede al store de autenticación
-  const requiresAuth = to.meta.requiresAuth; // Verifica si la ruta a la que se intenta acceder requiere autenticación
+  const authStore = useAuthStore();
+  const requiresAuth = to.meta.requiresAuth;
 
   if (requiresAuth && !authStore.isAuthenticated) {
-    // Caso 1: La ruta requiere autenticación Y el usuario NO está autenticado.
-    // Redirige a la página de login.
     next({ name: 'Login' });
   } else if (!requiresAuth && authStore.isAuthenticated && to.name === 'Login') {
-    // Caso 2: La ruta NO requiere autenticación (ej. Login) Y el usuario SÍ está autenticado.
-    // Redirige al dashboard para evitar que un usuario logueado acceda de nuevo a la página de login.
     next({ name: 'Dashboard' });
   } else {
-    // Caso 3: Todas las demás situaciones (ruta pública, o ruta protegida con usuario autenticado).
-    // Permite la navegación normal.
     next();
   }
 });
 
-export default router; // Exporta el router para ser utilizado en src/main.ts
+export default router;
