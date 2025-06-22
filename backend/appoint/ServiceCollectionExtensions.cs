@@ -150,6 +150,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IStaffRepository, StaffRepository>();
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
+        services.AddScoped<ISettingsRepository, SettingsRepository>();
         
         // Configuración de Twilio (descomentar si se usa).
         // services.AddSingleton<ITwilioRestClient>(provider =>

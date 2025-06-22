@@ -1,73 +1,96 @@
-using System.Data;
 using appoint.Models;
-using Dapper;
+using System.Reflection; // Para Reflection
+// Para Any()
+using System.Text.Json;
+using appoint.Repository; // Para serialización JSON
 
 namespace appoint.Services.implement;
 
-public class SettingsService : ISettingsService // CAMBIO: Renombrado de ConfigurationService
+public class SettingsService : ISettingsService
 {
-    private readonly IDbConnection _dbConnection;
+    private readonly ISettingsRepository _settingsRepository;
+    private readonly ILogger<SettingsService> _logger;
 
-    public SettingsService(IDbConnection dbConnection)
+    public SettingsService(ISettingsRepository settingsRepository, ILogger<SettingsService> logger)
     {
-        _dbConnection = dbConnection;
+        _settingsRepository = settingsRepository;
+        _logger = logger;
     }
 
     public async Task<Dictionary<string, string>> GetAppSettingsAsync()
     {
-        // CAMBIO: Consulta la tabla 'Settings' y columnas 'Key', 'Value'
-        const string sql = "SELECT `Key`, `Value` FROM Settings";
-        var settings = await _dbConnection.QueryAsync<SettingModel>(sql);
-        return settings.ToDictionary(s => s.Key, s => s.Value);
+        _logger.LogInformation("Fetching all app settings.");
+        var settingsList = await _settingsRepository.GetAllSettingsAsync();
+        return settingsList.ToDictionary(s => s.Key, s => s.Value);
     }
 
-    public async Task<string> GetSettingByKeyAsync(string key)
+    public async Task<string?> GetSettingByKeyAsync(string key)
     {
-        const string sql = "SELECT `Value` FROM Settings WHERE `Key` = @Key";
-        return await _dbConnection.QueryFirstOrDefaultAsync<string>(sql, new { Key = key });
-    }
-
-    public async Task UpdateAppSettingsAsync(AppGeneralSettingsRequest request)
-    {
-        // CAMBIO: Llama a UpdateSettingByKeyAsync
-        if (!string.IsNullOrEmpty(request.NombreEmpresa))
-            await UpdateSettingByKeyAsync("NombreEmpresa", request.NombreEmpresa);
-        if (!string.IsNullOrEmpty(request.DireccionEmpresa))
-            await UpdateSettingByKeyAsync("DireccionEmpresa", request.DireccionEmpresa);
-        if (!string.IsNullOrEmpty(request.TelefonoEmpresa))
-            await UpdateSettingByKeyAsync("TelefonoEmpresa", request.TelefonoEmpresa);
-        if (!string.IsNullOrEmpty(request.WhatsappApiKey))
-            await UpdateSettingByKeyAsync("WhatsappApiKey", request.WhatsappApiKey);
-        if (!string.IsNullOrEmpty(request.OnesignalAppId))
-            await UpdateSettingByKeyAsync("OnesignalAppId", request.OnesignalAppId);
-        // Añade más líneas para otros campos que hayas agregado a AppGeneralSettingsRequest
-        if (!string.IsNullOrEmpty(request.EmailSoporte))
-            await UpdateSettingByKeyAsync("EmailSoporte", request.EmailSoporte);
-        if (!string.IsNullOrEmpty(request.MonedaPorDefecto))
-            await UpdateSettingByKeyAsync("MonedaPorDefecto", request.MonedaPorDefecto);
+        _logger.LogInformation("Fetching setting by key: {Key}", key);
+        var setting = await _settingsRepository.GetSettingByKeyAsync(key);
+        return setting?.Value;
     }
 
     public async Task<bool> UpdateSettingByKeyAsync(string key, string value)
     {
-        // Primero, intenta encontrar si la clave ya existe
-        const string checkSql = "SELECT COUNT(Id) FROM Settings WHERE `Key` = @Key";
-        var count = await _dbConnection.ExecuteScalarAsync<int>(checkSql, new { Key = key });
+        _logger.LogInformation("Updating setting key: {Key} with value: {Value}", key, value);
+        return await _settingsRepository.UpdateSettingAsync(key, value);
+    }
 
-        if (count > 0)
+    /// <summary>
+    /// Actualiza un conjunto de configuraciones generales basándose en el DTO de solicitud.
+    /// </summary>
+    /// <param name="request">El DTO que contiene los nuevos valores de configuración.</param>
+    public async Task UpdateAppSettingsAsync(AppGeneralSettingsRequest request)
+    {
+        _logger.LogInformation("Starting update for general app settings.");
+
+        // Usamos Reflection para iterar sobre las propiedades del DTO de solicitud
+        // y mapearlas a claves en la tabla Settings.
+        // Esto asume que el nombre de la propiedad en el DTO coincide con la 'Key' en la tabla Settings.
+        // Ej: request.Clinic_Name -> Key "Clinic_Name", Value "..."
+
+        // Obtenemos todas las propiedades públicas del objeto request
+        var properties = typeof(AppGeneralSettingsRequest).GetProperties(BindingFlags.Public | BindingFlags.Instance);
+
+        foreach (var prop in properties)
         {
-            // Si existe, actualiza el valor
-            // CAMBIO: Nombres de columna 'Key', 'Value'. NO hay 'updated_at' en la migración de Settings.
-            const string updateSql = "UPDATE Settings SET `Value` = @Value WHERE `Key` = @Key";
-            await _dbConnection.ExecuteAsync(updateSql, new { Key = key, Value = value });
-            return true;
+            var key = prop.Name; // La clave en la tabla Settings será el nombre de la propiedad
+
+            // Obtener el valor de la propiedad del objeto request
+            var value = prop.GetValue(request);
+            string? stringValue = null;
+
+            // Manejar tipos específicos:
+            if (prop.PropertyType == typeof(bool))
+            {
+                // Convertir booleano a "true" o "false" string
+                stringValue = value?.ToString()?.ToLowerInvariant();
+            }
+            else if (prop.PropertyType == typeof(List<string>))
+            {
+                // Serializar List<string> a JSON string
+                var listValue = value as List<string>;
+                stringValue = listValue != null && listValue.Any() ? JsonSerializer.Serialize(listValue) : null;
+            }
+            else if (value != null)
+            {
+                // Para otros tipos (string, int, etc.), usar ToString()
+                stringValue = value.ToString();
+            }
+
+            // Si el valor no es nulo, proceder a actualizar/insertar en la base de datos
+            if (stringValue != null)
+            {
+                _logger.LogDebug("Attempting to update setting: Key='{Key}', Value='{Value}'", key, stringValue);
+                // Llama al repositorio para actualizar o insertar el setting
+                await _settingsRepository.UpdateSettingAsync(key, stringValue);
+            }
+            else
+            {
+                 _logger.LogDebug("Setting property '{Key}' has a null value, skipping update.", key);
+            }
         }
-        else
-        {
-            // Si no existe, inserta un nuevo registro
-            // CAMBIO: Nombres de columna 'Key', 'Value'. Generamos un nuevo Guid para Id.
-            const string insertSql = "INSERT INTO Settings (Id, `Key`, `Value`) VALUES (@Id, @Key, @Value)";
-            await _dbConnection.ExecuteAsync(insertSql, new { Id = Guid.NewGuid(), Key = key, Value = value });
-            return true; // Se considera actualizado porque el valor fue establecido (insertado)
-        }
+        _logger.LogInformation("Finished updating general app settings.");
     }
 }

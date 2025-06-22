@@ -6,7 +6,6 @@ import { useAuthStore } from '@/stores/auth';
 const API_BASE_URL: string = import.meta.env.VITE_BACKEND_API_URL || 'http://localhost:5000';
 
 const api: AxiosInstance = axios.create({
-  withCredentials: true,
   baseURL: API_BASE_URL,
   headers: {
     'Content-Type': 'application/json'

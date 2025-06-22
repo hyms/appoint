@@ -4,16 +4,15 @@ namespace appoint.Services;
 
 public interface ISettingsService
 {
-    // Método para obtener todas las configuraciones como un diccionario (Key -> Value)
+    // Obtener todas las configuraciones como un diccionario clave-valor.
     Task<Dictionary<string, string>> GetAppSettingsAsync();
 
-    // Método para actualizar un conjunto específico de configuraciones de la aplicación
-    Task UpdateAppSettingsAsync(AppGeneralSettingsRequest request);
+    // Actualizar un conjunto de configuraciones generales.
+    Task UpdateAppSettingsAsync(AppGeneralSettingsRequest request); // Aquí el cambio
 
-    // Método para obtener un valor de configuración por su clave
-    Task<string> GetSettingByKeyAsync(string key);
+    // Obtener una configuración específica por su clave.
+    Task<string?> GetSettingByKeyAsync(string key);
 
-    // Método para actualizar un valor de configuración específico por su clave
-    // Retorna true si se actualizó, false si no se encontró la clave
+    // Actualizar o insertar una configuración individual por clave y valor.
     Task<bool> UpdateSettingByKeyAsync(string key, string value);
 }
