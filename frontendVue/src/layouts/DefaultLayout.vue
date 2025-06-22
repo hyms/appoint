@@ -6,8 +6,7 @@
 
   <v-layout full-height>
     <!-- Diálogo para Doctor (si el usuario es doctor) -->
-    <!-- Asegúrate de que la ruta a DialogDoctor es correcta -->
-<!--    <DialogDoctor v-if="authStore.hasRole('Doctor')" v-model="dialogDoctor"></DialogDoctor>-->
+    <!--    <DialogDoctor v-if="authStore.hasRole('Doctor')" v-model="dialogDoctor"></DialogDoctor>-->
 
     <!-- Navigation Drawer (Sidebar) -->
     <v-navigation-drawer
@@ -83,9 +82,9 @@
             {{ labels.common.back }}
           </v-btn>
         </v-sheet>
+        <!-- Slot para el contenido de la página actual -->
         <v-row>
           <v-col>
-            <!-- Slot para el contenido de la página actual -->
             <slot></slot>
           </v-col>
         </v-row>
@@ -299,7 +298,7 @@ function loadMenu() {
   }
 
 // Settings (Admin side)
-  if (authStore.hasPermission('manage_settings')) {
+  if (authStore.hasRole(Role.admin.toString())) {
     menuItems.value.push({
       label: labels.menu.settings,
       url: '/settings/general',
@@ -344,27 +343,4 @@ onMounted(() => {
   height: 64px;
 }
 
-.fs-1 {
-  font-size: calc(1.2625rem + .15vw) !important
-}
-
-.fs-2 {
-  font-size: 1.25rem !important
-}
-
-.fs-3 {
-  font-size: 1.125rem !important
-}
-
-.fs-4 {
-  font-size: 1rem !important
-}
-
-.fs-5 {
-  font-size: .938rem !important
-}
-
-.fs-6 {
-  font-size: .875rem !important
-}
 </style>

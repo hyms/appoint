@@ -73,7 +73,7 @@ public class UserService : IUserService
                 // Puedes añadir más claims aquí, como los permisos del usuario si los recuperas
             };
 
-            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["JwtSettings:SecretKey"]!)); // Leer de Jwt:Key (consistente)
+            var secretKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_configuration["Jwt:key"]!)); // Leer de Jwt:Key (consistente)
             var signingCredentials = new SigningCredentials(secretKey, SecurityAlgorithms.HmacSha256Signature);
 
             var tokenDescriptor = new SecurityTokenDescriptor

@@ -1,4 +1,6 @@
 using FluentMigrator;
+using System;
+using BCrypt.Net; // Asegúrate de tener BCrypt.Net-Next instalado para el hashing de contraseñas
 
 namespace appoint.Migrations;
 
@@ -28,12 +30,11 @@ public class InitialDataSeeding : Migration
 
 
         // 1. Insertar una Sucursal Inicial
-        // Usamos Insert.Into().Row() para insertar filas. FluentMigrator maneja las fechas por defecto.
         Insert.IntoTable("Branches").Row(new {
             Id = branchId,
             Name = "Sucursal Principal",
             AddressLine1 = "Av. La Salle #123",
-            AddressLine2 = (string)null, // o DBNull.Value para NULLs
+            AddressLine2 = (string)null,
             City = "Santa Cruz de la Sierra",
             State = "Santa Cruz",
             Country = "Bolivia",
@@ -55,6 +56,7 @@ public class InitialDataSeeding : Migration
         Insert.IntoTable("Users").Row(new {
             Id = adminUserId,
             Email = "admin@appoint.com",
+            // Username = "admin@appoint.com", // Añadir Username ya que la tabla Users lo tiene NotNullable().Unique()
             PasswordHash = hashedPassword,
             FirstName = "Admin",
             LastName = "User",
@@ -77,16 +79,14 @@ public class InitialDataSeeding : Migration
             RoleId = adminRoleId
         });
 
-        // Opcional: Insertar un registro en la tabla 'Admins' si existe
-        // Si tienes una tabla 'Admins' relacionada con 'Users', puedes hacer:
-        /*
-        Insert.IntoTable("Admins").Row(new {
-            Id = Guid.Parse("f8765432-1098-7654-321f-edcba9876543"), // Otro GUID único para el registro de Admin
-            UserId = adminUserId,
-            CreatedAt = SystemMethods.CurrentDateTime,
-            UpdatedAt = SystemMethods.CurrentDateTime
-        });
-        */
+        // *** INICIO DE LA MODIFICACIÓN: INSERTAR DATOS INICIALES EN SETTINGS ***
+        Insert.IntoTable("Settings").Row(new { Id = Guid.NewGuid(), Key = "clinic_name", Value = "Appoint Clinic" });
+        Insert.IntoTable("Settings").Row(new { Id = Guid.NewGuid(), Key = "contact_no", Value = "+59170012345" });
+        Insert.IntoTable("Settings").Row(new { Id = Guid.NewGuid(), Key = "email", Value = "info@appointclinic.com" });
+        Insert.IntoTable("Settings").Row(new { Id = Guid.NewGuid(), Key = "email_verified", Value = "true" });
+        Insert.IntoTable("Settings").Row(new { Id = Guid.NewGuid(), Key = "currency", Value = "BOB" });
+        // Puedes añadir más configuraciones iniciales aquí si las necesitas
+        // *** FIN DE LA MODIFICACIÓN ***
     }
 
     public override void Down()
@@ -98,10 +98,12 @@ public class InitialDataSeeding : Migration
             RoleId = Guid.Parse("d030c1e8-7a5f-4a0e-8f2c-1a0e8f2c7a5f")
         });
 
-        // Opcional: Eliminar el registro de 'Admins'
-        /*
-        Delete.FromTable("Admins").Row(new { UserId = Guid.Parse("e6543210-9876-5432-1fed-cba987654321") });
-        */
+        // Eliminar las configuraciones insertadas en la tabla Settings
+        Delete.FromTable("Settings").Row(new { Key = "clinic_name" });
+        Delete.FromTable("Settings").Row(new { Key = "contact_no" });
+        Delete.FromTable("Settings").Row(new { Key = "email" });
+        Delete.FromTable("Settings").Row(new { Key = "email_verified" });
+        Delete.FromTable("Settings").Row(new { Key = "currency" });
 
         // Eliminar el usuario
         Delete.FromTable("Users").Row(new { Id = Guid.Parse("e6543210-9876-5432-1fed-cba987654321") });

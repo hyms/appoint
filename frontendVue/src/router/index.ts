@@ -24,7 +24,7 @@ const routes: Array<RouteRecordRaw> = [
   {
     path: '/settings/general',
     name: 'GeneralSettings',
-    component: DashboardView, // Temporalmente a DashboardView
+    component: import('@/views/GeneralSettingsView.vue'),
     meta: { requiresAuth: true }
   },
   {

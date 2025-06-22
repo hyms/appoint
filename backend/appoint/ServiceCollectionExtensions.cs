@@ -41,31 +41,38 @@ public static class ServiceCollectionExtensions
             options.JsonSerializerOptions.PropertyNamingPolicy = JsonNamingPolicy.CamelCase;
         });
 
-        // Configuración de la autenticación JWT.
-        services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
-            .AddJwtBearer(options =>
+        services.AddAuthentication(options =>
+        {
+            options.DefaultAuthenticateScheme = JwtBearerDefaults.AuthenticationScheme; // Esquema por defecto para autenticación
+            options.DefaultChallengeScheme = JwtBearerDefaults.AuthenticationScheme;   // Esquema por defecto para desafíos (respuestas 401)
+        }).AddJwtBearer(options =>
             {
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
-                    ValidateIssuer = true,
-                    ValidateAudience = true,
-                    ValidateLifetime = true,
-                    ValidateIssuerSigningKey = true,
-                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["JwtSettings:SecretKey"]!))
+                    ValidateIssuer = true, // Validar el emisor del token
+                    ValidateAudience = true, // Validar la audiencia del token
+                    ValidateLifetime = true, // Validar la fecha de expiración del token
+                    ValidateIssuerSigningKey = true, // Validar la firma del token
+
+                    ValidIssuer = configuration["Jwt:Issuer"], // Leer del appsettings.json
+                    ValidAudience = configuration["Jwt:Audience"], // Leer del appsettings.json
+                    IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(configuration["Jwt:Key"]!)), // Clave secreta
+            
+                    ClockSkew = TimeSpan.Zero // No permite desviación de reloj, el token expira exactamente en el tiempo especificado
                 };
             });
 
         // Configuración de políticas de autorización basadas en Claims ("Permission")
         services.AddAuthorization(options =>
         {
-            options.AddPolicy("RequireManageUsersPermission", policy =>
-                policy.RequireClaim("Permission", "ManageUsers"));
-            options.AddPolicy("RequireViewLogsPermission", policy =>
-                policy.RequireClaim("Permission", "ViewLogs"));
-            options.AddPolicy("RequireScheduleAppointmentsPermission", policy =>
-                policy.RequireClaim("Permission", "ScheduleAppointments"));
-            options.AddPolicy("RequireViewPatientDataPermission", policy =>
-                policy.RequireClaim("Permission", "ViewPatientData"));
+            // options.AddPolicy("RequireManageUsersPermission", policy =>
+            //     policy.RequireClaim("Permission", "ManageUsers"));
+            // options.AddPolicy("RequireViewLogsPermission", policy =>
+            //     policy.RequireClaim("Permission", "ViewLogs"));
+            // options.AddPolicy("RequireScheduleAppointmentsPermission", policy =>
+            //     policy.RequireClaim("Permission", "ScheduleAppointments"));
+            // options.AddPolicy("RequireViewPatientDataPermission", policy =>
+            //     policy.RequireClaim("Permission", "ViewPatientData"));
             // Agrega más políticas según tus necesidades.
         });
         // services.AddAuthorization(); // Esto ya se incluye con AddAuthentication y las políticas, puedes omitirlo.

@@ -79,17 +79,3 @@ public class SettingsController : ControllerBase // CAMBIO: Renombrado del contr
         return Ok(new ApiResponse($"Setting '{key}' updated successfully"));
     }
 }
-
-// Asegúrate de que esta clase esté definida en tu carpeta Models o DTOs
-// File: appoint.Models/UpdateSettingValueRequest.cs
-/*
-using System.ComponentModel.DataAnnotations;
-
-namespace appoint.Models;
-
-public class UpdateSettingValueRequest
-{
-    [Required(ErrorMessage = "Value is required.")]
-    public string Value { get; set; }
-}
-*/
