@@ -1,6 +1,6 @@
 <template>
-  <!-- Snackbar para notificaciones -->
-  <v-snackbar :text="snackbar.text" v-model="snackbar.view" :color="snackbar.color" :timeout="snackbar.timeout || 3000">
+  <!-- Snackbar para mensajes de notificación -->
+  <v-snackbar :text="snackbar.text" v-model="snackbar.view" :color="snackbar.color" :timeout="snackbar.timeout" top right>
     <template v-slot:actions>
       <v-btn color="white" variant="text" @click="snackbar.view = false">Cerrar</v-btn>
     </template>
@@ -9,42 +9,58 @@
   <!-- Diálogo para cambiar contraseña -->
   <v-dialog
     v-model="passwordDialog"
-    :max-width="400"
-    persistent
+    :persistent="loading"
+    max-width="400"
   >
-    <v-card :loading="loading">
+    <v-card class="rounded-xl pa-4" :loading="loading">
       <v-card-title class="headline">{{ labels.btn.change_password }}</v-card-title>
       <v-card-text>
-        <v-form ref="passwordFormRef">
-          <v-text-field
-            v-model="passwordForm.current_password"
-            :label="labels.user.current_password"
-            :rules="[rules.required, rules.minLength(6)]"
-            type="password"
-            hide-details="auto"
-            variant="outlined"
-            density="comfortable"
-            class="mb-4"
-          ></v-text-field>
-          <v-text-field
-            v-model="passwordForm.new_password"
-            :label="labels.user.new_password"
-            :rules="[rules.required, rules.minLength(6)]"
-            type="password"
-            hide-details="auto"
-            variant="outlined"
-            density="comfortable"
-            class="mb-4"
-          ></v-text-field>
-          <v-text-field
-            v-model="passwordForm.confirm_password"
-            :label="labels.user.confirm_password"
-            :rules="[rules.required, rules.minLength(6), rules.equalValue(passwordForm.new_password)]"
-            type="password"
-            hide-details="auto"
-            variant="outlined"
-            density="comfortable"
-          ></v-text-field>
+        <v-form ref="passwordFormRef" @submit.prevent="savePasswordModal">
+          <v-row>
+            <v-col cols="12">
+              <v-text-field
+                v-model="passwordForm.current_password"
+                :label="labels.user.current_password"
+                :rules="[rules.required, rules.min(6)]"
+                type="password"
+                hide-details="auto"
+                variant="outlined"
+                density="comfortable"
+                class="mb-2"
+                :disabled="loading"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="passwordForm.new_password"
+                :label="labels.user.new_password"
+                :rules="[rules.required, rules.min(6)]"
+                type="password"
+                hide-details="auto"
+                variant="outlined"
+                density="comfortable"
+                class="mb-2"
+                :disabled="loading"
+              ></v-text-field>
+            </v-col>
+            <v-col cols="12">
+              <v-text-field
+                v-model="passwordForm.confirm_password"
+                :label="labels.user.confirm_password"
+                :rules="[
+                  rules.required,
+                  rules.min(6),
+                  (v) => rules.equalValue(passwordForm.new_password)(v) || 'Las contraseñas no coinciden',
+                ]"
+                type="password"
+                hide-details="auto"
+                variant="outlined"
+                density="comfortable"
+                class="mb-2"
+                :disabled="loading"
+              ></v-text-field>
+            </v-col>
+          </v-row>
         </v-form>
       </v-card-text>
       <v-card-actions>
@@ -52,33 +68,31 @@
         <v-btn color="grey-darken-1" variant="text" @click="closeModal" :disabled="loading">
           {{ labels.btn.cancel }}
         </v-btn>
-        <v-btn color="primary" variant="flat" @click="savePasswordModal" :loading="loading">
-          {{ labels.btn.save_changes }}
+        <v-btn color="primary" variant="flat" @click="savePasswordModal" :loading="loading" :disabled="loading">
+          {{ labels.btn.save }}
         </v-btn>
       </v-card-actions>
     </v-card>
   </v-dialog>
 
-  <!-- Botón del Menú de Usuario en la App Bar -->
+  <!-- Botón de perfil y menú desplegable -->
   <v-btn color="primary" variant="outlined" prepend-icon="mdi-account" class="ma-1">
-    {{ authStore.userInfo?.fullName || 'Usuario' }}
+    {{ fullName }}
 
     <v-menu activator="parent">
       <v-list density="compact">
         <v-list-item
           @click="router.push('/profile/edit')"
-          :active="currentRoutePath === '/profile/edit'"
-          link
+          :active="router.currentRoute.value.path === '/profile/edit'"
         >
           <v-list-item-title>{{ labels.btn.profile }}</v-list-item-title>
         </v-list-item>
         <v-list-item
           @click="passwordDialog = true"
-          link
         >
           <v-list-item-title>{{ labels.btn.change_password }}</v-list-item-title>
         </v-list-item>
-        <v-list-item @click="authStore.logout()" link>
+        <v-list-item @click="authStore.logout()">
           <v-list-item-title>{{ labels.btn.logout }}</v-list-item-title>
         </v-list-item>
       </v-list>
@@ -88,38 +102,41 @@
 
 <script setup lang="ts">
 import { computed, ref, reactive } from 'vue';
-import { useRouter, useRoute } from 'vue-router';
-import { useAuthStore } from '@/stores/auth'; // Importa tu store de Pinia
-import api from '@/api'; // Importa tu instancia de Axios
+import { useRouter } from 'vue-router';
+import { useAuthStore } from '@/stores/auth'; // Asegúrate de que esta ruta es correcta
+import api from '@/api'; // Asegúrate de que esta ruta es correcta y que api es tu instancia de Axios
 
 const router = useRouter();
-const route = useRoute();
 const authStore = useAuthStore();
 
-// Referencia al formulario de contraseña para la validación
-const passwordFormRef = ref<HTMLFormElement | null>(null);
+const snackbar = reactive({
+  view: false,
+  color: '',
+  text: '',
+  timeout: 3000 // Duración del snackbar en ms
+});
 
 const loading = ref(false);
-
-const snackbar = reactive({ view: false, color: '', text: '', timeout: 3000 });
-
 const passwordDialog = ref(false);
+const passwordFormRef = ref(null); // Referencia al formulario para validación
+
 const passwordForm = reactive({
   current_password: '',
   new_password: '',
   confirm_password: '',
 });
 
-const currentRoutePath = computed(() => route.path);
+// Obtener el nombre completo del usuario desde el store de autenticación
+const fullName = computed(() => authStore.fullName);
 
-// --- PLACEHOLDERS para 'labels' y 'rules' ---
+// Definición de etiquetas (labels)
 const labels = {
   btn: {
     change_password: 'Cambiar Contraseña',
     profile: 'Perfil',
     logout: 'Cerrar Sesión',
-    save_changes: 'Guardar Cambios',
     cancel: 'Cancelar',
+    save: 'Guardar',
   },
   user: {
     current_password: 'Contraseña Actual',
@@ -128,21 +145,15 @@ const labels = {
   },
 };
 
+// Definición de reglas de validación
 const rules = {
   required: (value: string) => !!value || 'Campo obligatorio.',
-  min: (length: number) => (value: string) => (value && value.length >= length) || `Mínimo ${length} caracteres.`,
-  equalValue: (otherValue: string) => (value: string) => value === otherValue || 'Las contraseñas no coinciden.',
+  min: (min: number) => (value: string) => value.length >= min || `Debe tener al menos ${min} caracteres.`,
+  equalValue: (compareValue: string) => (value: string) => value === compareValue || 'Las contraseñas no coinciden.',
 };
-// --- FIN PLACEHOLDERS ---
-
-// Asegúrate de que authStore.userInfo tenga 'fullName' o créalo dinámicamente
-// Si tu AuthenticatedUserResponse no tiene FullName, puedes derivarlo aquí
-// const fullName = computed(() => authStore.userInfo?.firstName + ' ' + authStore.userInfo?.lastName);
-// Ya deberías tenerlo en authStore.userInfo.fullName si sigues las últimas actualizaciones.
 
 async function savePasswordModal() {
-  const { valid } = await passwordFormRef.value!.validate();
-
+  const { valid } = await passwordFormRef.value.validate(); // Valida el formulario
   if (!valid) {
     snackbar.text = 'Por favor, corrige los errores en el formulario.';
     snackbar.color = 'warning';
@@ -152,16 +163,19 @@ async function savePasswordModal() {
 
   loading.value = true;
   try {
-    // La URL de tu API para cambiar contraseña debe ser ajustada
-    // Asumiendo que es PUT a /users/change-password o similar.
-    await api.put('/users/change-password', passwordForm);
+    // La URL en el backend es /api/Users/change-password
+    const response = await api.put('/users/change-password', {
+      currentPassword: passwordForm.current_password,
+      newPassword: passwordForm.new_password,
+      confirmPassword: passwordForm.confirm_password,
+    });
 
-    snackbar.text = 'Contraseña cambiada exitosamente.';
+    snackbar.text = response.data.message || 'Contraseña cambiada exitosamente.';
     snackbar.color = 'success';
     snackbar.view = true;
 
-    // Limpiar formulario y cerrar diálogo
-    resetForm();
+    // Reiniciar formulario y cerrar diálogo
+    resetPasswordForm();
     passwordDialog.value = false;
 
   } catch (error: any) {
@@ -174,19 +188,21 @@ async function savePasswordModal() {
   }
 }
 
-function resetForm() {
+function closeModal() {
+  resetPasswordForm();
+  passwordDialog.value = false;
+}
+
+function resetPasswordForm() {
   passwordForm.current_password = '';
   passwordForm.new_password = '';
   passwordForm.confirm_password = '';
-  passwordFormRef.value?.resetValidation(); // Resetea la validación de Vuetify
-}
-
-function closeModal() {
-  resetForm();
-  passwordDialog.value = false;
+  if (passwordFormRef.value) {
+    passwordFormRef.value.resetValidation(); // Limpia los mensajes de error de validación
+  }
 }
 </script>
 
 <style scoped>
-/* Puedes añadir estilos específicos aquí */
+/* Puedes añadir estilos específicos para este componente aquí si es necesario */
 </style>

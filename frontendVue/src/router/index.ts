@@ -99,28 +99,28 @@ const routes: Array<RouteRecordRaw> = [
     component: DashboardView, // Temporalmente a DashboardView
     meta: { requiresAuth: true }
   },
-  {
-    path: '/admin/clinic-schedules',
-    name: 'AdminClinicSchedules',
-    component: DashboardView, // Temporalmente a DashboardView
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/admin/holidays', // Duplicado con DoctorHolidays, pero para Admin
-    name: 'AdminHolidays',
-    component: DashboardView, // Temporalmente a DashboardView
-    meta: { requiresAuth: true }
-  },
-  {
-    path: '/admin/settings-contact',
-    name: 'AdminSettingsContact',
-    component: DashboardView, // Temporalmente a DashboardView
-    meta: { requiresAuth: true }
-  },
+  // {
+  //   path: '/admin/clinic-schedules',
+  //   name: 'AdminClinicSchedules',
+  //   component: DashboardView, // Temporalmente a DashboardView
+  //   meta: { requiresAuth: true }
+  // },
+  // {
+  //   path: '/admin/holidays', // Duplicado con DoctorHolidays, pero para Admin
+  //   name: 'AdminHolidays',
+  //   component: DashboardView, // Temporalmente a DashboardView
+  //   meta: { requiresAuth: true }
+  // },
+  // {
+  //   path: '/admin/settings-contact',
+  //   name: 'AdminSettingsContact',
+  //   component: DashboardView, // Temporalmente a DashboardView
+  //   meta: { requiresAuth: true }
+  // },
   {
     path: '/profile/edit', // Ruta de perfil de usuario
     name: 'ProfileEdit',
-    component: DashboardView, // Temporalmente a DashboardView
+    component: import('@/views/ProfileEditView.vue'), // Temporalmente a DashboardView
     meta: { requiresAuth: true }
   },
   // *** FIN RUTAS TEMPORALES ***

@@ -11,6 +11,10 @@ export interface UserInfo {
   email: string;
   role: string;
   permissions: string[];
+  firstName?: string; // Asegúrate de que exista
+  lastName?: string;  // Asegúrate de que exista
+  contact?:string;
+  // regionCode?:string
 }
 export enum Role{
   admin = 'Admin',

@@ -3,6 +3,7 @@ using System.Security.Claims;
 using System.Text;
 using appoint.Domain;
 using appoint.Domain.Request;
+using appoint.Domain.Response;
 using appoint.Infrastructure;
 using appoint.Models;
 using Dapper;
@@ -46,9 +47,9 @@ public class UserService : IUserService
                 Email = user.Email,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
-                Type = user.Type, // Devolver el 'Type' que es el rol principal del usuario
-                // Rol (siempre es el mismo que el tipo en este contexto, pero podría venir de UserRoles)
-                Role = user.Type // Usamos Type como Role para compatibilidad con JWT claim.
+                Type = user.Type,
+                Role = user.Type,
+                Permissions = user.Permissions
             };
         }
         catch (Exception ex)
@@ -181,19 +182,12 @@ public class UserService : IUserService
         try
         {
             string hashedPassword = BCrypt.Net.BCrypt.HashPassword(request.Password);
-            Guid newUserId = Guid.NewGuid(); // Generar un nuevo GUID para el ID
+            Guid newUserId = Guid.NewGuid();
 
-            // Asegúrate de que UserRequest tenga todos los campos necesarios para la inserción
-            // y que los nombres de las columnas en SQL coincidan con las propiedades del objeto anónimo
             const string sql = @"
                 INSERT INTO Users (Id, Email, PasswordHash, FirstName, LastName, Type, Contact, RegionCode, BloodGroup, Gender, Dob, BranchId, EmailNotificationEnabled, CreatedAt, UpdatedAt)
                 VALUES (@Id, @Email, @PasswordHash, @FirstName, @LastName, @Type, @Contact, @RegionCode, @BloodGroup, @Gender, @Dob, @BranchId, @EmailNotificationEnabled, @CreatedAt, @UpdatedAt);";
 
-            // Se asume que UserRequest contiene los datos completos para crear un usuario.
-            // Si BranchId no viene en UserRequest, necesitarás un valor por defecto o pasarlo de otra forma.
-            // Si no estás usando BranchId en tu UserRequest, necesitarás modificar esto.
-            // Por simplicidad, asumimos que UserRequest ahora incluye BranchId.
-            // Y que el Role de UserRequest mapea directamente al Type de UserModel
             await _db.SaveData(sql, new
             {
                 Id = newUserId,
@@ -201,29 +195,27 @@ public class UserService : IUserService
                 PasswordHash = hashedPassword,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Type = request.Role, // Usar el Role de Request como Type de UserModel
+                Type = request.Role,
                 Contact = request.Contact,
                 RegionCode = request.RegionCode,
                 BloodGroup = request.BloodGroup,
                 Gender = request.Gender,
                 Dob = request.Dob,
-                // Si UserRequest no tiene BranchId, necesitarás obtenerlo o asignarlo aquí.
-                // Asumiendo que BranchId es obligatorio y viene de UserRequest.
-                BranchId = request.BranchId, // ESTO ES CRÍTICO: Debe venir del request o ser un valor por defecto.
-                EmailNotificationEnabled = true, // Por defecto activado
+                BranchId = request.BranchId,
+                EmailNotificationEnabled = true,
                 CreatedAt = DateTime.UtcNow,
                 UpdatedAt = DateTime.UtcNow
             });
 
-            // Retorna un UserModel que no contiene el hash de la contraseña
             var createdUser = new UserModel
             {
                 Id = newUserId,
                 Email = request.Email,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Type = request.Role, // El tipo de usuario creado
-                Role = request.Role // Para compatibilidad
+                Type = request.Role,
+                Role = request.Role,
+                Permissions = (await GetPermissionsForUserAsync(newUserId)).ToList()
             };
             _logger.LogInformation("Successfully created user with ID: {UserId} and email: {Email}", createdUser.Id, createdUser.Email);
             return createdUser;
@@ -234,8 +226,8 @@ public class UserService : IUserService
             throw;
         }
     }
-
-    public async Task<UserModel?> UpdateUserAsync(Guid id, UserRequest request) // Cambio a Task<UserModel?>
+    
+    public async Task<UserModel?> UpdateUserAsync(Guid id, UserRequest request)
     {
         _logger.LogInformation("Attempting to update user with ID: {UserId}", id);
         try
@@ -248,7 +240,6 @@ public class UserService : IUserService
             }
 
             string passwordToUpdateHash = existingUser.PasswordHash;
-            // Solo actualiza la contraseña si se proporciona una nueva y es diferente de la actual.
             if (!string.IsNullOrEmpty(request.Password))
             {
                 if (!BCrypt.Net.BCrypt.Verify(request.Password, existingUser.PasswordHash))
@@ -257,7 +248,6 @@ public class UserService : IUserService
                 }
             }
 
-            // Actualizar SQL para incluir todos los campos del UserRequest
             const string sql = @"
                 UPDATE Users 
                 SET Email = @Email, 
@@ -275,23 +265,20 @@ public class UserService : IUserService
                     UpdatedAt = @UpdatedAt
                 WHERE Id = @Id;";
             
-            // Asegúrate de que UserRequest tenga BranchId y EmailNotificationEnabled
-            // Si tu UserRequest no tiene BranchId, necesitarás obtener el BranchId existente
-            // y pasarlo, o ajustarlo si la actualización de BranchId no está permitida por este DTO.
             await _db.SaveData(sql, new
             {
                 Email = request.Email,
                 PasswordHash = passwordToUpdateHash,
                 FirstName = request.FirstName,
                 LastName = request.LastName,
-                Type = request.Role, // Usar el Role de Request como Type de UserModel
+                Type = request.Role,
                 Contact = request.Contact,
                 RegionCode = request.RegionCode,
                 BloodGroup = request.BloodGroup,
                 Gender = request.Gender,
                 Dob = request.Dob,
-                BranchId = request.BranchId, // CRÍTICO: Debe venir del request o del existingUser.BranchId
-                EmailNotificationEnabled = true, // Asumimos que no cambia por este DTO
+                BranchId = request.BranchId,
+                EmailNotificationEnabled = true,
                 UpdatedAt = DateTime.UtcNow,
                 Id = id
             });
@@ -303,7 +290,8 @@ public class UserService : IUserService
                 FirstName = request.FirstName,
                 LastName = request.LastName,
                 Type = request.Role,
-                Role = request.Role
+                Role = request.Role,
+                Permissions = (await GetPermissionsForUserAsync(id)).ToList()
             };
             _logger.LogInformation("Successfully updated user with ID: {UserId}", id);
             return updatedUser;
@@ -341,5 +329,174 @@ public class UserService : IUserService
     public bool VerifyPassword(string plainTextPassword, string hashedPassword)
     {
         return BCrypt.Net.BCrypt.Verify(plainTextPassword, hashedPassword);
+    }
+    
+    public async Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request)
+    {
+        _logger.LogInformation("Attempting to change password for user ID: {UserId}", userId);
+        
+        var user = await GetUserByIdAsync(userId);
+        if (user == null)
+        {
+            _logger.LogWarning("Password change failed: User with ID {UserId} not found.", userId);
+            throw new InvalidOperationException("User not found.");
+        }
+
+        // 1. Verificar la contraseña actual
+        if (!VerifyPassword(request.CurrentPassword, user.PasswordHash))
+        {
+            _logger.LogWarning("Password change failed for user {UserId}: Invalid current password.", userId);
+            throw new UnauthorizedAccessException("Invalid current password.");
+        }
+
+        // 2. Hashear la nueva contraseña
+        string newHashedPassword = BCrypt.Net.BCrypt.HashPassword(request.NewPassword);
+
+        // 3. Actualizar la contraseña en la base de datos
+        const string sql = @"
+            UPDATE Users
+            SET PasswordHash = @NewPasswordHash, UpdatedAt = @UpdatedAt
+            WHERE Id = @Id;";
+        
+        var parameters = new {
+            NewPasswordHash = newHashedPassword,
+            UpdatedAt = DateTime.UtcNow,
+            Id = userId
+        };
+
+        int rowsAffected = await _db.SaveData(sql, parameters);
+
+        if (rowsAffected == 0)
+        {
+            _logger.LogError("Password change failed: No rows affected for user ID: {UserId}", userId);
+            throw new InvalidOperationException("Failed to update password.");
+        }
+
+        _logger.LogInformation("Password changed successfully for user ID: {UserId}", userId);
+    }
+
+ 
+    private async Task<IEnumerable<string>> GetPermissionsForUserAsync(Guid userId)
+    {
+        var userType = (await _db.QueryFirstOrDefaultAsync<string, dynamic>("SELECT Type FROM Users WHERE Id = @UserId", new { UserId = userId }));
+
+        var permissions = new List<string>();
+
+        if (userType == "Admin")
+        {
+            permissions.Add("manage_admin_dashboard");
+            permissions.Add("manage_staff");
+            permissions.Add("manage_doctors");
+            permissions.Add("manage_patients");
+            permissions.Add("manage_appointments");
+            permissions.Add("manage_services");
+            permissions.Add("manage_settings");
+        }
+        else if (userType == "Doctor")
+        {
+            permissions.Add("view_doctor_dashboard");
+            permissions.Add("manage_appointments");
+            permissions.Add("view_my_schedule");
+            permissions.Add("manage_holidays");
+        }
+        else if (userType == "Patient")
+        {
+            permissions.Add("view_patient_dashboard");
+            permissions.Add("manage_appointments");
+        }
+        else if (userType == "Staff")
+        {
+            permissions.Add("view_staff_dashboard");
+        }
+
+        _logger.LogInformation("Loaded permissions for user {UserId}: {Permissions}", userId, string.Join(", ", permissions));
+        return permissions;
+    }
+    
+    /// <summary>
+    /// Actualiza el perfil de un usuario.
+    /// </summary>
+    /// <param name="userId">ID del usuario a actualizar.</param>
+    /// <param name="request">DTO con los datos actualizados del perfil.</param>
+    public async Task UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request)
+    {
+        _logger.LogInformation("Attempting to update profile for User ID: {UserId}", userId);
+
+        var existingUser = await GetUserByIdAsync(userId);
+        if (existingUser == null)
+        {
+            _logger.LogWarning("Profile update failed: User with ID {UserId} not found.", userId);
+            throw new InvalidOperationException("User not found.");
+        }
+
+        // Si el email es diferente y ya existe, lanzar error
+        if (!existingUser.Email.Equals(request.Email, StringComparison.OrdinalIgnoreCase))
+        {
+            var userWithSameEmail = await GetUserByEmailAsync(request.Email);
+            if (userWithSameEmail != null && userWithSameEmail.Id != userId)
+            {
+                throw new InvalidOperationException("Email already taken by another user.");
+            }
+        }
+        
+        // Ajustar la consulta SQL para MySQL con backticks
+        const string sql = @"
+            UPDATE `Users`
+            SET FirstName = @FirstName,
+                LastName = @LastName,
+                Email = @Email,
+                Contact = @Contact,
+                RegionCode = @RegionCode,
+                UpdatedAt = @UpdatedAt
+            WHERE Id = @Id;";
+
+        var parameters = new {
+            FirstName = request.FirstName,
+            LastName = request.LastName,
+            Email = request.Email,
+            Contact = request.Contact,
+            RegionCode = request.RegionCode,
+            UpdatedAt = DateTime.UtcNow,
+            Id = userId
+        };
+
+        int rowsAffected = await _db.SaveData(sql, parameters);
+
+        if (rowsAffected == 0)
+        {
+            _logger.LogError("Profile update failed: No rows affected for User ID: {UserId}", userId);
+            throw new InvalidOperationException("Failed to update user profile.");
+        }
+
+        _logger.LogInformation("User profile updated successfully for User ID: {UserId}", userId);
+    }
+    
+    /// <summary>
+    /// Obtiene los detalles del perfil de un usuario específico.
+    /// </summary>
+    /// <param name="userId">ID del usuario.</param>
+    /// <returns>UserProfileDetailsResponse con los datos del perfil.</returns>
+    public async Task<UserProfileDetailsResponse?> GetUserProfileAsync(Guid userId)
+    {
+        _logger.LogInformation("Fetching user profile for User ID: {UserId}", userId);
+        // Usar GetUserByIdAsync para obtener el modelo completo del usuario
+        var user = await GetUserByIdAsync(userId);
+
+        if (user == null)
+        {
+            _logger.LogWarning("User profile not found for User ID: {UserId}", userId);
+            return null;
+        }
+
+        return new UserProfileDetailsResponse
+        {
+            UserId = user.Id,
+            FirstName = user.FirstName,
+            LastName = user.LastName,
+            Email = user.Email,
+            Contact = user.Contact,
+            RegionCode = user.RegionCode
+            // Añade otros campos que quieras exponer en el perfil
+        };
     }
 }

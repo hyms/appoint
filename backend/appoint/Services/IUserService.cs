@@ -1,6 +1,7 @@
 using appoint.Models; 
 using appoint.Domain;
 using appoint.Domain.Request;
+using appoint.Domain.Response;
 
 namespace appoint.Services;
 
@@ -33,4 +34,9 @@ public interface IUserService
 
     // Método para verificar una contraseña
     bool VerifyPassword(string plainTextPassword, string hashedPassword);
+    
+    Task ChangePasswordAsync(Guid userId, ChangePasswordRequest request); 
+    
+    Task<UserProfileDetailsResponse?> GetUserProfileAsync(Guid userId);
+    Task UpdateUserProfileAsync(Guid userId, UpdateProfileRequest request);
 }

@@ -140,6 +140,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IPatientService, PatientService>();
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IDoctorSessionService, DoctorSessionService>();
         
         services.AddScoped<IRoleRepository, RoleRepository>();
         services.AddScoped<IPermissionRepository, PermissionRepository>();
@@ -151,7 +152,7 @@ public static class ServiceCollectionExtensions
         services.AddScoped<IBranchRepository, BranchRepository>();
         services.AddScoped<IPatientRepository, PatientRepository>();
         services.AddScoped<ISettingsRepository, SettingsRepository>();
-        
+        services.AddScoped<IDoctorSessionRepository, DoctorSessionRepository>();
         // Configuración de Twilio (descomentar si se usa).
         // services.AddSingleton<ITwilioRestClient>(provider =>
         // {

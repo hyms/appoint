@@ -4,6 +4,8 @@ using appoint.Domain; // Asegúrate de que esta referencia sea correcta si defin
 using appoint.Models;
 using appoint.Services;
 using System;
+using System.Security.Claims;
+using appoint.Domain.Request;
 using appoint.Domain.Response;
 using UserRequest = appoint.Domain.Request.UserRequest; // Añadir para Guid
 
@@ -194,6 +196,141 @@ public class UsersController : ControllerBase
         {
             _logger.LogError(ex, "Error during authentication for email: {Email}", request.Email);
             return StatusCode(500, new ApiResponse($"An unexpected error occurred during authentication: {ex.Message}", 500));
+        }
+    }
+    
+    /// <summary>
+    /// Endpoint para que un usuario cambie su propia contraseña.
+    /// (Corresponde a Laravel '/change-user-password')
+    /// </summary>
+    /// <param name="request">DTO con la contraseña actual, nueva y confirmación.</param>
+    /// <returns>Mensaje de éxito.</returns>
+    [HttpPut("change-password")] // Ruta: /api/Users/change-password
+    [ProducesResponseType(typeof(ApiResponse), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 400)] // Bad Request (validación, contraseñas no coinciden)
+    [ProducesResponseType(typeof(ApiResponse), 401)] // Unauthorized (contraseña actual incorrecta)
+    [ProducesResponseType(typeof(ApiResponse), 404)] // Not Found (usuario no encontrado - poco probable con Authorize)
+    [ProducesResponseType(typeof(ApiResponse), 500)] // Internal Server Error
+    public async Task<IActionResult> ChangePassword([FromBody] ChangePasswordRequest request)
+    {
+        // 1. Validar el modelo (data annotations en ChangePasswordRequest)
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ApiResponse(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList(), 400));
+        }
+
+        // 2. Obtener el ID del usuario logueado desde el token JWT
+        var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        {
+            return Unauthorized(new ApiResponse("User ID not found in token or invalid format.", 401));
+        }
+
+        try
+        {
+            await _userService.ChangePasswordAsync(userId, request);
+            return Ok(new ApiResponse("Password changed successfully."));
+        }
+        catch (UnauthorizedAccessException ex)
+        {
+            // Captura el error lanzado por el servicio si la contraseña actual es incorrecta
+            return Unauthorized(new ApiResponse(ex.Message, 401));
+        }
+        catch (InvalidOperationException ex)
+        {
+            // Otros errores de negocio como "usuario no encontrado" (aunque con [Authorize] es raro)
+            if (ex.Message.Contains("User not found", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound(new ApiResponse(ex.Message, 404));
+            }
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
+        catch (Exception ex)
+        {
+            // Captura cualquier otra excepción inesperada
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred while changing password: {ex.Message}", 500));
+        }
+    }
+    
+     /// <summary>
+    /// Obtiene el perfil del usuario actualmente logueado.
+    /// (Corresponde a la carga inicial de datos en el frontend 'profile/edit')
+    /// </summary>
+    /// <returns>UserProfileDetailsResponse con los datos del perfil.</returns>
+    [HttpGet("profile")] // Ruta: /api/Users/profile
+    [ProducesResponseType(typeof(ApiResponse<UserProfileDetailsResponse>), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 404)]
+    [ProducesResponseType(typeof(ApiResponse), 401)]
+    [ProducesResponseType(typeof(ApiResponse), 500)]
+    public async Task<IActionResult> GetUserProfile()
+    {
+        var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        {
+            return Unauthorized(new ApiResponse("User ID not found in token or invalid format.", 401));
+        }
+
+        try
+        {
+            var profile = await _userService.GetUserProfileAsync(userId);
+            if (profile == null)
+            {
+                return NotFound(new ApiResponse($"User profile for ID '{userId}' not found.", 404));
+            }
+            return Ok(new ApiResponse<UserProfileDetailsResponse>(profile, "User profile retrieved successfully."));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred while retrieving user profile: {ex.Message}", 500));
+        }
+    }
+
+    /// <summary>
+    /// Actualiza el perfil del usuario actualmente logueado.
+    /// (Corresponde a Laravel '/profile/update')
+    /// </summary>
+    /// <param name="request">DTO con los datos actualizados del perfil.</param>
+    /// <returns>Mensaje de éxito.</returns>
+    [HttpPut("profile")] // Ruta: /api/Users/profile
+    [ProducesResponseType(typeof(ApiResponse), 200)]
+    [ProducesResponseType(typeof(ApiResponse), 400)]
+    [ProducesResponseType(typeof(ApiResponse), 401)]
+    [ProducesResponseType(typeof(ApiResponse), 404)]
+    [ProducesResponseType(typeof(ApiResponse), 409)] // Conflict (email ya tomado)
+    [ProducesResponseType(typeof(ApiResponse), 500)]
+    public async Task<IActionResult> UpdateUserProfile([FromBody] UpdateProfileRequest request)
+    {
+        if (!ModelState.IsValid)
+        {
+            return BadRequest(new ApiResponse(ModelState.Values.SelectMany(v => v.Errors).Select(e => e.ErrorMessage).ToList(), 400));
+        }
+
+        var userIdClaim = HttpContext.User.FindFirst(ClaimTypes.NameIdentifier);
+        if (userIdClaim == null || !Guid.TryParse(userIdClaim.Value, out Guid userId))
+        {
+            return Unauthorized(new ApiResponse("User ID not found in token or invalid format.", 401));
+        }
+
+        try
+        {
+            await _userService.UpdateUserProfileAsync(userId, request);
+            return Ok(new ApiResponse("User profile updated successfully."));
+        }
+        catch (InvalidOperationException ex)
+        {
+            if (ex.Message.Contains("User not found", StringComparison.OrdinalIgnoreCase))
+            {
+                return NotFound(new ApiResponse(ex.Message, 404));
+            }
+            if (ex.Message.Contains("Email already taken", StringComparison.OrdinalIgnoreCase))
+            {
+                return Conflict(new ApiResponse(ex.Message, 409));
+            }
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred: {ex.Message}", 500));
+        }
+        catch (Exception ex)
+        {
+            return StatusCode(500, new ApiResponse($"An unexpected error occurred while updating user profile: {ex.Message}", 500));
         }
     }
 }

@@ -142,18 +142,18 @@ const labels = {
     services: 'Servicios',
     service_categories: 'Categorías Servicio',
     settings: 'Configuración',
-    clinic_schedules: 'Horarios Clínica'
+    // clinic_schedules: 'Horarios Clínica'
   },
   setting: {
     general_details: 'Detalles Generales',
     general: 'General',
-    contact_information: 'Información de Contacto'
+    // contact_information: 'Información de Contacto'
   },
   doctor_session: {
     my_schedule: 'Mi Horario'
   },
   holiday: {
-    holiday: 'Días Feriados',
+    // holiday: 'Días Feriados',
     doctor_holiday: 'Días Feriados Doctor'
   },
   common: {
@@ -306,9 +306,9 @@ function loadMenu() {
       icon: 'mdi-cog', // MDI Icon
       subItems: [
         { label: labels.setting.general, url: '/settings/general' },
-        { label: labels.setting.contact_information, url: '/admin/settings-contact' },
-        { label: labels.menu.clinic_schedules, url: '/admin/clinic-schedules' },
-        { label: labels.holiday.doctor_holiday, url: '/admin/holidays' }
+        // { label: labels.setting.contact_information, url: '/admin/settings-contact' },
+        // { label: labels.menu.clinic_schedules, url: '/admin/clinic-schedules' },
+        // { label: labels.holiday.doctor_holiday, url: '/admin/holidays' }
       ]
     })
   }
