@@ -1,0 +1,178 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../node_modules/.prisma/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserRole {
+  ADMIN
+  SECRETARY
+  PATIENT
+  PROFESSIONAL
+}
+
+enum AppointmentStatus {
+  PENDING
+  CONFIRMED
+  COMPLETED
+  CANCELLED
+  NO_SHOW
+}
+
+enum NotificationType {
+  APPOINTMENT_REMINDER
+  APPOINTMENT_CONFIRMATION
+  APPOINTMENT_CANCELLATION
+  MAGIC_LINK
+  EMERGENCY_NOTIFICATION
+}
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  phone         String?   @unique
+  passwordHash  String?
+  role          UserRole  @default(PATIENT)
+  isActive      Boolean   @default(true)
+  magicToken    String?   @unique
+  magicExpiresAt DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  profile           Profile?
+  appointments      Appointment[]     @relation("PatientAppointments")
+  professionalAppointments Appointment[] @relation("ProfessionalAppointments")
+  professionalSlots Slot[]
+  notifications     NotificationLog[]
+  strikes           Strike[]          @relation("PatientStrikes")
+  strikesBy         Strike[]          @relation("ProfessionalStrikes")
+}
+
+model Profile {
+  id              String   @id @default(uuid())
+  userId          String   @unique
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  firstName       String
+  lastName        String
+  dni             String?  @unique
+  dateOfBirth     DateTime?
+  address         String?
+  emergencyContact String?
+  medicalNotes    String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Appointment {
+  id            String            @id @default(uuid())
+  patientId     String
+  professionalId String
+  locationId    String?
+  slotId        String?           @unique
+  date          DateTime
+  startTime     DateTime
+  endTime       DateTime
+  status        AppointmentStatus @default(PENDING)
+  notes         String?
+  qrPaymentUrl  String?
+  paymentStatus String?           @default("PENDING")
+  notificationSent24h Boolean     @default(false)
+  notificationSent6h  Boolean     @default(false)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+
+  patient       User      @relation("PatientAppointments", fields: [patientId], references: [id])
+  professional  User      @relation("ProfessionalAppointments", fields: [professionalId], references: [id])
+  location      Location? @relation(fields: [locationId], references: [id])
+  slot          Slot?     @relation(fields: [slotId], references: [id])
+  payment       Payment?
+}
+
+model Location {
+  id          String        @id @default(uuid())
+  name        String
+  address     String
+  phone       String?
+  isActive    Boolean       @default(true)
+  createdAt   DateTime      @default(now())
+  updatedAt   DateTime      @updatedAt
+
+  slots        Slot[]
+  appointments Appointment[]
+}
+
+model Slot {
+  id              String       @id @default(uuid())
+  professionalId  String
+  locationId      String?
+  date            DateTime
+  startTime       DateTime
+  endTime         DateTime
+  isBooked        Boolean      @default(false)
+  isBlocked       Boolean      @default(false)
+  blockReason     String?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  professional    User         @relation(fields: [professionalId], references: [id])
+  location        Location?    @relation(fields: [locationId], references: [id])
+  appointment     Appointment?
+
+  @@unique([professionalId, date, startTime])
+}
+
+model Strike {
+  id              String   @id @default(uuid())
+  patientId       String
+  professionalId  String
+  reason          String
+  strikeDate      DateTime @default(now())
+  isActive        Boolean  @default(true)
+  blockedUntil    DateTime?
+
+  patient         User     @relation("PatientStrikes", fields: [patientId], references: [id])
+  professional    User     @relation("ProfessionalStrikes", fields: [professionalId], references: [id])
+}
+
+model NotificationLog {
+  id              String            @id @default(uuid())
+  userId          String
+  type            NotificationType
+  recipient       String
+  subject         String?
+  content         String
+  status          String            @default("PENDING")
+  sentAt          DateTime?
+  errorMessage    String?
+  createdAt       DateTime          @default(now())
+
+  user            User              @relation(fields: [userId], references: [id])
+}
+
+model EmergencyButton {
+  id              String   @id @default(uuid())
+  isActive        Boolean  @default(false)
+  activatedAt     DateTime?
+  message         String?
+  affectedDays    Int      @default(2)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Payment {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique
+  qrImageUrl    String
+  status        String   @default("PENDING")
+  uploadedAt    DateTime?
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}

@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Appointments 360",
+    "welcome": "Welcome to Appointments 360"
+  },
+  "nav": {
+    "home": "Home",
+    "appointments": "Appointments",
+    "dashboard": "Dashboard",
+    "profile": "Profile",
+    "logout": "Logout",
+    "login": "Login",
+    "register": "Register"
+  },
+  "auth": {
+    "email": "Email",
+    "password": "Password",
+    "phone": "Phone Number",
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "magicLink": "Send Magic Link",
+    "enterWithMagic": "Enter with Magic Link"
+  },
+  "appointments": {
+    "title": "My Appointments",
+    "book": "Book Appointment",
+    "cancel": "Cancel",
+    "confirm": "Confirm",
+    "status": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "noShow": "No Show"
+    },
+    "selectSlot": "Select a time slot",
+    "noSlots": "No available slots",
+    "bookingSuccess": "Appointment booked successfully"
+  },
+  "dashboard": {
+    "admin": "Admin Dashboard",
+    "secretary": "Secretary Dashboard",
+    "patients": "Patients",
+    "professionals": "Professionals",
+    "appointments": "Appointments",
+    "emergencies": "Emergency Button"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next"
+  }
+}

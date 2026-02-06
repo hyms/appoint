@@ -1,0 +1,61 @@
+{
+  "app": {
+    "title": "Citas 360",
+    "welcome": "Bienvenido a Citas 360"
+  },
+  "nav": {
+    "home": "Inicio",
+    "appointments": "Citas",
+    "dashboard": "Panel",
+    "profile": "Perfil",
+    "logout": "Cerrar Sesión",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse"
+  },
+  "auth": {
+    "email": "Correo Electrónico",
+    "password": "Contraseña",
+    "phone": "Número de Teléfono",
+    "login": "Iniciar Sesión",
+    "register": "Registrarse",
+    "logout": "Cerrar Sesión",
+    "magicLink": "Enviar Enlace Mágico",
+    "enterWithMagic": "Entrar con Enlace Mágico"
+  },
+  "appointments": {
+    "title": "Mis Citas",
+    "book": "Reservar Cita",
+    "cancel": "Cancelar",
+    "confirm": "Confirmar",
+    "status": {
+      "pending": "Pendiente",
+      "confirmed": "Confirmada",
+      "completed": "Completada",
+      "cancelled": "Cancelada",
+      "noShow": "No Asistió"
+    },
+    "selectSlot": "Selecciona un horario",
+    "noSlots": "No hay horarios disponibles",
+    "bookingSuccess": "Cita reservada correctamente"
+  },
+  "dashboard": {
+    "admin": "Panel de Administrador",
+    "secretary": "Panel de Secretario",
+    "patients": "Pacientes",
+    "professionals": "Profesionales",
+    "appointments": "Citas",
+    "emergencies": "Botón de Emergencia"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente"
+  }
+}

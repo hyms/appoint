@@ -1,0 +1,14 @@
+model Payment {
+  id            String   @id @default(uuid())
+  appointmentId String   @unique
+  qrImageUrl    String
+  status        String   @default("PENDING")
+  uploadedAt    DateTime?
+  verifiedAt    DateTime?
+  verifiedBy    String?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  appointment Appointment @relation(fields: [appointmentId], references: [id])
+}

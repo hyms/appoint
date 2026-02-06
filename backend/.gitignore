@@ -1,0 +1,16 @@
+node_modules
+.env
+.env.local
+
+node_modules/.prisma
+node_modules/.prisma/client
+
+dist
+build
+*.log
+
+.DS_Store
+.idea
+.vscode
+*.swp
+*.swo
