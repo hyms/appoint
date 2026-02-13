@@ -30,7 +30,7 @@ export class SlotService {
 
       if (workingHours && workingHours.isActive) {
         const slots = this.createSlotsForDay(
-          currentDate,
+          new Date(currentDate),
           workingHours.startTime,
           workingHours.endTime,
           dto.professionalId,
@@ -91,7 +91,7 @@ export class SlotService {
         slots.push({
           professionalId,
           locationId: locationId || null,
-          date: date,
+          date: new Date(date),
           startTime: new Date(currentSlotStart),
           endTime: slotEnd,
           isBooked: false,

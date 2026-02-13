@@ -10,7 +10,8 @@
     "profile": "Profile",
     "logout": "Logout",
     "login": "Login",
-    "register": "Register"
+    "register": "Register",
+    "language": "Language"
   },
   "auth": {
     "email": "Email",

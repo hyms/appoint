@@ -21,9 +21,9 @@ export default createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#1976D2',
-          secondary: '#424242',
-          accent: '#82B1FF',
+          primary: '#673AB7',
+          secondary: '#9575CD',
+          accent: '#B39DDB',
           error: '#FF5252',
           info: '#2196F3',
           success: '#4CAF50',
@@ -35,8 +35,8 @@ export default createVuetify({
       dark: {
         dark: true,
         colors: {
-          primary: '#2196F3',
-          secondary: '#424242',
+          primary: '#9575CD',
+          secondary: '#B39DDB',
           accent: '#FF4081',
           error: '#FF5252',
           info: '#2196F3',

@@ -1,5 +1,5 @@
 <template>
-  <v-container class="fill-height" fluid>
+<!--  <v-container class="fill-height" fluid>-->
     <v-row align="center" justify="center">
       <v-col cols="12" sm="10" md="8" lg="5" xl="4">
         <v-card class="pa-4 pa-sm-6" elevation="4">
@@ -34,7 +34,7 @@
               :rules="passwordRules"
               class="mb-2"
             />
-            
+
             <div class="d-flex justify-end mb-6">
               <v-btn
                 variant="text"
@@ -135,7 +135,7 @@
         </v-card-actions>
       </v-card>
     </v-dialog>
-  </v-container>
+<!--  </v-container>-->
 </template>
 
 <script setup lang="ts">
@@ -192,7 +192,7 @@ async function handleLogin() {
 
 async function sendMagicLink() {
   if (!magicPhone.value) return
-  
+
   sendingMagic.value = true
   try {
     await authStore.magicLink(magicPhone.value)

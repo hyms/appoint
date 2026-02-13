@@ -10,7 +10,8 @@
     "profile": "Perfil",
     "logout": "Cerrar Sesión",
     "login": "Iniciar Sesión",
-    "register": "Registrarse"
+    "register": "Registrarse",
+    "language": "Idioma"
   },
   "auth": {
     "email": "Correo Electrónico",
