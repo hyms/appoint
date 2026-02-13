@@ -1,8 +1,8 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
-import { AppointmentsService } from './appointments.service';
-import { PrismaService } from '../prisma/prisma.service';
-import { StrikeService } from '../strikes/services/strike.service';
+import { AppointmentsService } from './appointment.service';
+import { PrismaService } from '../../prisma/prisma.service';
+import { StrikeService } from '../../strikes/services/strike.service';
 
 describe('AppointmentsService', () => {
   let appointmentsService: AppointmentsService;
