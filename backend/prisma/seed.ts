@@ -1,6 +1,7 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
 import { PrismaClient } from '../node_modules/.prisma/client/client'
+import * as bcrypt from 'bcrypt'
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/appointments360?schema=public'
 const pool = new Pool({ connectionString })
@@ -10,26 +11,42 @@ const prisma = new PrismaClient({ adapter })
 async function main() {
   console.log('🌱 Seeding database...')
 
-  const adminEmail = 'admin@appointments360.com'
-  const adminExists = await prisma.user.findUnique({ where: { email: adminEmail } })
+  // Delete old admin if exists
+  const oldAdminEmail = 'admin@appointments360.com'
+  const oldAdmin = await prisma.user.findUnique({ where: { email: oldAdminEmail } })
+  if (oldAdmin) {
+    await prisma.user.delete({ where: { email: oldAdminEmail } })
+    console.log('🗑️  Old admin deleted:', oldAdminEmail)
+  }
 
-  if (!adminExists) {
-    const admin = await prisma.user.create({
-      data: {
-        email: adminEmail,
-        phone: '+1234567890',
-        role: 'ADMIN',
-        profile: {
-          create: {
-            firstName: 'System',
-            lastName: 'Administrator',
-            dni: '00000000A',
-          },
+  // Create new admin with password
+  const adminEmail = 'admin@test.com'
+  const adminPassword = '123456'
+  const passwordHash = await bcrypt.hash(adminPassword, 10)
+
+  const admin = await prisma.user.upsert({
+    where: { email: adminEmail },
+    update: {
+      passwordHash,
+      role: 'ADMIN',
+      isActive: true,
+    },
+    create: {
+      email: adminEmail,
+      passwordHash,
+      phone: '+1234567890',
+      role: 'ADMIN',
+      isActive: true,
+      profile: {
+        create: {
+          firstName: 'Admin',
+          lastName: 'User',
+          dni: '00000000A',
         },
       },
-    })
-    console.log('✅ Admin user created:', admin.email)
-  }
+    },
+  })
+  console.log('✅ Admin user created:', admin.email, '(Password: 123456)')
 
   const professionalEmail = 'doctor@appointments360.com'
   const professionalExists = await prisma.user.findUnique({ where: { email: professionalEmail } })
@@ -79,6 +96,10 @@ async function main() {
   console.log('✅ Emergency button configured')
 
   console.log('🎉 Seeding completed!')
+  console.log('')
+  console.log('🔑 Admin Credentials:')
+  console.log('   Email: admin@test.com')
+  console.log('   Password: 123456')
 }
 
 main()
