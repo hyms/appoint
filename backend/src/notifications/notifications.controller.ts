@@ -1,13 +1,17 @@
 import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { NotificationProvider } from './services/notification-provider.service';
+import { PrismaService } from '../prisma/prisma.service';
 import { SendNotificationDto, SendBulkNotificationDto } from './dto/notification.dto';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 
 @Controller('notifications')
 export class NotificationsController {
-  constructor(private readonly notificationProvider: NotificationProvider) {}
+  constructor(
+    private readonly notificationProvider: NotificationProvider,
+    private readonly prisma: PrismaService,
+  ) {}
 
   @Post('send')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -31,10 +35,7 @@ export class NotificationsController {
     if (userId) where.userId = userId;
     if (status) where.status = status;
 
-    const { PrismaService } = await import('../prisma/prisma.service');
-    const prisma = new PrismaService();
-    
-    return prisma.notificationLog.findMany({
+    return this.prisma.notificationLog.findMany({
       where,
       orderBy: { createdAt: 'desc' },
       take: 100,

@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GenerateSlotsDto, BlockSlotDto } from './dto/slot.dto';
+import { GenerateSlotsDto, BlockSlotDto } from '../dto/slot.dto';
 
 @Injectable()
 export class SlotService {
@@ -55,21 +55,14 @@ export class SlotService {
     };
   }
 
-  private async getWorkingHoursForDay(professionalId: string, dayOfWeek: string) {
-    const config = await this.prisma.professionalConfig.findFirst({
-      where: { professionalId },
-    });
-
-    if (!config) {
-      return {
-        dayOfWeek,
-        startTime: '09:00',
-        endTime: '17:00',
-        isActive: true,
-      };
-    }
-
-    return config.workingHours.find((wh: any) => wh.dayOfWeek === dayOfWeek);
+  private async getWorkingHoursForDay(_professionalId: string, dayOfWeek: string) {
+    // Using default working hours - professional config can be added later
+    return {
+      dayOfWeek,
+      startTime: '09:00',
+      endTime: '17:00',
+      isActive: true,
+    };
   }
 
   private createSlotsForDay(

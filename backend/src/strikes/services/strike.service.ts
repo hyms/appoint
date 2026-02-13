@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateStrikeDto, ResolveStrikeDto } from './dto/strike.dto';
+import { CreateStrikeDto, ResolveStrikeDto } from '../dto/strike.dto';
 
 @Injectable()
 export class StrikeService {

@@ -1,6 +1,6 @@
 import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ActivateEmergencyDto, DeactivateEmergencyDto } from './dto/emergency.dto';
+import { ActivateEmergencyDto, DeactivateEmergencyDto } from '../dto/emergency.dto';
 
 @Injectable()
 export class EmergencyService {

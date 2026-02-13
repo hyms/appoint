@@ -1,6 +1,6 @@
 import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto } from './dto/appointment.dto';
+import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto } from '../dto/appointment.dto';
 import { StrikeService } from '../../strikes/services/strike.service';
 
 @Injectable()
@@ -99,11 +99,10 @@ export class AppointmentsService {
     const updateData: any = { status: dto.status };
 
     if (dto.status === 'NO_SHOW') {
-      await this.strikeService.createStrike({
+      await this.strikeService.createStrike(userId, {
         patientId: appointment.patientId,
         reason: 'No show for scheduled appointment',
-        appointmentId,
-      }, userId);
+      });
     }
 
     if (dto.notes) {

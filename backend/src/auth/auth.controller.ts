@@ -1,8 +1,8 @@
 import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus, Req, Ip } from '@nestjs/common';
-import { Request } from 'express';
+import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
-import { JwtAuthGuard } from './guards/jwt-auth.guard';
+import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
