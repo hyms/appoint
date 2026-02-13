@@ -1,6 +1,6 @@
 <template>
   <v-text-field
-    v-model="modelValue"
+    v-model="value"
     :label="label"
     :type="type"
     :required="required"
@@ -15,13 +15,14 @@
     :loading="loading"
     :placeholder="placeholder"
     class="base-input"
-    @input="$emit('update:modelValue', $event.target.value)"
     @blur="$emit('blur', $event)"
     @focus="$emit('focus', $event)"
   />
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue'
+
 interface Props {
   modelValue?: string
   label?: string
@@ -39,7 +40,7 @@ interface Props {
   placeholder?: string
 }
 
-withDefaults(defineProps<Props>(), {
+const props = withDefaults(defineProps<Props>(), {
   type: 'text',
   required: false,
   clearable: false,
@@ -47,7 +48,16 @@ withDefaults(defineProps<Props>(), {
   loading: false,
 })
 
-defineEmits(['update:modelValue', 'blur', 'focus'])
+const emit = defineEmits<{
+  'update:modelValue': [value: string]
+  'blur': [event: FocusEvent]
+  'focus': [event: FocusEvent]
+}>()
+
+const value = computed({
+  get: () => props.modelValue || '',
+  set: (val: string) => emit('update:modelValue', val)
+})
 </script>
 
 <style scoped>
