@@ -1,74 +1,54 @@
-# Development Backlog - Appointments 360 (v1 Stabilization)
+# Development Backlog - Appointments 360 (v1 Deployment & Testing)
 
-This backlog focuses on refining the MVP 1 to ensure it is production-ready before moving to intelligent features.
+## ✅ Milestone 1 - 4: (COMPLETED)
 
-## ✅ Milestone 1: Environment & Project Scaffolding (COMPLETED)
-
--   \[x\] **Task 1.1:** NestJS /backend initialization.
-    
--   \[x\] **Task 1.2:** Vue 3 /frontend with Vuetify 3 & i18n.
-    
--   \[x\] **Task 1.3:** Docker Compose setup (Dev/Prod).
-    
--   \[x\] **Task 1.4:** Prisma ORM & PostgreSQL connection.
+-   [x] Base Scaffolding, Logic, and UI.
     
 
-## ✅ Milestone 2: Core Data Modeling & Security (COMPLETED)
+## ✅ Milestone 5 - 7: (COMPLETED)
 
--   \[x\] **Task 2.1:** Prisma Schema migration (Users, Appointments, Locations).
-    
--   \[x\] **Task 2.2:** JWT Auth & RBAC implementation.
-    
--   \[x\] **Task 2.3:** Magic Link validation for WhatsApp.
+-   [x] Refinement, Security Hardening, and Code Audit.
     
 
-## ✅ Milestone 3: Availability Engine & Business Logic (COMPLETED)
+## ✅ Milestone 8: Testing & 80% Coverage (Quality Gate)
 
--   \[x\] **Task 3.1:** Slot Generator engine.
+-   [x] **Task 8.1:** **Unit Tests:** Focus on `SlotGenerator`, `StrikeService`, and `AuthService`.
     
--   \[x\] **Task 3.2:** Emergency Kill Switch & mass notifications.
+-   [x] **Task 8.2:** **Integration Tests:** End-to-end booking flow.
     
--   \[x\] **Task 3.3:** Strike System & 2-day auto-blocking.
-    
-
-## ✅ Milestone 4: Frontend Development (COMPLETED)
-
--   \[x\] **Task 4.1:** i18n configuration (es/en).
-    
--   \[x\] **Task 4.2:** Admin/Secretary Dashboard.
-    
--   \[x\] **Task 4.3:** Mobile-First Booking Flow.
+-   [x] **Task 8.3:** **Coverage Policy:** Configure CI/CD to block deployments if coverage < 80%.
     
 
-## 🛠️ Milestone 5: V1 Refinement & Stabilization (CURRENT)
+## ✅ Milestone 9: Prototyping Deployment (Self-Hosted Droplet)
 
--   \[ \] **Task 5.1:** **Secretary Call Protocol:** Update `AppointmentStatus` to include `VOICE_VERIFIED`. Add a "Call & Verify" button in the Secretary Dashboard.
+-   [x] **Task 9.1:** **Server Management Setup:**
     
--   \[ \] **Task 5.2:** **Strict Overbooking Limit:** Backend interceptor to enforce "Max 2 Overbooks per day" and UI warnings.
-    
--   \[ \] **Task 5.3:** **Manual QR Flow Audit:** Improve image preview and add "Reject with Reason" flow for payments.
-    
--   \[ \] **Task 5.4:** **Emergency Kill Switch Polish:** Implement BullMQ or similar for reliable mass messaging.
-    
-
-## 🛡️ Milestone 6: Hardened Authentication & Anti-DoS
-
--   \[ \] **Task 6.1:** **Login Brute Force Protection:** - Implement a cooldown mechanism after 5 failed login attempts (e.g., block user/IP for 15 minutes).
-    
-    -   Store failed attempts in Redis for high-performance tracking.
+    -   [x] Install **Portainer CE** via Docker to manage the server (Visual UI for logs, containers, and stats).
         
--   \[ \] **Task 6.2:** **API Rate Limiting:** - Configure `@nestjs/throttler` to limit requests per IP across all sensitive endpoints (`/auth/login`, `/auth/magic-link`).
+    -   [x] Configure **UFW (Uncomplicated Firewall)** to only allow ports 80, 443, and 9443 (Portainer).
+        
+-   [x] **Task 9.2:** **Backend & Frontend Dockerization:**
     
--   \[ \] **Task 6.3:** **Account Lockout Notifications:** - Notify the user via WhatsApp/Email if their account has been temporarily locked due to multiple failed attempts.
+    -   [x] Configure `docker-compose.prod.yml` with log rotation (max 10MB) to save disk space.
+        
+    -   [x] Setup **Nginx Proxy Manager** (or Caddy) to handle SSL (HTTPS) automatically.
+        
+-   [x] **Task 9.3:** **Database Performance:**
     
--   \[ \] **Task 6.4:** **Advanced Security Headers:** - Configure `helmet` and CORS policies to prevent common web vulnerabilities (XSS, Clickjacking).
+    -   [x] Deploy PostgreSQL Alpine image or connect to Supabase Cloud.
+        
+    -   [x] If local: Setup a daily Cron Job for DB Backups to a remote storage (e.g., S3 or Mega).
+        
+-   [x] **Task 9.4:** **Automated Cleanup:**
+    
+    -   [x] Add a Cron Job to run `docker system prune -f` weekly to reclaim space from the 20GB disk.
+        
+
+## 🛡️ Milestone 10: Server Hardening
+
+-   [ ] **Task 10.1:** Disable SSH password login (use SSH Keys only).
+    
+-   [ ] **Task 10.2:** Install **Fail2Ban** to protect against brute force on the SSH port.
     
 
-## 📅 Roadmap (Future Versions)
-
--   **v1.1:** Gemini 2.0 Flash Integration for Natural Language Booking.
-    
--   **v2.0:** Automatic Payment Gateway & E-Invoicing.
-    
-
-_Status: Hardening security and refining MVP 1._
+_Status: Production deployment configuration complete. Ready for deployment!_
