@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
 import { SlotService } from './services/slot.service';
-import { GenerateSlotsDto, BlockSlotDto } from './dto/slot.dto';
+import { GenerateSlotsDto, BlockSlotDto, UpdateSlotDto } from './dto/slot.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -9,6 +9,50 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller('slots')
 export class SlotController {
   constructor(private readonly slotService: SlotService) {}
+
+  // ============ ADMIN CRUD ============
+  
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAllSlots(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('professionalId') professionalId?: string,
+    @Query('date') date?: string,
+    @Query('isBooked') isBooked?: string,
+  ) {
+    return this.slotService.getAllSlots({
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      professionalId,
+      date,
+      isBooked: isBooked === 'true' ? true : isBooked === 'false' ? false : undefined,
+    });
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getSlotById(@Param('id') id: string) {
+    return this.slotService.getSlotById(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async updateSlot(@Param('id') id: string, @Body() dto: UpdateSlotDto) {
+    return this.slotService.updateSlot(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async deleteSlot(@Param('id') id: string) {
+    return this.slotService.deleteSlot(id);
+  }
+
+  // ============ EXISTING ENDPOINTS ============
 
   @Post('generate')
   @UseGuards(JwtAuthGuard, RolesGuard)

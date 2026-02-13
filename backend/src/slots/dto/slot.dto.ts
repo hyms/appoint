@@ -58,3 +58,17 @@ export class BlockSlotDto {
   @IsString()
   reason?: string;
 }
+
+export class UpdateSlotDto {
+  @IsOptional()
+  @IsBoolean()
+  isBooked?: boolean;
+
+  @IsOptional()
+  @IsBoolean()
+  isBlocked?: boolean;
+
+  @IsOptional()
+  @IsString()
+  blockReason?: string;
+}

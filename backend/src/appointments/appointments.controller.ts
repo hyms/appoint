@@ -1,6 +1,6 @@
-import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards } from '@nestjs/common';
+import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards, Delete } from '@nestjs/common';
 import { AppointmentsService } from './services/appointment.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto } from './dto/appointment.dto';
+import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto, UpdateAppointmentDto } from './dto/appointment.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -9,6 +9,57 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 @Controller('appointments')
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
+
+  // ============ ADMIN CRUD ============
+
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAllAppointments(
+    @Query('page') page?: string,
+    @Query('limit') limit?: string,
+    @Query('status') status?: string,
+    @Query('patientId') patientId?: string,
+    @Query('professionalId') professionalId?: string,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.appointmentsService.getAllAppointments({
+      page: page ? parseInt(page) : 1,
+      limit: limit ? parseInt(limit) : 20,
+      status,
+      patientId,
+      professionalId,
+      startDate,
+      endDate,
+    });
+  }
+
+  @Get(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getAppointmentByIdAdmin(@Param('id') id: string) {
+    return this.appointmentsService.getAppointmentByIdAdmin(id);
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async updateAppointment(
+    @Param('id') id: string,
+    @Body() dto: UpdateAppointmentDto,
+  ) {
+    return this.appointmentsService.updateAppointment(id, dto);
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async deleteAppointment(@Param('id') id: string) {
+    return this.appointmentsService.deleteAppointment(id);
+  }
+
+  // ============ EXISTING ENDPOINTS ============
 
   @Post()
   @UseGuards(JwtAuthGuard)

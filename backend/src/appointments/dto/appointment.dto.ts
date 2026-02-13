@@ -33,3 +33,29 @@ export class CancelAppointmentDto {
   @IsString()
   reason: string;
 }
+
+export class UpdateAppointmentDto {
+  @IsOptional()
+  @IsString()
+  patientId?: string;
+
+  @IsOptional()
+  @IsString()
+  professionalId?: string;
+
+  @IsOptional()
+  @IsString()
+  slotId?: string;
+
+  @IsOptional()
+  @IsString()
+  locationId?: string;
+
+  @IsOptional()
+  @IsDateString()
+  date?: string;
+
+  @IsOptional()
+  @IsString()
+  notes?: string;
+}

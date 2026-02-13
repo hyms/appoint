@@ -1,10 +1,101 @@
 import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { GenerateSlotsDto, BlockSlotDto } from '../dto/slot.dto';
+import { GenerateSlotsDto, BlockSlotDto, UpdateSlotDto } from '../dto/slot.dto';
 
 @Injectable()
 export class SlotService {
   constructor(private prisma: PrismaService) {}
+
+  // ============ ADMIN CRUD ============
+
+  async getAllSlots(params: {
+    page: number;
+    limit: number;
+    professionalId?: string;
+    date?: string;
+    isBooked?: boolean;
+  }) {
+    const { page, limit, professionalId, date, isBooked } = params;
+    const skip = (page - 1) * limit;
+
+    const where: any = {};
+    if (professionalId) where.professionalId = professionalId;
+    if (date) where.date = new Date(date);
+    if (isBooked !== undefined) where.isBooked = isBooked;
+
+    const [slots, total] = await Promise.all([
+      this.prisma.slot.findMany({
+        where,
+        skip,
+        take: limit,
+        orderBy: { date: 'desc' },
+        include: {
+          professional: { include: { profile: true } },
+          location: true,
+        },
+      }),
+      this.prisma.slot.count({ where }),
+    ]);
+
+    return {
+      data: slots,
+      meta: {
+        total,
+        page,
+        limit,
+        totalPages: Math.ceil(total / limit),
+      },
+    };
+  }
+
+  async getSlotById(id: string) {
+    const slot = await this.prisma.slot.findUnique({
+      where: { id },
+      include: {
+        professional: { include: { profile: true } },
+        location: true,
+        appointment: true,
+      },
+    });
+
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    return slot;
+  }
+
+  async updateSlot(id: string, dto: UpdateSlotDto) {
+    const slot = await this.prisma.slot.findUnique({ where: { id } });
+
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    return this.prisma.slot.update({
+      where: { id },
+      data: dto,
+      include: {
+        professional: { include: { profile: true } },
+      },
+    });
+  }
+
+  async deleteSlot(id: string) {
+    const slot = await this.prisma.slot.findUnique({ where: { id } });
+
+    if (!slot) {
+      throw new NotFoundException('Slot not found');
+    }
+
+    if (slot.isBooked) {
+      throw new BadRequestException('Cannot delete a booked slot');
+    }
+
+    await this.prisma.slot.delete({ where: { id } });
+
+    return { message: 'Slot deleted successfully' };
+  }
 
   async generateSlots(dto: GenerateSlotsDto) {
     const professional = await this.prisma.user.findUnique({

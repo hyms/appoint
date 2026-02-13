@@ -184,3 +184,40 @@ model Payment {
 
   appointment Appointment @relation(fields: [appointmentId], references: [id])
 }
+
+model NotificationSettings {
+  id                  String   @id @default(uuid())
+  
+  // Email settings
+  emailEnabled        Boolean  @default(true)
+  emailFrom           String?
+  emailFromName       String?
+  
+  // SMS/Twilio settings
+  smsEnabled          Boolean  @default(false)
+  twilioAccountSid   String?
+  twilioAuthToken    String?
+  twilioPhoneNumber  String?
+  
+  // WhatsApp settings
+  whatsappEnabled     Boolean  @default(false)
+  whatsappPhoneId    String?
+  whatsappToken      String?
+  
+  // Telegram settings
+  telegramEnabled     Boolean  @default(false)
+  telegramBotToken   String?
+  telegramChatId     String?
+  
+  // Notification preferences
+  notifyAppointmentReminder Boolean @default(true)
+  notifyAppointmentConfirmation Boolean @default(true)
+  notifyAppointmentCancellation Boolean @default(true)
+  notifyEmergency Boolean @default(true)
+  
+  reminderHoursBefore Int @default(24)
+  
+  isActive            Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+}
