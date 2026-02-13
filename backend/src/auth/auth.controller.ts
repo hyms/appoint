@@ -1,4 +1,5 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus } from '@nestjs/common';
+import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus, Req, Ip } from '@nestjs/common';
+import { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
@@ -15,14 +16,25 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  async login(@Body() loginDto: LoginDto) {
-    return this.authService.login(loginDto);
+  async login(
+    @Body() loginDto: LoginDto,
+    @Ip() ip: string,
+    @Req() req: Request,
+  ) {
+    // Use forwarded IP if behind proxy, otherwise use direct IP
+    const clientIp = (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
+    return this.authService.login(loginDto, clientIp);
   }
 
   @Post('magic-link')
   @HttpCode(HttpStatus.OK)
-  async generateMagicLink(@Body() magicLinkDto: MagicLinkDto) {
-    return this.authService.generateMagicLink(magicLinkDto);
+  async generateMagicLink(
+    @Body() magicLinkDto: MagicLinkDto,
+    @Ip() ip: string,
+    @Req() req: Request,
+  ) {
+    const clientIp = (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
+    return this.authService.generateMagicLink(magicLinkDto, clientIp);
   }
 
   @Post('magic-link/validate')

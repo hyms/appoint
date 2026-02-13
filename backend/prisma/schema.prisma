@@ -16,6 +16,7 @@ enum UserRole {
 enum AppointmentStatus {
   PENDING
   CONFIRMED
+  VOICE_VERIFIED
   COMPLETED
   CANCELLED
   NO_SHOW
@@ -88,6 +89,11 @@ model Appointment {
   location      Location? @relation(fields: [locationId], references: [id])
   slot          Slot?     @relation(fields: [slotId], references: [id])
   payment       Payment?
+
+  @@index([date])
+  @@index([patientId, date])
+  @@index([professionalId, date])
+  @@index([status])
 }
 
 model Location {
@@ -121,6 +127,9 @@ model Slot {
   appointment     Appointment?
 
   @@unique([professionalId, date, startTime])
+  @@index([date])
+  @@index([professionalId, date])
+  @@index([isBooked, isBlocked])
 }
 
 model Strike {

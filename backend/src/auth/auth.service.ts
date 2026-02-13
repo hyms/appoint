@@ -1,7 +1,8 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { PrismaService } from '../prisma/prisma.service';
+import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
 import { UserRole } from '@prisma/client';
 
@@ -10,6 +11,7 @@ export class AuthService {
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
+    private bruteForceProtection: BruteForceProtectionService,
   ) {}
 
   async register(registerDto: RegisterDto) {
@@ -48,13 +50,22 @@ export class AuthService {
     };
   }
 
-  async login(loginDto: LoginDto) {
+  async login(loginDto: LoginDto, ipAddress: string) {
+    // Check if IP is blocked
+    if (this.bruteForceProtection.isBlocked(ipAddress)) {
+      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      throw new ForbiddenException(
+        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`
+      );
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { email: loginDto.email },
       include: { profile: true },
     });
 
     if (!user) {
+      this.bruteForceProtection.recordFailedAttempt(ipAddress);
       throw new UnauthorizedException('Invalid credentials');
     }
 
@@ -69,8 +80,15 @@ export class AuthService {
     const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
 
     if (!isPasswordValid) {
-      throw new UnauthorizedException('Invalid credentials');
+      this.bruteForceProtection.recordFailedAttempt(ipAddress);
+      const remainingAttempts = this.bruteForceProtection.getRemainingAttempts(ipAddress);
+      throw new UnauthorizedException(
+        `Invalid credentials. ${remainingAttempts} attempts remaining.`
+      );
     }
+
+    // Clear attempts on successful login
+    this.bruteForceProtection.clearAttempts(ipAddress);
 
     const token = this.generateToken(user.id, user.email, user.role);
 
@@ -80,12 +98,21 @@ export class AuthService {
     };
   }
 
-  async generateMagicLink(magicLinkDto: MagicLinkDto) {
+  async generateMagicLink(magicLinkDto: MagicLinkDto, ipAddress: string) {
+    // Check if IP is blocked
+    if (this.bruteForceProtection.isBlocked(ipAddress)) {
+      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      throw new ForbiddenException(
+        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`
+      );
+    }
+
     const user = await this.prisma.user.findUnique({
       where: { phone: magicLinkDto.phone },
     });
 
     if (!user) {
+      this.bruteForceProtection.recordFailedAttempt(ipAddress);
       throw new BadRequestException('User not found with this phone number');
     }
 

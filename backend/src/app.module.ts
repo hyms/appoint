@@ -1,4 +1,6 @@
 import { Module } from '@nestjs/common';
+import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { AuthModule } from './auth/auth.module';
@@ -13,6 +15,22 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
+    // Rate limiting - Anti DDoS protection
+    ThrottlerModule.forRoot({
+      throttlers: [
+        {
+          // General API rate limit: 100 requests per minute
+          ttl: 60000,
+          limit: 100,
+        },
+        {
+          // Strict limit for auth endpoints: 5 requests per minute
+          name: 'auth',
+          ttl: 60000,
+          limit: 5,
+        },
+      ],
+    }),
     AuthModule,
     SlotsModule,
     AppointmentsModule,
@@ -23,6 +41,14 @@ import { PrismaService } from './prisma/prisma.service';
     CronModule,
   ],
   controllers: [AppController],
-  providers: [AppService, PrismaService],
+  providers: [
+    AppService,
+    PrismaService,
+    // Apply rate limiting globally
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
+  ],
 })
 export class AppModule {}
