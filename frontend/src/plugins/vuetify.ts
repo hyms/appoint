@@ -19,6 +19,7 @@ export default createVuetify({
     defaultTheme: 'light',
     themes: {
       light: {
+        dark: false,
         colors: {
           primary: '#1976D2',
           secondary: '#424242',
@@ -27,9 +28,12 @@ export default createVuetify({
           info: '#2196F3',
           success: '#4CAF50',
           warning: '#FFC107',
+          background: '#F5F5F5',
+          surface: '#FFFFFF',
         },
       },
       dark: {
+        dark: true,
         colors: {
           primary: '#2196F3',
           secondary: '#424242',
@@ -38,8 +42,51 @@ export default createVuetify({
           info: '#2196F3',
           success: '#4CAF50',
           warning: '#FB8C00',
+          background: '#121212',
+          surface: '#1E1E1E',
         },
       },
+    },
+  },
+  defaults: {
+    global: {
+      ripple: true,
+    },
+    VBtn: {
+      variant: 'elevated',
+      rounded: 'lg',
+      elevation: 1,
+    },
+    VCard: {
+      variant: 'elevated',
+      rounded: 'xl',
+      elevation: 2,
+    },
+    VTextField: {
+      variant: 'outlined',
+      density: 'comfortable',
+      hideDetails: 'auto',
+    },
+    VSelect: {
+      variant: 'outlined',
+      density: 'comfortable',
+      hideDetails: 'auto',
+    },
+    VListItem: {
+      rounded: 'lg',
+    },
+    VChip: {
+      rounded: 'pill',
+    },
+  },
+  display: {
+    mobileBreakpoint: 'sm',
+    thresholds: {
+      xs: 0,
+      sm: 600,
+      md: 960,
+      lg: 1280,
+      xl: 1920,
     },
   },
 })
