@@ -25,7 +25,7 @@ import { CurrentUser } from '../auth/decorators/current-user.decorator';
 export class AppointmentsController {
   constructor(private readonly appointmentsService: AppointmentsService) {}
 
-  // ============ ADMIN CRUD ============
+  // ============ ADMIN CRUD - List All ============
 
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -49,6 +49,59 @@ export class AppointmentsController {
       endDate,
     });
   }
+
+  // ============ PATIENT ENDPOINTS - Specific routes first ============
+
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  async getMyAppointments(@CurrentUser() user: any) {
+    return this.appointmentsService.getPatientAppointments(user.id);
+  }
+
+  @Get('upcoming')
+  @UseGuards(JwtAuthGuard)
+  async getUpcoming(@CurrentUser() user: any) {
+    return this.appointmentsService.getUpcomingAppointments(user.id, user.role);
+  }
+
+  // ============ ADMIN/SECRETARY/PROFESSIONAL ENDPOINTS ============
+
+  @Get('patient/:patientId')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
+  async getPatientAppointments(@Param('patientId') patientId: string) {
+    return this.appointmentsService.getPatientAppointments(patientId);
+  }
+
+  @Get('professional')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
+  async getProfessionalAppointments(
+    @CurrentUser() user: any,
+    @Query('startDate') startDate?: string,
+    @Query('endDate') endDate?: string,
+  ) {
+    return this.appointmentsService.getProfessionalAppointments(
+      user.id,
+      startDate,
+      endDate,
+    );
+  }
+
+  // ============ CRUD OPERATIONS ============
+
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: any) {
+    const patientId = dto.patientId || user.id;
+    return this.appointmentsService.createAppointment(
+      { ...dto, patientId },
+      user.id,
+      user.role,
+    );
+  }
+
+  // ============ ADMIN BY ID - Must be after specific routes ============
 
   @Get(':id')
   @UseGuards(JwtAuthGuard, RolesGuard)
@@ -74,52 +127,7 @@ export class AppointmentsController {
     return this.appointmentsService.deleteAppointment(id);
   }
 
-  // ============ EXISTING ENDPOINTS ============
-
-  @Post()
-  @UseGuards(JwtAuthGuard)
-  async create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: any) {
-    const patientId = dto.patientId || user.id;
-    return this.appointmentsService.createAppointment(
-      { ...dto, patientId },
-      user.id,
-      user.role,
-    );
-  }
-
-  @Get('upcoming')
-  @UseGuards(JwtAuthGuard)
-  async getUpcoming(@CurrentUser() user: any) {
-    return this.appointmentsService.getUpcomingAppointments(user.id, user.role);
-  }
-
-  @Get('patient/:patientId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
-  async getPatientAppointments(@Param('patientId') patientId: string) {
-    return this.appointmentsService.getPatientAppointments(patientId);
-  }
-
-  @Get('professional')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
-  async getProfessionalAppointments(
-    @CurrentUser() user: any,
-    @Query('startDate') startDate?: string,
-    @Query('endDate') endDate?: string,
-  ) {
-    return this.appointmentsService.getProfessionalAppointments(
-      user.id,
-      startDate,
-      endDate,
-    );
-  }
-
-  @Get(':id')
-  @UseGuards(JwtAuthGuard)
-  async getById(@Param('id') id: string, @CurrentUser() user: any) {
-    return this.appointmentsService.getAppointmentById(id, user.id, user.role);
-  }
+  // ============ OTHER OPERATIONS ============
 
   @Patch(':id/status')
   @UseGuards(JwtAuthGuard, RolesGuard)

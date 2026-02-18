@@ -56,6 +56,12 @@ export class PaymentsController {
     return this.paymentsService.getPaymentsList({ status, patientId });
   }
 
+  @Get('my')
+  @UseGuards(JwtAuthGuard)
+  async getMyPayments(@CurrentUser() user: any) {
+    return this.paymentsService.getPaymentsByUser(user.id);
+  }
+
   @Post(':paymentId/verify')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SECRETARY')

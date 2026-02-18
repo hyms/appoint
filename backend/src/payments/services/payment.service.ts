@@ -123,6 +123,23 @@ export class PaymentsService {
     });
   }
 
+  async getPaymentsByUser(userId: string) {
+    return this.prisma.payment.findMany({
+      where: {
+        appointment: { patientId: userId },
+      },
+      include: {
+        appointment: {
+          include: {
+            patient: { include: { profile: true } },
+            professional: { include: { profile: true } },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+  }
+
   async verifyPayment(
     paymentId: string,
     dto: VerifyPaymentDto,

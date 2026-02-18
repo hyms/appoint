@@ -234,7 +234,7 @@ onMounted(async () => {
 
 async function loadAppointments() {
   try {
-    const allAppointments = await appointmentsService.getPatientAppointments(authStore.user?.id || '')
+    const allAppointments = await appointmentsService.getMyAppointments()
     const now = new Date()
     upcomingAppointments.value = allAppointments.filter((a: Appointment) => 
       new Date(a.date) >= now && a.status !== 'CANCELLED'
@@ -251,7 +251,7 @@ async function loadAppointments() {
 async function loadPaymentRecords() {
   loadingPayments.value = true
   try {
-    paymentRecords.value = await paymentsService.getPaymentsList()
+    paymentRecords.value = await paymentsService.getMyPayments()
   } catch (error) {
     console.error('Failed to load payments:', error)
   } finally {

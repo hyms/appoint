@@ -69,6 +69,12 @@ export const appointmentsService = {
     return response.data
   },
 
+  // Patient's own appointments
+  async getMyAppointments() {
+    const response = await api.get('/appointments/my')
+    return response.data
+  },
+
   // Existing methods
   async getUpcoming() {
     const response = await api.get('/appointments/upcoming')

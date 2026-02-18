@@ -35,6 +35,11 @@ export const paymentsService = {
     return response.data
   },
 
+  async getMyPayments(): Promise<QRPayment[]> {
+    const response = await api.get('/payments/my')
+    return response.data
+  },
+
   async verifyPayment(paymentId: string, status: 'VERIFIED' | 'REJECTED'): Promise<QRPayment> {
     const response = await api.post(`/payments/${paymentId}/verify`, { status })
     return response.data
