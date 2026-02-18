@@ -134,7 +134,8 @@ async function generateQR() {
   }
 }
 
-function previewImage(file: File) {
+function previewImage(files: File | File[] | null) {
+  const file = Array.isArray(files) ? files[0] : files
   if (file) {
     previewUrl.value = URL.createObjectURL(file)
   }
