@@ -67,6 +67,34 @@ export const appointmentsService = {
 }
 
 export const slotsService = {
+  // Admin CRUD
+  async getAll(params?: { page?: number; limit?: number; professionalId?: string; date?: string; isBooked?: boolean }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.professionalId) queryParams.append('professionalId', params.professionalId)
+    if (params?.date) queryParams.append('date', params.date)
+    if (params?.isBooked !== undefined) queryParams.append('isBooked', params.isBooked.toString())
+    const response = await api.get(`/slots?${queryParams}`)
+    return response.data
+  },
+
+  async getById(id: string) {
+    const response = await api.get(`/slots/${id}`)
+    return response.data
+  },
+
+  async update(id: string, data: { isBooked?: boolean; isBlocked?: boolean; blockReason?: string }) {
+    const response = await api.patch(`/slots/${id}`, data)
+    return response.data
+  },
+
+  async delete(id: string) {
+    const response = await api.delete(`/slots/${id}`)
+    return response.data
+  },
+
+  // Existing methods
   async generate(data: { professionalId: string; startDate: string; endDate: string; locationId?: string }) {
     const response = await api.post('/slots/generate', data)
     return response.data

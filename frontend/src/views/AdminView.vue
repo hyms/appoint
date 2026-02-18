@@ -52,31 +52,132 @@
 
       <v-window-item value="slots">
         <v-card>
-          <v-card-title>Slot Management</v-card-title>
+          <v-card-title class="d-flex justify-space-between align-center">
+            <span>Slot Management</span>
+            <v-btn color="primary" size="small" @click="openGenerateDialog">
+              Generate Slots
+            </v-btn>
+          </v-card-title>
           <v-card-text>
-            <v-row>
-              <v-col cols="12" md="4">
+            <v-row class="mb-4">
+              <v-col cols="12" md="3">
                 <v-text-field
-                  v-model="slotStartDate"
-                  label="Start Date"
+                  v-model="slotFilters.date"
+                  label="Filter by Date"
                   type="date"
+                  density="compact"
+                  clearable
+                  @update:model-value="loadSlots"
                 />
               </v-col>
-              <v-col cols="12" md="4">
-                <v-text-field
-                  v-model="slotEndDate"
-                  label="End Date"
-                  type="date"
+              <v-col cols="12" md="3">
+                <v-select
+                  v-model="slotFilters.isBooked"
+                  label="Filter by Status"
+                  :items="slotStatusOptions"
+                  item-title="text"
+                  item-value="value"
+                  density="compact"
+                  clearable
+                  @update:model-value="loadSlots"
                 />
               </v-col>
-              <v-col cols="12" md="4">
-                <v-btn color="primary" @click="generateSlots" :loading="generating">
-                  Generate Slots
+              <v-col cols="12" md="6" class="d-flex align-center">
+                <v-spacer />
+                <v-btn color="primary" variant="text" @click="loadSlots" prepend-icon="mdi-refresh">
+                  Refresh
                 </v-btn>
               </v-col>
             </v-row>
+
+            <v-data-table
+              :headers="slotHeaders"
+              :items="slots"
+              :loading="slotsLoading"
+              :items-per-page="10"
+            >
+              <template v-slot:item.date="{ item }">
+                {{ formatDate(item.date) }}
+              </template>
+              <template v-slot:item.startTime="{ item }">
+                {{ formatTime(item.startTime) }}
+              </template>
+              <template v-slot:item.endTime="{ item }">
+                {{ formatTime(item.endTime) }}
+              </template>
+              <template v-slot:item.isBooked="{ item }">
+                <v-chip :color="item.isBooked ? 'warning' : 'success'" size="small">
+                  {{ item.isBooked ? 'Booked' : 'Available' }}
+                </v-chip>
+              </template>
+              <template v-slot:item.isBlocked="{ item }">
+                <v-chip :color="item.isBlocked ? 'error' : 'default'" size="small" :variant="item.isBlocked ? 'flat' : 'outlined'">
+                  {{ item.isBlocked ? 'Blocked' : 'Open' }}
+                </v-chip>
+              </template>
+              <template v-slot:item.actions="{ item }">
+                <v-btn
+                  v-if="!item.isBlocked"
+                  size="small"
+                  color="error"
+                  variant="tonal"
+                  @click="blockSlot(item)"
+                  :disabled="item.isBooked"
+                >
+                  Block
+                </v-btn>
+                <v-btn
+                  v-else
+                  size="small"
+                  color="success"
+                  variant="tonal"
+                  @click="unblockSlot(item)"
+                >
+                  Unblock
+                </v-btn>
+                <v-btn
+                  size="small"
+                  color="error"
+                  variant="text"
+                  icon="mdi-delete"
+                  @click="deleteSlot(item)"
+                  :disabled="item.isBooked"
+                />
+              </template>
+            </v-data-table>
           </v-card-text>
         </v-card>
+
+        <!-- Generate Slots Dialog -->
+        <v-dialog v-model="generateDialog" max-width="500">
+          <v-card>
+            <v-card-title>Generate Slots</v-card-title>
+            <v-card-text>
+              <v-text-field
+                v-model="generateData.professionalId"
+                label="Professional ID"
+                placeholder="Enter professional ID"
+              />
+              <v-text-field
+                v-model="generateData.startDate"
+                label="Start Date"
+                type="date"
+              />
+              <v-text-field
+                v-model="generateData.endDate"
+                label="End Date"
+                type="date"
+              />
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn @click="generateDialog = false">Cancel</v-btn>
+              <v-btn color="primary" @click="generateSlots" :loading="generatingSlots">
+                Generate
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
       </v-window-item>
 
       <v-window-item value="emergency">
@@ -138,19 +239,51 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { appointmentsService, emergencyService, strikesService, slotsService } from '@/services/appointments'
 
 const tab = ref('appointments')
 const loading = ref(false)
 const generating = ref(false)
 
+// Slots state
+const slots = ref<any[]>([])
+const slotsLoading = ref(false)
+const slotsMeta = ref({ total: 0, page: 1, limit: 10, totalPages: 0 })
+const slotFilters = reactive({
+  date: '',
+  isBooked: undefined as boolean | undefined
+})
+const slotStatusOptions = [
+  { text: 'Available', value: false },
+  { text: 'Booked', value: true }
+]
+const slotHeaders = [
+  { title: 'Date', key: 'date' },
+  { title: 'Start', key: 'startTime' },
+  { title: 'End', key: 'endTime' },
+  { title: 'Status', key: 'isBooked' },
+  { title: 'Blocked', key: 'isBlocked' },
+  { title: 'Professional', key: 'professional.email' },
+  { title: 'Actions', key: 'actions', sortable: false }
+]
+
+// Generate dialog
+const generateDialog = ref(false)
+const generatingSlots = ref(false)
+const generateData = reactive({
+  professionalId: '2c9ab7c4-5d4f-4edc-b93c-08bc3daa1b55',
+  startDate: '',
+  endDate: ''
+})
+
+// Legacy state
+const slotStartDate = ref('')
+const slotEndDate = ref('')
+
 const appointments = ref<any[]>([])
 const strikes = ref<any[]>([])
 const emergencyStatus = reactive({ isActive: false, message: '' })
-
-const slotStartDate = ref('')
-const slotEndDate = ref('')
 
 const appointmentHeaders = [
   { title: 'Date', key: 'date' },
@@ -169,6 +302,7 @@ const strikeHeaders = [
 
 onMounted(async () => {
   await loadData()
+  await loadSlots()
 })
 
 async function loadData() {
@@ -184,6 +318,87 @@ async function loadData() {
   } finally {
     loading.value = false
   }
+}
+
+async function loadSlots() {
+  slotsLoading.value = true
+  try {
+    const params: any = { page: 1, limit: 20 }
+    if (slotFilters.date) params.date = slotFilters.date
+    if (slotFilters.isBooked !== undefined) params.isBooked = slotFilters.isBooked
+    
+    const response = await slotsService.getAll(params)
+    slots.value = response.data || response
+    slotsMeta.value = response.meta || { total: slots.value.length, page: 1, limit: 20, totalPages: 1 }
+  } catch (error) {
+    console.error('Failed to load slots:', error)
+  } finally {
+    slotsLoading.value = false
+  }
+}
+
+function openGenerateDialog() {
+  generateDialog.value = true
+}
+
+async function generateSlots() {
+  generatingSlots.value = true
+  try {
+    await slotsService.generate({
+      professionalId: generateData.professionalId,
+      startDate: generateData.startDate,
+      endDate: generateData.endDate
+    })
+    alert('Slots generated successfully')
+    generateDialog.value = false
+    await loadSlots()
+  } catch (error) {
+    alert('Failed to generate slots')
+  } finally {
+    generatingSlots.value = false
+  }
+}
+
+async function blockSlot(slot: any) {
+  const reason = prompt('Enter block reason:')
+  if (reason) {
+    try {
+      await slotsService.block(slot.id, reason)
+      await loadSlots()
+    } catch (error) {
+      alert('Failed to block slot')
+    }
+  }
+}
+
+async function unblockSlot(slot: any) {
+  try {
+    await slotsService.unblock(slot.id)
+    await loadSlots()
+  } catch (error) {
+    alert('Failed to unblock slot')
+  }
+}
+
+async function deleteSlot(slot: any) {
+  if (confirm(`Are you sure you want to delete the slot from ${formatDate(slot.date)}?`)) {
+    try {
+      await slotsService.delete(slot.id)
+      await loadSlots()
+    } catch (error) {
+      alert('Failed to delete slot')
+    }
+  }
+}
+
+function formatDate(dateStr: string) {
+  if (!dateStr) return ''
+  return new Date(dateStr).toLocaleDateString()
+}
+
+function formatTime(timeStr: string) {
+  if (!timeStr) return ''
+  return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 async function updateStatus(id: string, status: string) {
@@ -203,22 +418,6 @@ async function cancelAppointment(item: any) {
     } catch (error) {
       alert('Failed to cancel')
     }
-  }
-}
-
-async function generateSlots() {
-  generating.value = true
-  try {
-    await slotsService.generate({
-      professionalId: 'doctor@appointments360.com',
-      startDate: slotStartDate.value,
-      endDate: slotEndDate.value
-    })
-    alert('Slots generated successfully')
-  } catch (error) {
-    alert('Failed to generate slots')
-  } finally {
-    generating.value = false
   }
 }
 
