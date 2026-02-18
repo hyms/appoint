@@ -146,17 +146,39 @@ const drawerOpen = ref(true)
 const rail = ref(false)
 const activeTab = computed(() => route.path)
 
-const menuItems = computed(() => [
-  { to: '/dashboard', label: t('nav.dashboard'), icon: 'mdi-view-dashboard' },
-  { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
-  { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
-])
+const menuItems = computed(() => {
+  const items = [
+    { to: '/dashboard', label: t('nav.dashboard'), icon: 'mdi-view-dashboard' },
+    { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
+    { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
+  ]
+  
+  // Add professional config for professionals
+  if (authStore.user?.role === 'PROFESSIONAL') {
+    items.push({ to: '/professional-config', label: 'Configuración', icon: 'mdi-cog' })
+  }
+  
+  // Add admin panel for admins and secretaries
+  if (['ADMIN', 'SECRETARY'].includes(authStore.user?.role || '')) {
+    items.push({ to: '/admin', label: 'Admin', icon: 'mdi-shield-account' })
+  }
+  
+  return items
+})
 
-const bottomNavItems = computed(() => [
-  { to: '/dashboard', label: t('nav.dashboard'), icon: 'mdi-view-dashboard' },
-  { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
-  { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
-])
+const bottomNavItems = computed(() => {
+  const items = [
+    { to: '/dashboard', label: t('nav.dashboard'), icon: 'mdi-view-dashboard' },
+    { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
+    { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
+  ]
+  
+  if (authStore.user?.role === 'PROFESSIONAL') {
+    items.push({ to: '/professional-config', label: 'Config', icon: 'mdi-cog' })
+  }
+  
+  return items
+})
 
 function changeLocale(lang: string) {
   locale.value = lang

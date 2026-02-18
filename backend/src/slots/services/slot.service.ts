@@ -4,11 +4,15 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProfessionalConfigService } from '../../professional-config/professional-config.service';
 import { GenerateSlotsDto, BlockSlotDto, UpdateSlotDto } from '../dto/slot.dto';
 
 @Injectable()
 export class SlotService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ProfessionalConfigService,
+  ) {}
 
   // ============ ADMIN CRUD ============
 
@@ -156,16 +160,10 @@ export class SlotService {
   }
 
   private async getWorkingHoursForDay(
-    _professionalId: string,
+    professionalId: string,
     dayOfWeek: string,
   ) {
-    // Using default working hours - professional config can be added later
-    return {
-      dayOfWeek,
-      startTime: '09:00',
-      endTime: '17:00',
-      isActive: true,
-    };
+    return this.configService.getWorkingHoursForDay(professionalId, dayOfWeek);
   }
 
   private createSlotsForDay(

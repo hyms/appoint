@@ -45,6 +45,12 @@ const routes = [
     name: 'admin',
     component: () => import('@/views/AdminView.vue'),
     meta: { requiresAuth: true, roles: ['ADMIN', 'SECRETARY'] }
+  },
+  {
+    path: '/professional-config',
+    name: 'professional-config',
+    component: () => import('@/views/ProfessionalConfigView.vue'),
+    meta: { requiresAuth: true, roles: ['PROFESSIONAL'] }
   }
 ]
 

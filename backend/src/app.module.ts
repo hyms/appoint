@@ -12,6 +12,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { CronModule } from './cron/cron.module';
 import { NotificationSettingsModule } from './notification-settings/notification-settings.module';
+import { ProfessionalConfigModule } from './professional-config/professional-config.module';
 import { PrismaService } from './prisma/prisma.service';
 
 @Module({
@@ -35,6 +36,7 @@ import { PrismaService } from './prisma/prisma.service';
     NotificationsModule,
     CronModule,
     NotificationSettingsModule,
+    ProfessionalConfigModule,
   ],
   controllers: [AppController],
   providers: [

@@ -9,6 +9,7 @@
     <v-tabs v-model="tab" color="primary" class="mb-4">
       <v-tab value="appointments">Appointments</v-tab>
       <v-tab value="slots">Slots</v-tab>
+      <v-tab value="professionals">Profesionales</v-tab>
       <v-tab value="emergency">{{ $t('dashboard.emergencies') }}</v-tab>
       <v-tab value="strikes">Strikes</v-tab>
     </v-tabs>
@@ -410,6 +411,10 @@
         </v-card>
       </v-window-item>
 
+      <v-window-item value="professionals">
+        <ProfessionalConfigAdmin />
+      </v-window-item>
+
       <v-window-item value="strikes">
         <v-card>
           <v-card-title>Strike Management</v-card-title>
@@ -445,6 +450,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { appointmentsService, emergencyService, strikesService, slotsService } from '@/services/appointments'
+import ProfessionalConfigAdmin from '@/components/ProfessionalConfigAdmin.vue'
 
 const tab = ref('appointments')
 const loading = ref(false)
