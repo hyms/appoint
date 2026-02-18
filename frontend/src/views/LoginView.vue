@@ -62,7 +62,7 @@
 
           <!-- Divider -->
           <v-divider class="my-6">
-            <span class="text-caption text-medium-emphasis px-2">OR</span>
+            <span class="text-caption text-medium-emphasis px-2">{{ $t('common.or') }}</span>
           </v-divider>
 
           <!-- Magic Link Button -->
@@ -81,7 +81,7 @@
           <!-- Register Link -->
           <div class="text-center mt-6">
             <span class="text-body-2 text-medium-emphasis">
-              Don't have an account?
+              {{ $t('auth.dontHaveAccount') }}
             </span>
             <v-btn
               variant="text"

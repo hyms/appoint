@@ -1,6 +1,7 @@
 import { Injectable, UnauthorizedException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
+import * as crypto from 'crypto';
 import { PrismaService } from '../prisma/prisma.service';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
@@ -179,7 +180,7 @@ export class AuthService {
   }
 
   private generateRandomToken(): string {
-    return Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    return crypto.randomBytes(32).toString('hex');
   }
 
   private sanitizeUser(user: any) {

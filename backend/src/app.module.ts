@@ -30,6 +30,12 @@ import { PrismaService } from './prisma/prisma.service';
           ttl: 60000,
           limit: 5,
         },
+        {
+          // Very strict limit for magic-link: 3 requests per minute (prevent abuse)
+          name: 'magic-link',
+          ttl: 60000,
+          limit: 3,
+        },
       ],
     }),
     AuthModule,

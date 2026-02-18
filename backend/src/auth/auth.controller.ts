@@ -1,4 +1,5 @@
 import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus, Req, Ip } from '@nestjs/common';
+import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
@@ -6,6 +7,7 @@ import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
+@UseGuards(ThrottlerGuard)
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
@@ -16,6 +18,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ auth: { limit: 5, ttl: 60000 } })
   async login(
     @Body() loginDto: LoginDto,
     @Ip() ip: string,
@@ -28,6 +31,7 @@ export class AuthController {
 
   @Post('magic-link')
   @HttpCode(HttpStatus.OK)
+  @Throttle({ 'magic-link': { limit: 3, ttl: 60000 } })
   async generateMagicLink(
     @Body() magicLinkDto: MagicLinkDto,
     @Ip() ip: string,

@@ -49,6 +49,7 @@ model User {
   notifications     NotificationLog[]
   strikes           Strike[]          @relation("PatientStrikes")
   strikesBy         Strike[]          @relation("ProfessionalStrikes")
+  professionalConfig ProfessionalConfig?
 }
 
 model Profile {
@@ -107,6 +108,7 @@ model Location {
 
   slots        Slot[]
   appointments Appointment[]
+  professionalConfigs ProfessionalConfig[]
 }
 
 model Slot {
@@ -220,4 +222,21 @@ model NotificationSettings {
   isActive            Boolean  @default(true)
   createdAt          DateTime @default(now())
   updatedAt          DateTime @updatedAt
+}
+
+model ProfessionalConfig {
+  id                      String   @id @default(uuid())
+  professionalId          String   @unique
+  professional             User     @relation(fields: [professionalId], references: [id], onDelete: Cascade)
+  
+  slotDurationMinutes      Int      @default(30)
+  breakBetweenSlotsMinutes Int     @default(5)
+  
+  locationId              String?
+  location                Location? @relation(fields: [locationId], references: [id])
+  
+  workingHours            Json     @default("[{\"dayOfWeek\":\"MONDAY\",\"startTime\":\"09:00\",\"endTime\":\"17:00\",\"isActive\":true},{\"dayOfWeek\":\"TUESDAY\",\"startTime\":\"09:00\",\"endTime\":\"17:00\",\"isActive\":true},{\"dayOfWeek\":\"WEDNESDAY\",\"startTime\":\"09:00\",\"endTime\":\"17:00\",\"isActive\":true},{\"dayOfWeek\":\"THURSDAY\",\"startTime\":\"09:00\",\"endTime\":\"17:00\",\"isActive\":true},{\"dayOfWeek\":\"FRIDAY\",\"startTime\":\"09:00\",\"endTime\":\"17:00\",\"isActive\":true}]")
+  
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
 }

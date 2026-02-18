@@ -139,7 +139,14 @@ export class AppointmentsService {
     return { message: 'Appointment deleted successfully' };
   }
 
-  async createAppointment(dto: CreateAppointmentDto) {
+  async createAppointment(dto: CreateAppointmentDto, userId: string, userRole: string) {
+    // Validate patientId authorization
+    // Patients can only book for themselves
+    // Admin, Secretary, and Professional can book for any patient
+    if (dto.patientId !== userId && !['ADMIN', 'SECRETARY', 'PROFESSIONAL'].includes(userRole)) {
+      throw new ForbiddenException('You can only book appointments for yourself');
+    }
+
     const slot = await this.prisma.slot.findUnique({
       where: { id: dto.slotId },
     });

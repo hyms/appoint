@@ -64,10 +64,12 @@ export class AppointmentsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@Body() dto: CreateAppointmentDto, @CurrentUser() user: any) {
-    return this.appointmentsService.createAppointment({
-      ...dto,
-      patientId: dto.patientId || user.id,
-    });
+    const patientId = dto.patientId || user.id;
+    return this.appointmentsService.createAppointment(
+      { ...dto, patientId },
+      user.id,
+      user.role,
+    );
   }
 
   @Get('upcoming')

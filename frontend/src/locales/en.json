@@ -21,7 +21,22 @@
     "register": "Register",
     "logout": "Logout",
     "magicLink": "Send Magic Link",
-    "enterWithMagic": "Enter with Magic Link"
+    "enterWithMagic": "Enter with Magic Link",
+    "forgotPassword": "Forgot password?",
+    "dontHaveAccount": "Don't have an account?"
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "confirm": "Confirm",
+    "back": "Back",
+    "next": "Next",
+    "or": "OR"
   },
   "appointments": {
     "title": "My Appointments",
@@ -46,17 +61,5 @@
     "professionals": "Professionals",
     "appointments": "Appointments",
     "emergencies": "Emergency Button"
-  },
-  "common": {
-    "save": "Save",
-    "cancel": "Cancel",
-    "delete": "Delete",
-    "edit": "Edit",
-    "loading": "Loading...",
-    "error": "Error",
-    "success": "Success",
-    "confirm": "Confirm",
-    "back": "Back",
-    "next": "Next"
   }
 }

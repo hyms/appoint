@@ -21,7 +21,22 @@
     "register": "Registrarse",
     "logout": "Cerrar Sesión",
     "magicLink": "Enviar Enlace Mágico",
-    "enterWithMagic": "Entrar con Enlace Mágico"
+    "enterWithMagic": "Entrar con Enlace Mágico",
+    "forgotPassword": "¿Olvidaste tu contraseña?",
+    "dontHaveAccount": "¿No tienes cuenta?"
+  },
+  "common": {
+    "save": "Guardar",
+    "cancel": "Cancelar",
+    "delete": "Eliminar",
+    "edit": "Editar",
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito",
+    "confirm": "Confirmar",
+    "back": "Atrás",
+    "next": "Siguiente",
+    "or": "O"
   },
   "appointments": {
     "title": "Mis Citas",
@@ -46,17 +61,5 @@
     "professionals": "Profesionales",
     "appointments": "Citas",
     "emergencies": "Botón de Emergencia"
-  },
-  "common": {
-    "save": "Guardar",
-    "cancel": "Cancelar",
-    "delete": "Eliminar",
-    "edit": "Editar",
-    "loading": "Cargando...",
-    "error": "Error",
-    "success": "Éxito",
-    "confirm": "Confirmar",
-    "back": "Atrás",
-    "next": "Siguiente"
   }
 }

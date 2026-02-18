@@ -1,4 +1,4 @@
-import { Module } from '@nestjs/common';
+import { Module, UnauthorizedException } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { PassportModule } from '@nestjs/passport';
 import { AuthService } from './auth.service';
@@ -7,12 +7,19 @@ import { JwtStrategy } from './strategies/jwt.strategy';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { PrismaService } from '../prisma/prisma.service';
 
+const jwtSecret = process.env.JWT_SECRET;
+if (!jwtSecret) {
+  throw new UnauthorizedException('JWT_SECRET environment variable is not set');
+}
+
+const jwtExpiresIn = process.env.JWT_EXPIRES_IN || '7d';
+
 @Module({
   imports: [
     PassportModule.register({ defaultStrategy: 'jwt' }),
     JwtModule.register({
-      secret: process.env.JWT_SECRET || 'your-super-secret-jwt-key',
-      signOptions: { expiresIn: (process.env.JWT_EXPIRES_IN || '7d') as any },
+      secret: jwtSecret,
+      signOptions: { expiresIn: jwtExpiresIn as any },
     }),
   ],
   controllers: [AuthController],
