@@ -234,12 +234,20 @@ onMounted(async () => {
 
 async function loadAppointments() {
   try {
-    const allAppointments = await appointmentsService.getMyAppointments()
+    let allAppointments: Appointment[] = []
+    
+    // Use different endpoints based on user role
+    if (authStore.user?.role === 'PROFESSIONAL') {
+      allAppointments = await appointmentsService.getProfessionalAppointments()
+    } else {
+      allAppointments = await appointmentsService.getMyAppointments()
+    }
+    
     const now = new Date()
-    upcomingAppointments.value = allAppointments.filter((a: Appointment) => 
+    upcomingAppointments.value = allAppointments.filter((a: Appointment) =>
       new Date(a.date) >= now && a.status !== 'CANCELLED'
     )
-    pastAppointments.value = allAppointments.filter((a: Appointment) => 
+    pastAppointments.value = allAppointments.filter((a: Appointment) =>
       new Date(a.date) < now || a.status === 'CANCELLED'
     )
     await loadPaymentRecords()
