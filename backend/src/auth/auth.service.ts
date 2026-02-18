@@ -199,4 +199,19 @@ export class AuthService {
     const { passwordHash, magicToken, magicExpiresAt, ...sanitized } = user;
     return sanitized;
   }
+
+  async getUsers(role?: string) {
+    const where: any = {};
+    if (role) {
+      where.role = role;
+    }
+
+    const users = await this.prisma.user.findMany({
+      where,
+      include: { profile: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users.map(user => this.sanitizeUser(user));
+  }
 }

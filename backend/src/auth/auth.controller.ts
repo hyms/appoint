@@ -3,6 +3,7 @@ import {
   Post,
   Body,
   Get,
+  Query,
   UseGuards,
   HttpCode,
   HttpStatus,
@@ -14,6 +15,8 @@ import type { Request } from 'express';
 import { AuthService } from './auth.service';
 import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
+import { RolesGuard } from '../auth/guards/roles.guard';
+import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
 
 @Controller('auth')
@@ -63,5 +66,12 @@ export class AuthController {
   @UseGuards(JwtAuthGuard)
   async getCurrentUser(@CurrentUser() user: any) {
     return user;
+  }
+
+  @Get('users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SECRETARY')
+  async getUsers(@Query('role') role?: string) {
+    return this.authService.getUsers(role);
   }
 }
