@@ -23,6 +23,7 @@
           item-value="id"
           label="Choose your doctor"
           prepend-inner-icon="mdi-doctor"
+          :loading="loadingProfessionals"
           @update:modelValue="onProfessionalSelect"
         />
       </v-card-text>
@@ -135,6 +136,7 @@ import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { appointmentsService, slotsService, type Slot } from '@/services/appointments'
+import api from '@/services/api'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -148,6 +150,7 @@ const selectedSlot = ref<Slot | null>(null)
 const notes = ref('')
 const booking = ref(false)
 const loadingSlots = ref(false)
+const loadingProfessionals = ref(false)
 
 const minDate = computed(() => new Date())
 const maxDate = computed(() => {
@@ -162,19 +165,35 @@ const selectedProfessionalName = computed(() => {
 })
 
 onMounted(async () => {
-  // Load professional from database
-  professionals.value = [
-    { id: '2c9ab7c4-5d4f-4edc-b93c-08bc3daa1b55', label: 'Dr. Test - Professional' }
-  ]
-  
-  // Auto-select first professional
-  if (professionals.value.length > 0) {
-    selectedProfessional.value = professionals.value[0].id
-  }
+  await loadProfessionals()
 })
+
+async function loadProfessionals() {
+  loadingProfessionals.value = true
+  try {
+    const response = await api.get('/auth/users?role=PROFESSIONAL')
+    professionals.value = response.data.map((u: any) => ({
+      id: u.id,
+      label: `Dr. ${u.profile?.firstName || ''} ${u.profile?.lastName || ''}`.trim()
+    }))
+    
+    // Auto-select first professional
+    if (professionals.value.length > 0) {
+      selectedProfessional.value = professionals.value[0].id
+    }
+  } catch (err) {
+    console.error('Failed to load professionals:', err)
+    error('Failed to load professionals')
+  } finally {
+    loadingProfessionals.value = false
+  }
+}
 
 function onProfessionalSelect() {
   console.log('Professional selected:', selectedProfessional.value)
+  // Reset slots when professional changes
+  availableSlots.value = []
+  selectedSlot.value = null
 }
 
 function onDateSelect() {
