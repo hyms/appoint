@@ -15,72 +15,109 @@ import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from '../auth/decorators/current-user.decorator';
 
 @Controller('strikes')
-export class StrikeController {
+@UseGuards(JwtAuthGuard)
+export class StrikesController {
   constructor(private readonly strikeService: StrikeService) {}
 
+  // Create strike - Professionals only
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async createStrike(@Body() dto: CreateStrikeDto, @CurrentUser() user: any) {
+  @Roles('PROFESSIONAL', 'ADMIN')
+  async createStrike(
+    @Body() dto: CreateStrikeDto,
+    @CurrentUser() user: any,
+  ) {
     return this.strikeService.createStrike(user.id, dto);
   }
 
-  @Get('patient/:patientId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async getPatientStrikes(@Param('patientId') patientId: string) {
-    return this.strikeService.getPatientStrikes(patientId);
+  // Get my strikes (as patient) - Any authenticated user
+  @Get('my')
+  async getMyStrikes(@CurrentUser() user: any) {
+    return this.strikeService.getMyStrikes(user.id);
   }
 
-  @Get('professional')
+  // Get strikes created by me (as professional) - Professionals only
+  @Get('professional/my')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async getProfessionalStrikes(@CurrentUser() user: any) {
+  @Roles('PROFESSIONAL')
+  async getMyProfessionalStrikes(@CurrentUser() user: any) {
     return this.strikeService.getProfessionalStrikes(user.id);
   }
 
-  @Post(':strikeId/resolve')
+  // Get strikes for a specific patient - Admin/Secretary/Professional (their own)
+  @Get('patient/:patientId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL')
+  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
+  async getPatientStrikes(
+    @Param('patientId') patientId: string,
+    @CurrentUser() user: any,
+  ) {
+    // If professional, only show strikes they created for this patient
+    if (user.role === 'PROFESSIONAL') {
+      return this.strikeService.getPatientStrikesWithProfessional(patientId, user.id);
+    }
+    // Admin/Secretary can see all
+    return this.strikeService.getAllStrikes({ patientId });
+  }
+
+  // Get all strikes - Admin/Secretary only
+  @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SECRETARY')
+  async getAllStrikes(
+    @Query('patientId') patientId?: string,
+    @Query('professionalId') professionalId?: string,
+  ) {
+    return this.strikeService.getAllStrikes({ patientId, professionalId });
+  }
+
+  // Resolve strike - Professional (own) or Admin
+  @Post(':strikeId/resolve')
   async resolveStrike(
     @Param('strikeId') strikeId: string,
     @Body() dto: ResolveStrikeDto,
     @CurrentUser() user: any,
   ) {
-    return this.strikeService.resolveStrike(strikeId, dto, user.id);
+    return this.strikeService.resolveStrike(strikeId, dto, user.id, user.role);
   }
 
-  @Get('check/:patientId')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async checkPatientBlocked(
+  // Check if patient is blocked with specific professional
+  @Get('check/:patientId/:professionalId')
+  async checkBlocked(
     @Param('patientId') patientId: string,
-    @Query('professionalId') professionalId?: string,
+    @Param('professionalId') professionalId: string,
   ) {
-    if (professionalId) {
-      return {
-        blocked: await this.strikeService.checkPatientBlocked(
-          patientId,
-          professionalId,
-        ),
-      };
-    }
-    return this.strikeService.isPatientBlockedForAny(patientId);
+    const blocked = await this.strikeService.checkPatientBlocked(
+      patientId,
+      professionalId,
+    );
+    return { blocked, patientId, professionalId };
   }
 
-  @Get('stats')
+  // Get stats - Professionals only (their own stats)
+  @Get('stats/my')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async getStats(@CurrentUser() user: any) {
+  @Roles('PROFESSIONAL')
+  async getMyStats(@CurrentUser() user: any) {
     return this.strikeService.getStrikeStats(user.id);
   }
 
-  @Post('cancel-appointments/:patientId')
+  // Cancel appointments due to strike - Professional or Admin
+  @Post('cancel-appointments/:patientId/:professionalId')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
-  async cancelAppointments(@Param('patientId') patientId: string) {
+  @Roles('PROFESSIONAL', 'ADMIN')
+  async cancelAppointments(
+    @Param('patientId') patientId: string,
+    @Param('professionalId') professionalId: string,
+    @CurrentUser() user: any,
+  ) {
+    // Professional can only cancel their own patient's appointments
+    if (user.role === 'PROFESSIONAL' && user.id !== professionalId) {
+      return { error: 'Can only cancel appointments for your own patients' };
+    }
     return this.strikeService.cancelUpcomingAppointmentsForBlockedPatient(
       patientId,
+      professionalId,
     );
   }
 }

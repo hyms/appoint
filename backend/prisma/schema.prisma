@@ -139,12 +139,18 @@ model Strike {
   patientId       String
   professionalId  String
   reason          String
+  resolution      String?
   strikeDate      DateTime @default(now())
   isActive        Boolean  @default(true)
   blockedUntil    DateTime?
 
   patient         User     @relation("PatientStrikes", fields: [patientId], references: [id])
   professional    User     @relation("ProfessionalStrikes", fields: [professionalId], references: [id])
+
+  @@index([patientId])
+  @@index([professionalId])
+  @@index([patientId, professionalId])
+  @@index([isActive, blockedUntil])
 }
 
 model NotificationLog {

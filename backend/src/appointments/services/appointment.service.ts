@@ -197,12 +197,14 @@ export class AppointmentsService {
       throw new BadRequestException('Slot is not available');
     }
 
-    const isBlocked = await this.strikeService.isPatientBlockedForAny(
+    // Check if patient is blocked with THIS specific professional
+    const isBlocked = await this.strikeService.checkPatientBlocked(
       dto.patientId,
+      dto.professionalId,
     );
-    if (isBlocked.blocked) {
+    if (isBlocked) {
       throw new BadRequestException(
-        'Patient is currently blocked and cannot book appointments',
+        'Patient is currently blocked with this professional and cannot book appointments',
       );
     }
 
@@ -292,9 +294,33 @@ export class AppointmentsService {
     const updateData: any = { status: dto.status };
 
     if (dto.status === 'NO_SHOW') {
+      // Validate: Only the assigned professional can mark NO_SHOW
+      if (appointment.professionalId !== userId && userRole !== 'ADMIN') {
+        throw new ForbiddenException(
+          'Only the assigned professional can mark an appointment as NO_SHOW',
+        );
+      }
+
+      // Validate: Appointment date must be in the past
+      const appointmentDate = new Date(appointment.date);
+      const now = new Date();
+      if (appointmentDate > now) {
+        throw new BadRequestException(
+          'Cannot mark as NO_SHOW for future appointments',
+        );
+      }
+
+      // Validate: Must provide a reason for NO_SHOW
+      if (!dto.notes || dto.notes.length < 10) {
+        throw new BadRequestException(
+          'Please provide a detailed reason for the NO_SHOW (at least 10 characters)',
+        );
+      }
+
       await this.strikeService.createStrike(userId, {
         patientId: appointment.patientId,
-        reason: 'No show for scheduled appointment',
+        reason: dto.notes || 'No show for scheduled appointment',
+        appointmentId: appointment.id,
       });
     }
 
