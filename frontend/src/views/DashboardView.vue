@@ -44,13 +44,23 @@
           class="h-100"
         />
       </v-col>
-      <v-col v-if="isStaff" cols="12" sm="6" md="4" class="mt-4 mt-md-0">
+      <v-col v-if="isAdminOrSecretary" cols="12" sm="6" md="4" class="mt-4 mt-md-0">
         <BaseCard
           to="/admin"
           icon="mdi-shield-account"
           icon-color="warning"
           :title="$t('dashboard.admin')"
           subtitle="Administrative tools"
+          class="h-100"
+        />
+      </v-col>
+      <v-col v-if="isProfessional" cols="12" sm="6" md="4" class="mt-4 mt-md-0">
+        <BaseCard
+          to="/professional-config"
+          icon="mdi-account-cog"
+          icon-color="info"
+          title="Herramientas Administrativas"
+          subtitle="Configurar horario y preferencias"
           class="h-100"
         />
       </v-col>
@@ -152,11 +162,11 @@ const upcomingAppointments = ref<Appointment[]>([])
 const loading = ref(true)
 
 const user = computed(() => authStore.user)
-const isStaff = computed(() => 
+const isAdminOrSecretary = computed(() => 
   user.value?.role === 'ADMIN' || 
-  user.value?.role === 'SECRETARY' || 
-  user.value?.role === 'PROFESSIONAL'
+  user.value?.role === 'SECRETARY'
 )
+const isProfessional = computed(() => user.value?.role === 'PROFESSIONAL')
 
 onMounted(async () => {
   try {
