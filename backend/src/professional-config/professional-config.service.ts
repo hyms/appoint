@@ -27,7 +27,7 @@ export class ProfessionalConfigService {
       config = await this.prisma.professionalConfig.create({
         data: {
           professionalId,
-          workingHours: defaultWorkingHours,
+          workingHours: defaultWorkingHours as any,
         },
         include: { location: true },
       });
@@ -48,7 +48,7 @@ export class ProfessionalConfigService {
           slotDurationMinutes: dto.slotDurationMinutes,
           breakBetweenSlotsMinutes: dto.breakBetweenSlotsMinutes,
           locationId: dto.locationId,
-          workingHours: dto.workingHours ? JSON.stringify(dto.workingHours) : undefined,
+          workingHours: dto.workingHours ? dto.workingHours as any : undefined,
         },
         include: { location: true },
       });
@@ -59,7 +59,7 @@ export class ProfessionalConfigService {
           slotDurationMinutes: dto.slotDurationMinutes,
           breakBetweenSlotsMinutes: dto.breakBetweenSlotsMinutes,
           locationId: dto.locationId,
-          workingHours: dto.workingHours || defaultWorkingHours,
+          workingHours: (dto.workingHours || defaultWorkingHours) as any,
         },
         include: { location: true },
       });
