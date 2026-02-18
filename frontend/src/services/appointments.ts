@@ -32,6 +32,44 @@ export interface Appointment {
 }
 
 export const appointmentsService = {
+  // Admin CRUD
+  async getAll(params?: { 
+    page?: number; 
+    limit?: number; 
+    status?: string; 
+    patientId?: string; 
+    professionalId?: string;
+    startDate?: string;
+    endDate?: string;
+  }) {
+    const queryParams = new URLSearchParams()
+    if (params?.page) queryParams.append('page', params.page.toString())
+    if (params?.limit) queryParams.append('limit', params.limit.toString())
+    if (params?.status) queryParams.append('status', params.status)
+    if (params?.patientId) queryParams.append('patientId', params.patientId)
+    if (params?.professionalId) queryParams.append('professionalId', params.professionalId)
+    if (params?.startDate) queryParams.append('startDate', params.startDate)
+    if (params?.endDate) queryParams.append('endDate', params.endDate)
+    const response = await api.get(`/appointments?${queryParams}`)
+    return response.data
+  },
+
+  async getById(id: string) {
+    const response = await api.get(`/appointments/${id}`)
+    return response.data
+  },
+
+  async update(id: string, data: { patientId?: string; professionalId?: string; slotId?: string; locationId?: string; date?: string; notes?: string }) {
+    const response = await api.patch(`/appointments/${id}`, data)
+    return response.data
+  },
+
+  async delete(id: string) {
+    const response = await api.delete(`/appointments/${id}`)
+    return response.data
+  },
+
+  // Existing methods
   async getUpcoming() {
     const response = await api.get('/appointments/upcoming')
     return response.data
