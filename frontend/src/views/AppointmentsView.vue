@@ -46,7 +46,7 @@
                       {{ apt.status }}
                     </v-chip>
                     <v-btn
-                      v-if="apt.status !== 'CANCELLED' && apt.paymentStatus !== 'PAID'"
+                      v-if="apt.status !== 'CANCELLED' && apt.paymentStatus !== 'PAID' && authStore.user?.role === 'PATIENT'"
                       color="primary"
                       size="small"
                       @click="openPaymentDialog(apt)"
@@ -54,7 +54,7 @@
                       Pay
                     </v-btn>
                     <v-btn
-                      v-if="apt.status !== 'CANCELLED'"
+                      v-if="apt.status !== 'CANCELLED' && authStore.user?.role === 'PATIENT'"
                       color="error"
                       size="small"
                       @click="cancelAppointment(apt)"
