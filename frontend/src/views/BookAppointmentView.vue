@@ -227,6 +227,7 @@ async function confirmBooking() {
   booking.value = true
   try {
     await appointmentsService.create({
+      patientId: authStore.user?.id,
       professionalId: selectedProfessional.value,
       slotId: selectedSlot.value.id,
       notes: notes.value
