@@ -20,21 +20,21 @@ import { PrismaService } from './prisma/prisma.service';
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          // General API rate limit: 100 requests per minute
+          // General API rate limit: 1000 requests per minute (increased for development)
           ttl: 60000,
-          limit: 100,
+          limit: 1000,
         },
         {
-          // Strict limit for auth endpoints: 5 requests per minute
+          // Strict limit for auth endpoints: 20 requests per minute
           name: 'auth',
           ttl: 60000,
-          limit: 5,
+          limit: 20,
         },
         {
-          // Very strict limit for magic-link: 3 requests per minute (prevent abuse)
+          // Very strict limit for magic-link: 10 requests per minute
           name: 'magic-link',
           ttl: 60000,
-          limit: 3,
+          limit: 10,
         },
       ],
     }),
