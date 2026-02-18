@@ -426,8 +426,10 @@ const selectedProfessionalName = computed(() => {
 })
 
 onMounted(async () => {
+  // For demo, use the professional from database
+  // In production, fetch professionals from API
   professionals.value = [
-    { id: 'doctor@appointments360.com', label: 'Dr. John Doe' }
+    { id: '2c9ab7c4-5d4f-4edc-b93c-08bc3daa1b55', label: 'Dr. Test - Professional' }
   ]
 })
 
@@ -448,11 +450,13 @@ async function loadAvailableSlots() {
   
   loadingSlots.value = true
   try {
+    // Format date as YYYY-MM-DD
+    const dateStr = selectedDate.value.toISOString().split('T')[0]
     const response = await slotsService.getAvailable(
       selectedProfessional.value,
-      selectedDate.value.toISOString()
+      dateStr
     )
-    availableSlots.value = response.slots
+    availableSlots.value = response.slots || []
   } catch (err) {
     error('Failed to load available slots')
     console.error(err)
