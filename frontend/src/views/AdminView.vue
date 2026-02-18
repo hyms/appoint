@@ -358,10 +358,13 @@
           <v-card>
             <v-card-title>Generate Slots</v-card-title>
             <v-card-text>
-              <v-text-field
+              <v-select
                 v-model="generateData.professionalId"
-                label="Professional ID"
-                placeholder="Enter professional ID"
+                :items="professionalsList"
+                item-title="label"
+                item-value="id"
+                label="Select Professional"
+                :loading="loadingProfessionals"
               />
               <v-text-field
                 v-model="generateData.startDate"
@@ -450,6 +453,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { appointmentsService, emergencyService, strikesService, slotsService } from '@/services/appointments'
+import api from '@/services/api'
 import ProfessionalConfigAdmin from '@/components/ProfessionalConfigAdmin.vue'
 
 const tab = ref('appointments')
@@ -515,8 +519,10 @@ const slotHeaders = [
 // Generate dialog
 const generateDialog = ref(false)
 const generatingSlots = ref(false)
+const loadingProfessionals = ref(false)
+const professionalsList = ref<{ id: string; label: string }[]>([])
 const generateData = reactive({
-  professionalId: '2c9ab7c4-5d4f-4edc-b93c-08bc3daa1b55',
+  professionalId: '',
   startDate: '',
   endDate: ''
 })
@@ -540,6 +546,7 @@ onMounted(async () => {
   await loadData()
   await loadAppointments()
   await loadSlots()
+  await loadProfessionals()
 })
 
 async function loadData() {
@@ -553,6 +560,25 @@ async function loadData() {
     console.error('Failed to load data:', error)
   } finally {
     loading.value = false
+  }
+}
+
+async function loadProfessionals() {
+  loadingProfessionals.value = true
+  try {
+    const response = await api.get('/auth/users?role=PROFESSIONAL')
+    professionalsList.value = response.data.map((u: any) => ({
+      id: u.id,
+      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
+    }))
+    // Set default professional if available
+    if (professionalsList.value.length > 0 && !generateData.professionalId) {
+      generateData.professionalId = professionalsList.value[0].id
+    }
+  } catch (error) {
+    console.error('Failed to load professionals:', error)
+  } finally {
+    loadingProfessionals.value = false
   }
 }
 
