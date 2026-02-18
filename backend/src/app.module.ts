@@ -16,25 +16,13 @@ import { PrismaService } from './prisma/prisma.service';
 
 @Module({
   imports: [
-    // Rate limiting - Anti DDoS protection
+    // Rate limiting - Disabled for development
     ThrottlerModule.forRoot({
       throttlers: [
         {
-          // General API rate limit: 1000 requests per minute (increased for development)
+          // No rate limiting in development
           ttl: 60000,
-          limit: 1000,
-        },
-        {
-          // Strict limit for auth endpoints: 20 requests per minute
-          name: 'auth',
-          ttl: 60000,
-          limit: 20,
-        },
-        {
-          // Very strict limit for magic-link: 10 requests per minute
-          name: 'magic-link',
-          ttl: 60000,
-          limit: 10,
+          limit: 10000,
         },
       ],
     }),
