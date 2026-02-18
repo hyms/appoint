@@ -1,7 +1,10 @@
 import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { NotificationProvider } from './services/notification-provider.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { SendNotificationDto, SendBulkNotificationDto } from './dto/notification.dto';
+import {
+  SendNotificationDto,
+  SendBulkNotificationDto,
+} from './dto/notification.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -30,7 +33,10 @@ export class NotificationsController {
   @Get('logs')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SECRETARY')
-  async getLogs(@Query('userId') userId?: string, @Query('status') status?: string) {
+  async getLogs(
+    @Query('userId') userId?: string,
+    @Query('status') status?: string,
+  ) {
     const where: any = {};
     if (userId) where.userId = userId;
     if (status) where.status = status;
@@ -59,7 +65,13 @@ export class NotificationsController {
   @Post('test/email')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async testEmail(@Body() body: { to: string; subject: string; message: string }) {
-    return this.notificationProvider.sendEmail(body.to, body.subject, body.message);
+  async testEmail(
+    @Body() body: { to: string; subject: string; message: string },
+  ) {
+    return this.notificationProvider.sendEmail(
+      body.to,
+      body.subject,
+      body.message,
+    );
   }
 }

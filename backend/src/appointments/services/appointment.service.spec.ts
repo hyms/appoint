@@ -1,5 +1,9 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { AppointmentsService } from './appointment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StrikeService } from '../../strikes/services/strike.service';
@@ -61,9 +65,15 @@ describe('AppointmentsService', () => {
         professional: { profile: { firstName: 'Dr. Smith' } },
       };
 
-      mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
+      mockPrismaService.appointment.findUnique.mockResolvedValue(
+        mockAppointment,
+      );
 
-      const result = await appointmentsService.getAppointmentById('apt-1', 'user-1', 'PATIENT');
+      const result = await appointmentsService.getAppointmentById(
+        'apt-1',
+        'user-1',
+        'PATIENT',
+      );
 
       expect(result).toEqual(mockAppointment);
     });
@@ -72,7 +82,11 @@ describe('AppointmentsService', () => {
       mockPrismaService.appointment.findUnique.mockResolvedValue(null);
 
       await expect(
-        appointmentsService.getAppointmentById('invalid-id', 'user-1', 'PATIENT')
+        appointmentsService.getAppointmentById(
+          'invalid-id',
+          'user-1',
+          'PATIENT',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -84,7 +98,11 @@ describe('AppointmentsService', () => {
       });
 
       await expect(
-        appointmentsService.getAppointmentById('apt-1', 'other-user', 'PATIENT')
+        appointmentsService.getAppointmentById(
+          'apt-1',
+          'other-user',
+          'PATIENT',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -96,9 +114,14 @@ describe('AppointmentsService', () => {
         { id: 'apt-2', date: new Date(), status: 'CONFIRMED' },
       ];
 
-      mockPrismaService.appointment.findMany.mockResolvedValue(mockAppointments);
+      mockPrismaService.appointment.findMany.mockResolvedValue(
+        mockAppointments,
+      );
 
-      const result = await appointmentsService.getUpcomingAppointments('user-1', 'PATIENT');
+      const result = await appointmentsService.getUpcomingAppointments(
+        'user-1',
+        'PATIENT',
+      );
 
       expect(result).toEqual(mockAppointments);
       expect(mockPrismaService.appointment.findMany).toHaveBeenCalledWith(
@@ -106,7 +129,7 @@ describe('AppointmentsService', () => {
           where: expect.objectContaining({
             patientId: 'user-1',
           }),
-        })
+        }),
       );
     });
   });
@@ -120,7 +143,9 @@ describe('AppointmentsService', () => {
         slotId: 'slot-1',
       };
 
-      mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
+      mockPrismaService.appointment.findUnique.mockResolvedValue(
+        mockAppointment,
+      );
       mockPrismaService.$transaction.mockResolvedValue([
         { ...mockAppointment, status: 'CANCELLED' },
         { id: 'slot-1', isBooked: false },
@@ -130,7 +155,7 @@ describe('AppointmentsService', () => {
         'apt-1',
         { reason: 'Personal reasons' },
         'user-1',
-        'PATIENT'
+        'PATIENT',
       );
 
       expect(result.status).toBe('CANCELLED');
@@ -148,8 +173,8 @@ describe('AppointmentsService', () => {
           'apt-1',
           { reason: 'Personal reasons' },
           'user-1',
-          'PATIENT'
-        )
+          'PATIENT',
+        ),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -161,7 +186,9 @@ describe('AppointmentsService', () => {
         { id: 'apt-2', patientId: 'user-1' },
       ];
 
-      mockPrismaService.appointment.findMany.mockResolvedValue(mockAppointments);
+      mockPrismaService.appointment.findMany.mockResolvedValue(
+        mockAppointments,
+      );
 
       const result = await appointmentsService.getPatientAppointments('user-1');
 
@@ -176,16 +203,16 @@ describe('AppointmentsService', () => {
 
   describe('getProfessionalAppointments', () => {
     it('should return appointments filtered by date range', async () => {
-      const mockAppointments = [
-        { id: 'apt-1', professionalId: 'doc-1' },
-      ];
+      const mockAppointments = [{ id: 'apt-1', professionalId: 'doc-1' }];
 
-      mockPrismaService.appointment.findMany.mockResolvedValue(mockAppointments);
+      mockPrismaService.appointment.findMany.mockResolvedValue(
+        mockAppointments,
+      );
 
       const result = await appointmentsService.getProfessionalAppointments(
         'doc-1',
         '2024-01-01',
-        '2024-01-31'
+        '2024-01-31',
       );
 
       expect(result).toEqual(mockAppointments);
@@ -198,7 +225,7 @@ describe('AppointmentsService', () => {
               lte: new Date('2024-01-31'),
             },
           }),
-        })
+        }),
       );
     });
   });

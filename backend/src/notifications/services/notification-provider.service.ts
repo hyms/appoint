@@ -1,6 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SendNotificationDto, NotificationType, ProviderType } from '../dto/notification.dto';
+import {
+  SendNotificationDto,
+  NotificationType,
+  ProviderType,
+} from '../dto/notification.dto';
 
 @Injectable()
 export class NotificationProvider {
@@ -31,7 +35,11 @@ export class NotificationProvider {
           result = await this.sendTelegram(dto.recipient, dto.content);
           break;
         default:
-          result = await this.sendEmail(dto.recipient, dto.subject || '', dto.content);
+          result = await this.sendEmail(
+            dto.recipient,
+            dto.subject || '',
+            dto.content,
+          );
       }
 
       const updatedNotification = await this.prisma.notificationLog.update({
@@ -45,8 +53,11 @@ export class NotificationProvider {
 
       return updatedNotification;
     } catch (error) {
-      this.logger.error(`Failed to send notification ${notification.id}:`, error);
-      
+      this.logger.error(
+        `Failed to send notification ${notification.id}:`,
+        error,
+      );
+
       return this.prisma.notificationLog.update({
         where: { id: notification.id },
         data: {
@@ -57,7 +68,10 @@ export class NotificationProvider {
     }
   }
 
-  async sendWhatsApp(phone: string, message: string): Promise<{ success: boolean; messageId?: string }> {
+  async sendWhatsApp(
+    phone: string,
+    message: string,
+  ): Promise<{ success: boolean; messageId?: string }> {
     const whatsappToken = process.env.WHATSAPP_TOKEN;
     const whatsappPhoneId = process.env.WHATSAPP_PHONE_ID;
 
@@ -72,7 +86,7 @@ export class NotificationProvider {
         {
           method: 'POST',
           headers: {
-            'Authorization': `Bearer ${whatsappToken}`,
+            Authorization: `Bearer ${whatsappToken}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
@@ -81,7 +95,7 @@ export class NotificationProvider {
             type: 'text',
             text: { body: message },
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -96,7 +110,10 @@ export class NotificationProvider {
     }
   }
 
-  async sendTelegram(chatId: string, message: string): Promise<{ success: boolean; messageId?: string }> {
+  async sendTelegram(
+    chatId: string,
+    message: string,
+  ): Promise<{ success: boolean; messageId?: string }> {
     const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
 
     if (!telegramToken) {
@@ -115,7 +132,7 @@ export class NotificationProvider {
             text: message,
             parse_mode: 'HTML',
           }),
-        }
+        },
       );
 
       if (!response.ok) {
@@ -130,7 +147,11 @@ export class NotificationProvider {
     }
   }
 
-  async sendEmail(to: string, subject: string, body: string): Promise<{ success: boolean; messageId?: string }> {
+  async sendEmail(
+    to: string,
+    subject: string,
+    body: string,
+  ): Promise<{ success: boolean; messageId?: string }> {
     const smtpHost = process.env.SMTP_HOST;
     const smtpUser = process.env.SMTP_USER;
 
@@ -141,12 +162,14 @@ export class NotificationProvider {
 
     console.log(`[EMAIL] To: ${to}, Subject: ${subject}`);
     console.log(`[EMAIL] Body: ${body}`);
-    
+
     return { success: true, messageId: `email-${Date.now()}` };
   }
 
   private simulateSend(recipient: string, provider: string, message: string) {
-    this.logger.log(`[${provider}] Simulated send to ${recipient}: ${message.substring(0, 50)}...`);
+    this.logger.log(
+      `[${provider}] Simulated send to ${recipient}: ${message.substring(0, 50)}...`,
+    );
     return { success: true, messageId: `simulated-${Date.now()}` };
   }
 
@@ -168,8 +191,11 @@ export class NotificationProvider {
 
   private formatReminderMessage(appointment: any): string {
     const date = new Date(appointment.date).toLocaleDateString();
-    const time = new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    
+    const time = new Date(appointment.startTime).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
     return `
 Appointment Reminder
 
@@ -206,7 +232,10 @@ Appointments 360
 
   private formatConfirmationMessage(appointment: any): string {
     const date = new Date(appointment.date).toLocaleDateString();
-    const time = new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    const time = new Date(appointment.startTime).toLocaleTimeString([], {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
 
     return `
 Appointment Confirmed

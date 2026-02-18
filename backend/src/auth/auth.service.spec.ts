@@ -1,8 +1,13 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { JwtService } from '@nestjs/jwt';
-import { UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import {
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { UserRole } from '@prisma/client';
 
 describe('AuthService', () => {
@@ -23,6 +28,13 @@ describe('AuthService', () => {
     sign: jest.fn(),
   };
 
+  const mockBruteForceProtectionService = {
+    recordFailedAttempt: jest.fn(),
+    recordSuccessfulAttempt: jest.fn(),
+    isBlocked: jest.fn().mockResolvedValue(false),
+    getBlockTimeRemaining: jest.fn().mockReturnValue(0),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -34,6 +46,10 @@ describe('AuthService', () => {
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: BruteForceProtectionService,
+          useValue: mockBruteForceProtectionService,
         },
       ],
     }).compile();
@@ -86,9 +102,13 @@ describe('AuthService', () => {
         lastName: 'Doe',
       };
 
-      mockPrismaService.user.findUnique.mockResolvedValue({ id: 'existing-user' });
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        id: 'existing-user',
+      });
 
-      await expect(authService.register(registerDto)).rejects.toThrow(ConflictException);
+      await expect(authService.register(registerDto)).rejects.toThrow(
+        ConflictException,
+      );
     });
   });
 
@@ -131,7 +151,9 @@ describe('AuthService', () => {
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
 
-      await expect(authService.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('should throw UnauthorizedException for deactivated user', async () => {
@@ -147,7 +169,9 @@ describe('AuthService', () => {
         profile: {},
       });
 
-      await expect(authService.login(loginDto)).rejects.toThrow(UnauthorizedException);
+      await expect(authService.login(loginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -173,8 +197,11 @@ describe('AuthService', () => {
       const magicLinkDto = { phone: '+9999999999' };
 
       mockPrismaService.user.findUnique.mockResolvedValue(null);
+      mockBruteForceProtectionService.isBlocked.mockResolvedValue(false);
 
-      await expect(authService.generateMagicLink(magicLinkDto)).rejects.toThrow(BadRequestException);
+      await expect(authService.generateMagicLink(magicLinkDto)).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -206,7 +233,9 @@ describe('AuthService', () => {
     it('should throw BadRequestException for invalid token', async () => {
       mockPrismaService.user.findFirst.mockResolvedValue(null);
 
-      await expect(authService.validateMagicLink('invalid-token')).rejects.toThrow(BadRequestException);
+      await expect(
+        authService.validateMagicLink('invalid-token'),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 });

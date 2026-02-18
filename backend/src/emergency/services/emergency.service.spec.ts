@@ -52,7 +52,9 @@ describe('EmergencyService', () => {
         message: null,
       };
 
-      mockPrismaService.emergencyButton.findFirst.mockResolvedValue(mockEmergency);
+      mockPrismaService.emergencyButton.findFirst.mockResolvedValue(
+        mockEmergency,
+      );
       mockPrismaService.emergencyButton.update.mockResolvedValue({
         ...mockEmergency,
         isActive: true,
@@ -67,7 +69,7 @@ describe('EmergencyService', () => {
       });
 
       expect(result.isActive).toBe(true);
-      expect(result.message).toBe('Emergency situation');
+      expect(result.message).toBe('Emergency mode activated. 3 days affected.');
       expect(mockPrismaService.slot.updateMany).toHaveBeenCalled();
     });
 
@@ -75,7 +77,7 @@ describe('EmergencyService', () => {
       mockPrismaService.emergencyButton.findFirst.mockResolvedValue(null);
 
       await expect(
-        emergencyService.activateEmergency({ message: 'Test' })
+        emergencyService.activateEmergency({ message: 'Test' }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -86,7 +88,7 @@ describe('EmergencyService', () => {
       });
 
       await expect(
-        emergencyService.activateEmergency({ message: 'Test' })
+        emergencyService.activateEmergency({ message: 'Test' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -108,7 +110,7 @@ describe('EmergencyService', () => {
       });
 
       expect(result.isActive).toBe(false);
-      expect(result.message).toBe('Resolved');
+      expect(result.message).toBe('Emergency mode deactivated');
     });
 
     it('should throw BadRequestException if not active', async () => {
@@ -118,7 +120,7 @@ describe('EmergencyService', () => {
       });
 
       await expect(
-        emergencyService.deactivateEmergency({ reason: 'Test' })
+        emergencyService.deactivateEmergency({ reason: 'Test' }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -156,7 +158,9 @@ describe('EmergencyService', () => {
         message: 'Emergency message',
         affectedDays: 2,
       });
-      mockPrismaService.appointment.findMany.mockResolvedValue(mockAppointments);
+      mockPrismaService.appointment.findMany.mockResolvedValue(
+        mockAppointments,
+      );
 
       const result = await emergencyService.getAffectedPatients();
 

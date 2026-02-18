@@ -1,6 +1,9 @@
 import { Controller, Post, Get, Body, UseGuards } from '@nestjs/common';
 import { EmergencyService } from './services/emergency.service';
-import { ActivateEmergencyDto, DeactivateEmergencyDto } from './dto/emergency.dto';
+import {
+  ActivateEmergencyDto,
+  DeactivateEmergencyDto,
+} from './dto/emergency.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';

@@ -35,21 +35,30 @@ export class NotificationSettingsService {
 
   async testTelegram(botToken: string, chatId: string) {
     try {
-      const response = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          chat_id: chatId,
-          text: '🔔 Test notification from Appointments 360',
-        }),
-      });
+      const response = await fetch(
+        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: chatId,
+            text: '🔔 Test notification from Appointments 360',
+          }),
+        },
+      );
 
       if (!response.ok) {
         const error = await response.json();
-        return { success: false, error: error.description || 'Failed to send message' };
+        return {
+          success: false,
+          error: error.description || 'Failed to send message',
+        };
       }
 
-      return { success: true, message: 'Telegram test message sent successfully' };
+      return {
+        success: true,
+        message: 'Telegram test message sent successfully',
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
@@ -57,27 +66,41 @@ export class NotificationSettingsService {
 
   async testWhatsApp(phoneId: string, token: string) {
     try {
-      return { success: false, error: 'WhatsApp API requires business verification. Please configure manually.' };
+      return {
+        success: false,
+        error:
+          'WhatsApp API requires business verification. Please configure manually.',
+      };
     } catch (error: any) {
       return { success: false, error: error.message };
     }
   }
 
-  async testTwilio(accountSid: string, authToken: string, fromNumber: string, toNumber: string) {
+  async testTwilio(
+    accountSid: string,
+    authToken: string,
+    fromNumber: string,
+    toNumber: string,
+  ) {
     try {
-      const credentials = Buffer.from(`${accountSid}:${authToken}`).toString('base64');
-      const response = await fetch(`https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`, {
-        method: 'POST',
-        headers: {
-          'Authorization': `Basic ${credentials}`,
-          'Content-Type': 'application/x-www-form-urlencoded',
+      const credentials = Buffer.from(`${accountSid}:${authToken}`).toString(
+        'base64',
+      );
+      const response = await fetch(
+        `https://api.twilio.com/2010-04-01/Accounts/${accountSid}/Messages.json`,
+        {
+          method: 'POST',
+          headers: {
+            Authorization: `Basic ${credentials}`,
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+          body: new URLSearchParams({
+            To: toNumber,
+            From: fromNumber,
+            Body: '🔔 Test notification from Appointments 360',
+          }),
         },
-        body: new URLSearchParams({
-          To: toNumber,
-          From: fromNumber,
-          Body: '🔔 Test notification from Appointments 360',
-        }),
-      });
+      );
 
       if (!response.ok) {
         const error = await response.json();

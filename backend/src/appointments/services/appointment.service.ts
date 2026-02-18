@@ -1,6 +1,16 @@
-import { Injectable, NotFoundException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto, UpdateAppointmentDto } from '../dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentStatusDto,
+  CancelAppointmentDto,
+  UpdateAppointmentDto,
+} from '../dto/appointment.dto';
 import { StrikeService } from '../../strikes/services/strike.service';
 
 @Injectable()
@@ -21,7 +31,15 @@ export class AppointmentsService {
     startDate?: string;
     endDate?: string;
   }) {
-    const { page, limit, status, patientId, professionalId, startDate, endDate } = params;
+    const {
+      page,
+      limit,
+      status,
+      patientId,
+      professionalId,
+      startDate,
+      endDate,
+    } = params;
     const skip = (page - 1) * limit;
 
     const where: any = {};
@@ -82,7 +100,9 @@ export class AppointmentsService {
   }
 
   async updateAppointment(id: string, dto: UpdateAppointmentDto) {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
 
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
@@ -92,7 +112,9 @@ export class AppointmentsService {
     if (dto.patientId) updateData.patientId = dto.patientId;
     if (dto.professionalId) updateData.professionalId = dto.professionalId;
     if (dto.slotId) {
-      const slot = await this.prisma.slot.findUnique({ where: { id: dto.slotId } });
+      const slot = await this.prisma.slot.findUnique({
+        where: { id: dto.slotId },
+      });
       if (slot) {
         updateData.slotId = dto.slotId;
         updateData.date = slot.date;
@@ -117,14 +139,21 @@ export class AppointmentsService {
   }
 
   async deleteAppointment(id: string) {
-    const appointment = await this.prisma.appointment.findUnique({ where: { id } });
+    const appointment = await this.prisma.appointment.findUnique({
+      where: { id },
+    });
 
     if (!appointment) {
       throw new NotFoundException('Appointment not found');
     }
 
-    if (appointment.status !== 'CANCELLED' && appointment.status !== 'NO_SHOW') {
-      throw new BadRequestException('Only cancelled or no-show appointments can be deleted');
+    if (
+      appointment.status !== 'CANCELLED' &&
+      appointment.status !== 'NO_SHOW'
+    ) {
+      throw new BadRequestException(
+        'Only cancelled or no-show appointments can be deleted',
+      );
     }
 
     await this.prisma.appointment.delete({ where: { id } });
@@ -139,12 +168,21 @@ export class AppointmentsService {
     return { message: 'Appointment deleted successfully' };
   }
 
-  async createAppointment(dto: CreateAppointmentDto, userId: string, userRole: string) {
+  async createAppointment(
+    dto: CreateAppointmentDto,
+    userId: string,
+    userRole: string,
+  ) {
     // Validate patientId authorization
     // Patients can only book for themselves
     // Admin, Secretary, and Professional can book for any patient
-    if (dto.patientId !== userId && !['ADMIN', 'SECRETARY', 'PROFESSIONAL'].includes(userRole)) {
-      throw new ForbiddenException('You can only book appointments for yourself');
+    if (
+      dto.patientId !== userId &&
+      !['ADMIN', 'SECRETARY', 'PROFESSIONAL'].includes(userRole)
+    ) {
+      throw new ForbiddenException(
+        'You can only book appointments for yourself',
+      );
     }
 
     const slot = await this.prisma.slot.findUnique({
@@ -159,9 +197,13 @@ export class AppointmentsService {
       throw new BadRequestException('Slot is not available');
     }
 
-    const isBlocked = await this.strikeService.isPatientBlockedForAny(dto.patientId);
+    const isBlocked = await this.strikeService.isPatientBlockedForAny(
+      dto.patientId,
+    );
     if (isBlocked.blocked) {
-      throw new BadRequestException('Patient is currently blocked and cannot book appointments');
+      throw new BadRequestException(
+        'Patient is currently blocked and cannot book appointments',
+      );
     }
 
     const appointment = await this.prisma.appointment.create({
@@ -192,7 +234,11 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async getAppointmentById(appointmentId: string, userId: string, userRole: string) {
+  async getAppointmentById(
+    appointmentId: string,
+    userId: string,
+    userRole: string,
+  ) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id: appointmentId },
       include: {
@@ -207,7 +253,7 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    const canAccess = 
+    const canAccess =
       userRole === 'ADMIN' ||
       userRole === 'SECRETARY' ||
       appointment.patientId === userId ||
@@ -220,16 +266,27 @@ export class AppointmentsService {
     return appointment;
   }
 
-  async updateStatus(appointmentId: string, dto: UpdateAppointmentStatusDto, userId: string, userRole: string) {
-    const appointment = await this.getAppointmentById(appointmentId, userId, userRole);
+  async updateStatus(
+    appointmentId: string,
+    dto: UpdateAppointmentStatusDto,
+    userId: string,
+    userRole: string,
+  ) {
+    const appointment = await this.getAppointmentById(
+      appointmentId,
+      userId,
+      userRole,
+    );
 
-    const canUpdate = 
+    const canUpdate =
       userRole === 'ADMIN' ||
       userRole === 'SECRETARY' ||
       appointment.professionalId === userId;
 
     if (!canUpdate) {
-      throw new ForbiddenException('Only professionals or staff can update appointment status');
+      throw new ForbiddenException(
+        'Only professionals or staff can update appointment status',
+      );
     }
 
     const updateData: any = { status: dto.status };
@@ -255,14 +312,23 @@ export class AppointmentsService {
     });
   }
 
-  async cancelAppointment(appointmentId: string, dto: CancelAppointmentDto, userId: string, userRole: string) {
-    const appointment = await this.getAppointmentById(appointmentId, userId, userRole);
+  async cancelAppointment(
+    appointmentId: string,
+    dto: CancelAppointmentDto,
+    userId: string,
+    userRole: string,
+  ) {
+    const appointment = await this.getAppointmentById(
+      appointmentId,
+      userId,
+      userRole,
+    );
 
     if (appointment.status === 'CANCELLED') {
       throw new BadRequestException('Appointment is already cancelled');
     }
 
-    const canCancel = 
+    const canCancel =
       userRole === 'ADMIN' ||
       userRole === 'SECRETARY' ||
       appointment.patientId === userId ||
@@ -301,7 +367,11 @@ export class AppointmentsService {
     });
   }
 
-  async getProfessionalAppointments(professionalId: string, startDate?: string, endDate?: string) {
+  async getProfessionalAppointments(
+    professionalId: string,
+    startDate?: string,
+    endDate?: string,
+  ) {
     const where: any = { professionalId };
 
     if (startDate && endDate) {

@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { StrikeService } from './strike.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 
 describe('StrikeService', () => {
   let strikeService: StrikeService;
@@ -93,7 +97,7 @@ describe('StrikeService', () => {
         strikeService.createStrike('prof-1', {
           patientId: 'non-existent',
           reason: 'No-show',
-        })
+        }),
       ).rejects.toThrow(NotFoundException);
     });
 
@@ -113,7 +117,7 @@ describe('StrikeService', () => {
         strikeService.createStrike('prof-1', {
           patientId: 'patient-1',
           reason: 'No-show',
-        })
+        }),
       ).rejects.toThrow(BadRequestException);
     });
   });
@@ -167,7 +171,7 @@ describe('StrikeService', () => {
       const result = await strikeService.resolveStrike(
         'strike-1',
         { resolution: 'Patient explained situation' },
-        'prof-1'
+        'prof-1',
       );
 
       expect(result.isActive).toBe(false);
@@ -186,8 +190,8 @@ describe('StrikeService', () => {
         strikeService.resolveStrike(
           'strike-1',
           { resolution: 'Test' },
-          'prof-1'
-        )
+          'prof-1',
+        ),
       ).rejects.toThrow(ForbiddenException);
     });
   });
@@ -200,7 +204,10 @@ describe('StrikeService', () => {
         blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
       });
 
-      const result = await strikeService.checkPatientBlocked('patient-1', 'prof-1');
+      const result = await strikeService.checkPatientBlocked(
+        'patient-1',
+        'prof-1',
+      );
 
       expect(result).toBe(true);
     });
@@ -208,7 +215,10 @@ describe('StrikeService', () => {
     it('should return false if no active strike', async () => {
       mockPrismaService.strike.findFirst.mockResolvedValue(null);
 
-      const result = await strikeService.checkPatientBlocked('patient-1', 'prof-1');
+      const result = await strikeService.checkPatientBlocked(
+        'patient-1',
+        'prof-1',
+      );
 
       expect(result).toBe(false);
     });
@@ -238,7 +248,10 @@ describe('StrikeService', () => {
       mockPrismaService.strike.findMany.mockResolvedValue([{ id: 'strike-1' }]);
       mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 3 });
 
-      const result = await strikeService.cancelUpcomingAppointmentsForBlockedPatient('patient-1');
+      const result =
+        await strikeService.cancelUpcomingAppointmentsForBlockedPatient(
+          'patient-1',
+        );
 
       expect(result.cancelled).toBe(3);
       expect(result.message).toContain('3 appointments cancelled');
@@ -247,7 +260,10 @@ describe('StrikeService', () => {
     it('should return zero if patient not blocked', async () => {
       mockPrismaService.strike.findMany.mockResolvedValue([]);
 
-      const result = await strikeService.cancelUpcomingAppointmentsForBlockedPatient('patient-1');
+      const result =
+        await strikeService.cancelUpcomingAppointmentsForBlockedPatient(
+          'patient-1',
+        );
 
       expect(result.cancelled).toBe(0);
       expect(result.message).toContain('not blocked');
@@ -256,7 +272,9 @@ describe('StrikeService', () => {
 
   describe('getStrikeStats', () => {
     it('should return statistics for a professional', async () => {
-      mockPrismaService.strike.count.mockResolvedValueOnce(10).mockResolvedValueOnce(3);
+      mockPrismaService.strike.count
+        .mockResolvedValueOnce(10)
+        .mockResolvedValueOnce(3);
 
       const result = await strikeService.getStrikeStats('prof-1');
 

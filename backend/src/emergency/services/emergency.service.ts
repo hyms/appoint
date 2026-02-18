@@ -1,6 +1,13 @@
-import { Injectable, BadRequestException, NotFoundException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { ActivateEmergencyDto, DeactivateEmergencyDto } from '../dto/emergency.dto';
+import {
+  ActivateEmergencyDto,
+  DeactivateEmergencyDto,
+} from '../dto/emergency.dto';
 
 @Injectable()
 export class EmergencyService {
@@ -141,7 +148,9 @@ export class EmergencyService {
     }
 
     const blockedUntil = new Date();
-    blockedUntil.setDate(blockedUntil.getDate() + (emergency.affectedDays || 2));
+    blockedUntil.setDate(
+      blockedUntil.getDate() + (emergency.affectedDays || 2),
+    );
 
     const affectedAppointments = await this.prisma.appointment.findMany({
       where: {

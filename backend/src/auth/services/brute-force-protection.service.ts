@@ -10,7 +10,7 @@ interface LoginAttempt {
 export class BruteForceProtectionService {
   private readonly logger = new Logger(BruteForceProtectionService.name);
   private readonly attempts = new Map<string, LoginAttempt>();
-  
+
   // Configurable limits
   private readonly MAX_ATTEMPTS = 5;
   private readonly WINDOW_MS = 15 * 60 * 1000; // 15 minutes
@@ -21,15 +21,15 @@ export class BruteForceProtectionService {
    */
   isBlocked(identifier: string): boolean {
     const attempt = this.attempts.get(identifier);
-    
+
     if (!attempt) return false;
-    
+
     // Check if block has expired
     if (attempt.blockedUntil && Date.now() > attempt.blockedUntil) {
       this.attempts.delete(identifier);
       return false;
     }
-    
+
     return !!attempt.blockedUntil;
   }
 
@@ -64,7 +64,7 @@ export class BruteForceProtectionService {
     if (existing.count >= this.MAX_ATTEMPTS) {
       existing.blockedUntil = now + this.BLOCK_DURATION_MS;
       this.logger.error(
-        `IP ${identifier} blocked for ${this.BLOCK_DURATION_MS / 60000} minutes after ${existing.count} failed attempts`
+        `IP ${identifier} blocked for ${this.BLOCK_DURATION_MS / 60000} minutes after ${existing.count} failed attempts`,
       );
     }
   }
@@ -82,7 +82,7 @@ export class BruteForceProtectionService {
   getRemainingAttempts(identifier: string): number {
     const attempt = this.attempts.get(identifier);
     if (!attempt) return this.MAX_ATTEMPTS;
-    
+
     const remaining = this.MAX_ATTEMPTS - attempt.count;
     return Math.max(0, remaining);
   }
@@ -93,7 +93,7 @@ export class BruteForceProtectionService {
   getBlockTimeRemaining(identifier: string): number {
     const attempt = this.attempts.get(identifier);
     if (!attempt?.blockedUntil) return 0;
-    
+
     const remaining = attempt.blockedUntil - Date.now();
     return Math.max(0, Math.ceil(remaining / 1000));
   }

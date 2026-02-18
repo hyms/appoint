@@ -1,4 +1,14 @@
-import { Controller, Post, Body, Get, UseGuards, HttpCode, HttpStatus, Req, Ip } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  UseGuards,
+  HttpCode,
+  HttpStatus,
+  Req,
+  Ip,
+} from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
@@ -25,7 +35,8 @@ export class AuthController {
     @Req() req: Request,
   ) {
     // Use forwarded IP if behind proxy, otherwise use direct IP
-    const clientIp = (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
     return this.authService.login(loginDto, clientIp);
   }
 
@@ -37,7 +48,8 @@ export class AuthController {
     @Ip() ip: string,
     @Req() req: Request,
   ) {
-    const clientIp = (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
     return this.authService.generateMagicLink(magicLinkDto, clientIp);
   }
 

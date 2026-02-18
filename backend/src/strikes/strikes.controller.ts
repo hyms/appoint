@@ -1,4 +1,12 @@
-import { Controller, Post, Get, Body, Param, Query, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+} from '@nestjs/common';
 import { StrikeService } from './services/strike.service';
 import { CreateStrikeDto, ResolveStrikeDto } from './dto/strike.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
@@ -50,7 +58,12 @@ export class StrikeController {
     @Query('professionalId') professionalId?: string,
   ) {
     if (professionalId) {
-      return { blocked: await this.strikeService.checkPatientBlocked(patientId, professionalId) };
+      return {
+        blocked: await this.strikeService.checkPatientBlocked(
+          patientId,
+          professionalId,
+        ),
+      };
     }
     return this.strikeService.isPatientBlockedForAny(patientId);
   }
@@ -66,6 +79,8 @@ export class StrikeController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'PROFESSIONAL', 'SECRETARY')
   async cancelAppointments(@Param('patientId') patientId: string) {
-    return this.strikeService.cancelUpcomingAppointmentsForBlockedPatient(patientId);
+    return this.strikeService.cancelUpcomingAppointmentsForBlockedPatient(
+      patientId,
+    );
   }
 }

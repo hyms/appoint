@@ -32,7 +32,20 @@ export class NotificationSettingsController {
   }
 
   @Post('test/sms')
-  async testSms(@Body() body: { accountSid: string; authToken: string; fromNumber: string; toNumber: string }) {
-    return this.service.testTwilio(body.accountSid, body.authToken, body.fromNumber, body.toNumber);
+  async testSms(
+    @Body()
+    body: {
+      accountSid: string;
+      authToken: string;
+      fromNumber: string;
+      toNumber: string;
+    },
+  ) {
+    return this.service.testTwilio(
+      body.accountSid,
+      body.authToken,
+      body.fromNumber,
+      body.toNumber,
+    );
   }
 }

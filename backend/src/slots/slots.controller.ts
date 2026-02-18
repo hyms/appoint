@@ -1,4 +1,14 @@
-import { Controller, Post, Get, Patch, Body, Param, Query, Delete, UseGuards } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Query,
+  Delete,
+  UseGuards,
+} from '@nestjs/common';
 import { SlotService } from './services/slot.service';
 import { GenerateSlotsDto, BlockSlotDto, UpdateSlotDto } from './dto/slot.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
@@ -11,7 +21,7 @@ export class SlotController {
   constructor(private readonly slotService: SlotService) {}
 
   // ============ ADMIN CRUD ============
-  
+
   @Get()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
@@ -27,7 +37,8 @@ export class SlotController {
       limit: limit ? parseInt(limit) : 20,
       professionalId,
       date,
-      isBooked: isBooked === 'true' ? true : isBooked === 'false' ? false : undefined,
+      isBooked:
+        isBooked === 'true' ? true : isBooked === 'false' ? false : undefined,
     });
   }
 
@@ -78,7 +89,11 @@ export class SlotController {
     @Query('startDate') startDate: string,
     @Query('endDate') endDate: string,
   ) {
-    return this.slotService.getSlotsByProfessional(professionalId, startDate, endDate);
+    return this.slotService.getSlotsByProfessional(
+      professionalId,
+      startDate,
+      endDate,
+    );
   }
 
   @Post('block')

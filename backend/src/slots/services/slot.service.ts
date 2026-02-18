@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { GenerateSlotsDto, BlockSlotDto, UpdateSlotDto } from '../dto/slot.dto';
 
@@ -115,9 +119,14 @@ export class SlotService {
     const defaultBreak = 5;
 
     while (currentDate <= endDate) {
-      const dayOfWeek = currentDate.toLocaleDateString('en-US', { weekday: 'long' }).toUpperCase();
-      
-      const workingHours = await this.getWorkingHoursForDay(dto.professionalId, dayOfWeek);
+      const dayOfWeek = currentDate
+        .toLocaleDateString('en-US', { weekday: 'long' })
+        .toUpperCase();
+
+      const workingHours = await this.getWorkingHoursForDay(
+        dto.professionalId,
+        dayOfWeek,
+      );
 
       if (workingHours && workingHours.isActive) {
         const slots = this.createSlotsForDay(
@@ -146,7 +155,10 @@ export class SlotService {
     };
   }
 
-  private async getWorkingHoursForDay(_professionalId: string, dayOfWeek: string) {
+  private async getWorkingHoursForDay(
+    _professionalId: string,
+    dayOfWeek: string,
+  ) {
     // Using default working hours - professional config can be added later
     return {
       dayOfWeek,
@@ -176,7 +188,9 @@ export class SlotService {
     dayEnd.setHours(endHour, endMinute, 0, 0);
 
     while (currentSlotStart < dayEnd) {
-      const slotEnd = new Date(currentSlotStart.getTime() + durationMinutes * 60000);
+      const slotEnd = new Date(
+        currentSlotStart.getTime() + durationMinutes * 60000,
+      );
 
       if (slotEnd <= dayEnd) {
         slots.push({
@@ -190,7 +204,9 @@ export class SlotService {
         });
       }
 
-      currentSlotStart = new Date(currentSlotStart.getTime() + (durationMinutes + breakMinutes) * 60000);
+      currentSlotStart = new Date(
+        currentSlotStart.getTime() + (durationMinutes + breakMinutes) * 60000,
+      );
     }
 
     return slots;
@@ -257,7 +273,11 @@ export class SlotService {
     });
   }
 
-  async getSlotsByProfessional(professionalId: string, startDate: string, endDate: string) {
+  async getSlotsByProfessional(
+    professionalId: string,
+    startDate: string,
+    endDate: string,
+  ) {
     return this.prisma.slot.findMany({
       where: {
         professionalId,

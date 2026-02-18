@@ -1,4 +1,10 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  UnauthorizedException,
+  ConflictException,
+  BadRequestException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
@@ -54,9 +60,10 @@ export class AuthService {
   async login(loginDto: LoginDto, ipAddress: string) {
     // Check if IP is blocked
     if (this.bruteForceProtection.isBlocked(ipAddress)) {
-      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      const remainingSeconds =
+        this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
       throw new ForbiddenException(
-        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`
+        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`,
       );
     }
 
@@ -78,13 +85,17 @@ export class AuthService {
       throw new UnauthorizedException('Use magic link authentication');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
       this.bruteForceProtection.recordFailedAttempt(ipAddress);
-      const remainingAttempts = this.bruteForceProtection.getRemainingAttempts(ipAddress);
+      const remainingAttempts =
+        this.bruteForceProtection.getRemainingAttempts(ipAddress);
       throw new UnauthorizedException(
-        `Invalid credentials. ${remainingAttempts} attempts remaining.`
+        `Invalid credentials. ${remainingAttempts} attempts remaining.`,
       );
     }
 
@@ -102,9 +113,10 @@ export class AuthService {
   async generateMagicLink(magicLinkDto: MagicLinkDto, ipAddress: string) {
     // Check if IP is blocked
     if (this.bruteForceProtection.isBlocked(ipAddress)) {
-      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      const remainingSeconds =
+        this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
       throw new ForbiddenException(
-        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`
+        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`,
       );
     }
 

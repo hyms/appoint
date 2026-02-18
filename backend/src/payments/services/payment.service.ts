@@ -1,4 +1,8 @@
-import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
+import {
+  Injectable,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VerifyPaymentDto, UploadPaymentDto } from '../dto/payment.dto';
 import * as QRCode from 'qrcode';
@@ -119,7 +123,11 @@ export class PaymentsService {
     });
   }
 
-  async verifyPayment(paymentId: string, dto: VerifyPaymentDto, userId: string) {
+  async verifyPayment(
+    paymentId: string,
+    dto: VerifyPaymentDto,
+    userId: string,
+  ) {
     const payment = await this.prisma.payment.findUnique({
       where: { id: paymentId },
     });
@@ -149,6 +157,10 @@ export class PaymentsService {
   }
 
   async rejectPayment(paymentId: string, reason: string) {
-    return this.verifyPayment(paymentId, { status: 'REJECTED', notes: reason }, 'system');
+    return this.verifyPayment(
+      paymentId,
+      { status: 'REJECTED', notes: reason },
+      'system',
+    );
   }
 }

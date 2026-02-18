@@ -1,7 +1,11 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationProvider } from './notification-provider.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { SendNotificationDto, NotificationType, ProviderType } from '../dto/notification.dto';
+import {
+  SendNotificationDto,
+  NotificationType,
+  ProviderType,
+} from '../dto/notification.dto';
 
 describe('NotificationProvider', () => {
   let notificationProvider: NotificationProvider;
@@ -10,6 +14,7 @@ describe('NotificationProvider', () => {
   const mockPrismaService = {
     notificationLog: {
       create: jest.fn(),
+      createMany: jest.fn(),
       update: jest.fn(),
     },
   };
@@ -25,7 +30,8 @@ describe('NotificationProvider', () => {
       ],
     }).compile();
 
-    notificationProvider = module.get<NotificationProvider>(NotificationProvider);
+    notificationProvider =
+      module.get<NotificationProvider>(NotificationProvider);
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
@@ -74,7 +80,9 @@ describe('NotificationProvider', () => {
         errorMessage: 'Sending failed',
       });
 
-      jest.spyOn(notificationProvider, 'sendEmail').mockResolvedValue({ success: false });
+      jest
+        .spyOn(notificationProvider, 'sendEmail')
+        .mockResolvedValue({ success: false });
 
       const result = await notificationProvider.sendNotification(dto);
 
@@ -87,7 +95,10 @@ describe('NotificationProvider', () => {
       delete process.env.WHATSAPP_TOKEN;
       delete process.env.WHATSAPP_PHONE_ID;
 
-      const result = await notificationProvider.sendWhatsApp('+1234567890', 'Test message');
+      const result = await notificationProvider.sendWhatsApp(
+        '+1234567890',
+        'Test message',
+      );
 
       expect(result.success).toBe(true);
     });
@@ -97,7 +108,10 @@ describe('NotificationProvider', () => {
     it('should simulate Telegram when token not configured', async () => {
       delete process.env.TELEGRAM_BOT_TOKEN;
 
-      const result = await notificationProvider.sendTelegram('123456', 'Test message');
+      const result = await notificationProvider.sendTelegram(
+        '123456',
+        'Test message',
+      );
 
       expect(result.success).toBe(true);
     });
@@ -111,7 +125,7 @@ describe('NotificationProvider', () => {
       const result = await notificationProvider.sendEmail(
         'test@example.com',
         'Test Subject',
-        'Test body'
+        'Test body',
       );
 
       expect(result.success).toBe(true);
@@ -145,7 +159,8 @@ describe('NotificationProvider', () => {
         status: 'SENT',
       });
 
-      const result = await notificationProvider.sendAppointmentReminder(appointment);
+      const result =
+        await notificationProvider.sendAppointmentReminder(appointment);
 
       expect(result).toBeDefined();
     });
@@ -189,11 +204,13 @@ describe('NotificationProvider', () => {
         { id: 'patient-2', email: 'patient2@example.com' },
       ];
 
-      mockPrismaService.notificationLog.createMany.mockResolvedValue({ count: 2 });
+      mockPrismaService.notificationLog.createMany.mockResolvedValue({
+        count: 2,
+      });
 
       const result = await notificationProvider.sendEmergencyNotification(
         'Emergency message',
-        affectedPatients
+        affectedPatients,
       );
 
       expect(result).toHaveLength(2);

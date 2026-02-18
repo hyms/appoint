@@ -21,48 +21,38 @@ export const useAuthStore = defineStore('auth', () => {
   const isAuthenticated = computed(() => !!token.value)
 
   async function login(email: string, password: string) {
-    try {
-      const response = await api.post('/auth/login', { email, password })
-      token.value = response.data.access_token
-      user.value = response.data.user
+    const response = await api.post('/auth/login', { email, password })
+    token.value = response.data.access_token
+    user.value = response.data.user
+    if (token.value) {
       localStorage.setItem('token', token.value)
-      return response.data
-    } catch (error) {
-      throw error
     }
+    return response.data
   }
 
   async function register(data: { email: string; password: string; firstName: string; lastName: string; phone?: string }) {
-    try {
-      const response = await api.post('/auth/register', data)
-      token.value = response.data.access_token
-      user.value = response.data.user
+    const response = await api.post('/auth/register', data)
+    token.value = response.data.access_token
+    user.value = response.data.user
+    if (token.value) {
       localStorage.setItem('token', token.value)
-      return response.data
-    } catch (error) {
-      throw error
     }
+    return response.data
   }
 
   async function magicLink(phone: string) {
-    try {
-      const response = await api.post('/auth/magic-link', { phone })
-      return response.data
-    } catch (error) {
-      throw error
-    }
+    const response = await api.post('/auth/magic-link', { phone })
+    return response.data
   }
 
-  async function validateMagicLink(token: string) {
-    try {
-      const response = await api.post('/auth/magic-link/validate', { token })
-      token.value = response.data.access_token
-      user.value = response.data.user
+  async function validateMagicLink(magicToken: string) {
+    const response = await api.post('/auth/magic-link/validate', { token: magicToken })
+    token.value = response.data.access_token
+    user.value = response.data.user
+    if (token.value) {
       localStorage.setItem('token', token.value)
-      return response.data
-    } catch (error) {
-      throw error
     }
+    return response.data
   }
 
   async function fetchCurrentUser() {

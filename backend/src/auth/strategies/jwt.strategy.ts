@@ -8,7 +8,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
   constructor(private prisma: PrismaService) {
     const jwtSecret = process.env.JWT_SECRET;
     if (!jwtSecret) {
-      throw new UnauthorizedException('JWT_SECRET environment variable is not set');
+      throw new UnauthorizedException(
+        'JWT_SECRET environment variable is not set',
+      );
     }
 
     super({

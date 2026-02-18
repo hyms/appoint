@@ -36,36 +36,48 @@ export class CronService {
       },
     });
 
-    this.logger.log(`Found ${pendingAppointments.length} appointments for reminders.`);
+    this.logger.log(
+      `Found ${pendingAppointments.length} appointments for reminders.`,
+    );
 
     for (const appointment of pendingAppointments) {
       try {
         const appointmentTime = new Date(appointment.startTime);
-        const hoursUntilAppointment = (appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+        const hoursUntilAppointment =
+          (appointmentTime.getTime() - now.getTime()) / (1000 * 60 * 60);
 
-        if (hoursUntilAppointment <= 24 && hoursUntilAppointment > 6 && !appointment.notificationSent24h) {
+        if (
+          hoursUntilAppointment <= 24 &&
+          hoursUntilAppointment > 6 &&
+          !appointment.notificationSent24h
+        ) {
           await this.notificationProvider.sendAppointmentReminder(appointment);
-          
+
           await this.prisma.appointment.update({
             where: { id: appointment.id },
             data: { notificationSent24h: true },
           });
-          
-          this.logger.log(`24h reminder sent for appointment ${appointment.id}`);
+
+          this.logger.log(
+            `24h reminder sent for appointment ${appointment.id}`,
+          );
         }
 
         if (hoursUntilAppointment <= 6 && !appointment.notificationSent6h) {
           await this.notificationProvider.sendAppointmentReminder(appointment);
-          
+
           await this.prisma.appointment.update({
             where: { id: appointment.id },
             data: { notificationSent6h: true },
           });
-          
+
           this.logger.log(`6h reminder sent for appointment ${appointment.id}`);
         }
       } catch (error) {
-        this.logger.error(`Failed to send reminder for appointment ${appointment.id}:`, error);
+        this.logger.error(
+          `Failed to send reminder for appointment ${appointment.id}:`,
+          error,
+        );
       }
     }
 
@@ -112,8 +124,9 @@ export class CronService {
 
     const summary = {
       total: todaysAppointments.length,
-      pending: todaysAppointments.filter(a => a.status === 'PENDING').length,
-      confirmed: todaysAppointments.filter(a => a.status === 'CONFIRMED').length,
+      pending: todaysAppointments.filter((a) => a.status === 'PENDING').length,
+      confirmed: todaysAppointments.filter((a) => a.status === 'CONFIRMED')
+        .length,
     };
 
     this.logger.log(`Daily summary: ${JSON.stringify(summary)}`);
@@ -145,6 +158,8 @@ export class CronService {
       this.logger.log(`Appointment ${appointment.id} marked as no-show`);
     }
 
-    this.logger.log(`Auto-cancel job completed. ${missedAppointments.length} appointments marked as no-show.`);
+    this.logger.log(
+      `Auto-cancel job completed. ${missedAppointments.length} appointments marked as no-show.`,
+    );
   }
 }

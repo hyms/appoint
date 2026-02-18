@@ -1,6 +1,21 @@
-import { Controller, Post, Get, Patch, Body, Param, Query, UseGuards, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Patch,
+  Body,
+  Param,
+  Query,
+  UseGuards,
+  Delete,
+} from '@nestjs/common';
 import { AppointmentsService } from './services/appointment.service';
-import { CreateAppointmentDto, UpdateAppointmentStatusDto, CancelAppointmentDto, UpdateAppointmentDto } from './dto/appointment.dto';
+import {
+  CreateAppointmentDto,
+  UpdateAppointmentStatusDto,
+  CancelAppointmentDto,
+  UpdateAppointmentDto,
+} from './dto/appointment.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -93,7 +108,11 @@ export class AppointmentsController {
     @Query('startDate') startDate?: string,
     @Query('endDate') endDate?: string,
   ) {
-    return this.appointmentsService.getProfessionalAppointments(user.id, startDate, endDate);
+    return this.appointmentsService.getProfessionalAppointments(
+      user.id,
+      startDate,
+      endDate,
+    );
   }
 
   @Get(':id')
@@ -120,6 +139,11 @@ export class AppointmentsController {
     @Body() dto: CancelAppointmentDto,
     @CurrentUser() user: any,
   ) {
-    return this.appointmentsService.cancelAppointment(id, dto, user.id, user.role);
+    return this.appointmentsService.cancelAppointment(
+      id,
+      dto,
+      user.id,
+      user.role,
+    );
   }
 }

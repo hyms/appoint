@@ -50,7 +50,9 @@ describe('PaymentsService', () => {
         date: new Date('2024-01-01'),
       };
 
-      mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
+      mockPrismaService.appointment.findUnique.mockResolvedValue(
+        mockAppointment,
+      );
 
       const result = await paymentsService.generatePaymentQR('apt-1');
 
@@ -62,7 +64,7 @@ describe('PaymentsService', () => {
       mockPrismaService.appointment.findUnique.mockResolvedValue(null);
 
       await expect(
-        paymentsService.generatePaymentQR('non-existent')
+        paymentsService.generatePaymentQR('non-existent'),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -74,7 +76,9 @@ describe('PaymentsService', () => {
         filename: 'payment-123.png',
       } as Express.Multer.File;
 
-      mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
+      mockPrismaService.appointment.findUnique.mockResolvedValue(
+        mockAppointment,
+      );
       mockPrismaService.payment.upsert.mockResolvedValue({
         id: 'payment-1',
         appointmentId: 'apt-1',
@@ -91,7 +95,10 @@ describe('PaymentsService', () => {
       mockPrismaService.appointment.findUnique.mockResolvedValue(null);
 
       await expect(
-        paymentsService.uploadPayment('non-existent', {} as Express.Multer.File)
+        paymentsService.uploadPayment(
+          'non-existent',
+          {} as Express.Multer.File,
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });
@@ -174,7 +181,7 @@ describe('PaymentsService', () => {
       const result = await paymentsService.verifyPayment(
         'payment-1',
         { status: 'VERIFIED' },
-        'user-1'
+        'user-1',
       );
 
       expect(result.status).toBe('VERIFIED');
@@ -185,7 +192,11 @@ describe('PaymentsService', () => {
       mockPrismaService.payment.findUnique.mockResolvedValue(null);
 
       await expect(
-        paymentsService.verifyPayment('non-existent', { status: 'VERIFIED' }, 'user-1')
+        paymentsService.verifyPayment(
+          'non-existent',
+          { status: 'VERIFIED' },
+          'user-1',
+        ),
       ).rejects.toThrow(NotFoundException);
     });
   });

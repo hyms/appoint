@@ -11,6 +11,7 @@ describe('SlotService', () => {
       findUnique: jest.fn(),
     },
     slot: {
+      findUnique: jest.fn(),
       createMany: jest.fn(),
       findMany: jest.fn(),
       update: jest.fn(),
@@ -108,7 +109,10 @@ describe('SlotService', () => {
       mockPrismaService.slot.findMany.mockResolvedValue(mockSlots);
       mockPrismaService.slot.count.mockResolvedValue(0);
 
-      const result = await slotService.getAvailableSlots('prof-1', '2024-01-01');
+      const result = await slotService.getAvailableSlots(
+        'prof-1',
+        '2024-01-01',
+      );
 
       expect(result).toHaveProperty('availableSlots', 2);
       expect(result).toHaveProperty('slots');
@@ -124,7 +128,10 @@ describe('SlotService', () => {
       mockPrismaService.slot.findMany.mockResolvedValue(mockSlots);
       mockPrismaService.slot.count.mockResolvedValue(3);
 
-      const result = await slotService.getAvailableSlots('prof-1', '2024-01-01');
+      const result = await slotService.getAvailableSlots(
+        'prof-1',
+        '2024-01-01',
+      );
 
       expect(result.totalSlots).toBe(5);
       expect(result.availableSlots).toBe(2);
@@ -171,7 +178,7 @@ describe('SlotService', () => {
       mockPrismaService.slot.findUnique.mockResolvedValue(mockSlot);
 
       await expect(
-        slotService.blockSlot({ slotId: 'slot-1' })
+        slotService.blockSlot({ slotId: 'slot-1' }),
       ).rejects.toThrow();
     });
   });

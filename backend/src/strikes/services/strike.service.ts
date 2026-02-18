@@ -1,4 +1,9 @@
-import { Injectable, BadRequestException, NotFoundException, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  BadRequestException,
+  NotFoundException,
+  ForbiddenException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateStrikeDto, ResolveStrikeDto } from '../dto/strike.dto';
 
@@ -27,7 +32,9 @@ export class StrikeService {
     });
 
     if (activeStrike) {
-      throw new BadRequestException('Patient already has an active strike with this professional');
+      throw new BadRequestException(
+        'Patient already has an active strike with this professional',
+      );
     }
 
     const blockedUntil = new Date();
@@ -75,7 +82,11 @@ export class StrikeService {
     });
   }
 
-  async resolveStrike(strikeId: string, dto: ResolveStrikeDto, professionalId: string) {
+  async resolveStrike(
+    strikeId: string,
+    dto: ResolveStrikeDto,
+    professionalId: string,
+  ) {
     const strike = await this.prisma.strike.findUnique({
       where: { id: strikeId },
     });
@@ -85,7 +96,9 @@ export class StrikeService {
     }
 
     if (strike.professionalId !== professionalId) {
-      throw new ForbiddenException('Only the professional who created the strike can resolve it');
+      throw new ForbiddenException(
+        'Only the professional who created the strike can resolve it',
+      );
     }
 
     const updatedStrike = await this.prisma.strike.update({
@@ -105,7 +118,10 @@ export class StrikeService {
     };
   }
 
-  async checkPatientBlocked(patientId: string, professionalId: string): Promise<boolean> {
+  async checkPatientBlocked(
+    patientId: string,
+    professionalId: string,
+  ): Promise<boolean> {
     const activeStrike = await this.prisma.strike.findFirst({
       where: {
         patientId,
@@ -118,7 +134,9 @@ export class StrikeService {
     return !!activeStrike;
   }
 
-  async isPatientBlockedForAny(patientId: string): Promise<{ blocked: boolean; strikes: any[] }> {
+  async isPatientBlockedForAny(
+    patientId: string,
+  ): Promise<{ blocked: boolean; strikes: any[] }> {
     const activeStrikes = await this.prisma.strike.findMany({
       where: {
         patientId,
@@ -229,7 +247,10 @@ export class StrikeService {
       totalStrikes,
       activeStrikes,
       resolvedStrikes,
-      resolutionRate: totalStrikes > 0 ? ((resolvedStrikes / totalStrikes) * 100).toFixed(1) + '%' : '0%',
+      resolutionRate:
+        totalStrikes > 0
+          ? ((resolvedStrikes / totalStrikes) * 100).toFixed(1) + '%'
+          : '0%',
     };
   }
 }
