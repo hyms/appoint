@@ -153,9 +153,9 @@ const menuItems = computed(() => {
     { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
   ]
   
-  // Add professional config for professionals
+  // Add administrative tools for professionals
   if (authStore.user?.role === 'PROFESSIONAL') {
-    items.push({ to: '/professional-config', label: 'Configuración', icon: 'mdi-cog' })
+    items.push({ to: '/professional-config', label: 'Herramientas Administrativas', icon: 'mdi-account-cog' })
   }
   
   // Add admin panel for admins and secretaries
@@ -174,7 +174,7 @@ const bottomNavItems = computed(() => {
   ]
   
   if (authStore.user?.role === 'PROFESSIONAL') {
-    items.push({ to: '/professional-config', label: 'Config', icon: 'mdi-cog' })
+    items.push({ to: '/professional-config', label: 'Admin', icon: 'mdi-account-cog' })
   }
   
   return items
