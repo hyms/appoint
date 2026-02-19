@@ -68,6 +68,12 @@ export class AuthController {
     return user;
   }
 
+  @Get('professionals')
+  @UseGuards(JwtAuthGuard)
+  async getProfessionals() {
+    return this.authService.getProfessionals();
+  }
+
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SECRETARY')

@@ -18,9 +18,9 @@
       <v-window-item value="appointments">
         <v-card>
           <v-card-title class="d-flex justify-space-between align-center">
-            <span>Appointment Management</span>
+            <span>Gestión de Citas</span>
             <v-btn color="primary" size="small" @click="refreshAppointments" prepend-icon="mdi-refresh">
-              Refresh
+              Actualizar
             </v-btn>
           </v-card-title>
           <v-card-text>
@@ -29,7 +29,7 @@
               <v-col cols="12" md="2">
                 <v-text-field
                   v-model="appointmentFilters.startDate"
-                  label="Start Date"
+                  label="Fecha Inicio"
                   type="date"
                   density="compact"
                   clearable
@@ -39,7 +39,7 @@
               <v-col cols="12" md="2">
                 <v-text-field
                   v-model="appointmentFilters.endDate"
-                  label="End Date"
+                  label="Fecha Fin"
                   type="date"
                   density="compact"
                   clearable
@@ -49,7 +49,7 @@
               <v-col cols="12" md="2">
                 <v-select
                   v-model="appointmentFilters.status"
-                  label="Status"
+                  label="Estado"
                   :items="statusOptions"
                   item-title="text"
                   item-value="value"
@@ -59,22 +59,28 @@
                 />
               </v-col>
               <v-col cols="12" md="3">
-                <v-text-field
+                <v-select
                   v-model="appointmentFilters.patientId"
-                  label="Patient ID"
+                  label="Paciente"
+                  :items="patientsList"
+                  item-title="label"
+                  item-value="id"
                   density="compact"
                   clearable
-                  placeholder="Filter by patient ID"
+                  :loading="loadingPatients"
                   @update:model-value="loadAppointments"
                 />
               </v-col>
               <v-col cols="12" md="3">
-                <v-text-field
+                <v-select
                   v-model="appointmentFilters.professionalId"
-                  label="Professional ID"
+                  label="Profesional"
+                  :items="professionalsList"
+                  item-title="label"
+                  item-value="id"
                   density="compact"
                   clearable
-                  placeholder="Filter by professional ID"
+                  :loading="loadingProfessionalsForFilter"
                   @update:model-value="loadAppointments"
                 />
               </v-col>
@@ -118,62 +124,15 @@
                 </v-chip>
               </template>
               <template v-slot:item.actions="{ item }">
-                <v-menu>
-                  <template v-slot:activator="{ props }">
-                    <v-btn v-bind="props" icon="mdi-dots-vertical" size="small" variant="text" />
-                  </template>
-                  <v-list density="compact">
-                    <v-list-item @click="viewAppointment(item)">
-                      <template v-slot:prepend>
-                        <v-icon size="small">mdi-eye</v-icon>
-                      </template>
-                      <v-list-item-title>View Details</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item 
-                      v-if="item.status === 'PENDING'" 
-                      @click="confirmAppointment(item)"
-                    >
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="success">mdi-check</v-icon>
-                      </template>
-                      <v-list-item-title>Confirm</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item 
-                      v-if="item.status === 'CONFIRMED'" 
-                      @click="completeAppointment(item)"
-                    >
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="info">mdi-check-all</v-icon>
-                      </template>
-                      <v-list-item-title>Mark Complete</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item 
-                      v-if="item.status === 'PENDING' || item.status === 'CONFIRMED'" 
-                      @click="noShowAppointment(item)"
-                    >
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="warning">mdi-account-off</v-icon>
-                      </template>
-                      <v-list-item-title>No Show</v-list-item-title>
-                    </v-list-item>
-                    <v-list-item 
-                      v-if="item.status !== 'CANCELLED' && item.status !== 'NO_SHOW'" 
-                      @click="cancelAppointmentDialog(item)"
-                    >
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="error">mdi-cancel</v-icon>
-                      </template>
-                      <v-list-item-title>Cancel</v-list-item-title>
-                    </v-list-item>
-                    <v-divider class="my-1" />
-                    <v-list-item @click="deleteAppointment(item)" :disabled="item.status === 'PENDING' || item.status === 'CONFIRMED'">
-                      <template v-slot:prepend>
-                        <v-icon size="small" color="error">mdi-delete</v-icon>
-                      </template>
-                      <v-list-item-title>Delete</v-list-item-title>
-                    </v-list-item>
-                  </v-list>
-                </v-menu>
+                <v-btn
+                  size="small"
+                  color="primary"
+                  variant="text"
+                  prepend-icon="mdi-eye"
+                  @click="viewAppointment(item)"
+                >
+                  Ver
+                </v-btn>
               </template>
             </v-data-table>
           </v-card-text>
@@ -183,7 +142,7 @@
         <v-dialog v-model="viewDialog" max-width="600">
           <v-card v-if="selectedAppointment">
             <v-card-title class="d-flex justify-space-between">
-              <span>Appointment Details</span>
+              <span>Detalles de la Cita</span>
               <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
             </v-card-title>
             <v-card-text>
@@ -193,23 +152,23 @@
                   <v-list-item-subtitle>{{ selectedAppointment.id }}</v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Date & Time</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Fecha y Hora</v-list-item-title>
                   <v-list-item-subtitle>{{ formatDate(selectedAppointment.date) }} {{ formatTime(selectedAppointment.startTime) }} - {{ formatTime(selectedAppointment.endTime) }}</v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Patient</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Paciente</v-list-item-title>
                   <v-list-item-subtitle v-if="selectedAppointment.patient">
                     {{ selectedAppointment.patient.profile?.firstName }} {{ selectedAppointment.patient.profile?.lastName }} ({{ selectedAppointment.patient.email }})
                   </v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Professional</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Profesional</v-list-item-title>
                   <v-list-item-subtitle v-if="selectedAppointment.professional">
                     {{ selectedAppointment.professional.profile?.firstName }} {{ selectedAppointment.professional.profile?.lastName }} ({{ selectedAppointment.professional.email }})
                   </v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Status</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Estado</v-list-item-title>
                   <v-list-item-subtitle>
                     <v-chip :color="getStatusColor(selectedAppointment.status)" size="small">
                       {{ selectedAppointment.status }}
@@ -217,7 +176,7 @@
                   </v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Payment Status</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Estado de Pago</v-list-item-title>
                   <v-list-item-subtitle>
                     <v-chip :color="getPaymentColor(selectedAppointment.paymentStatus)" size="small">
                       {{ selectedAppointment.paymentStatus || 'N/A' }}
@@ -225,7 +184,7 @@
                   </v-list-item-subtitle>
                 </v-list-item>
                 <v-list-item v-if="selectedAppointment.notes">
-                  <v-list-item-title class="text-caption text-medium-emphasis">Notes</v-list-item-title>
+                  <v-list-item-title class="text-caption text-medium-emphasis">Notas</v-list-item-title>
                   <v-list-item-subtitle>{{ selectedAppointment.notes }}</v-list-item-subtitle>
                 </v-list-item>
               </v-list>
@@ -236,7 +195,7 @@
         <!-- Cancel Appointment Dialog -->
         <v-dialog v-model="cancelDialog" max-width="400">
           <v-card>
-            <v-card-title>Cancel Appointment</v-card-title>
+            <v-card-title>Cancelar Cita</v-card-title>
             <v-card-text>
               <p class="mb-4">Are you sure you want to cancel this appointment?</p>
               <v-textarea
@@ -455,6 +414,7 @@ import { ref, reactive, onMounted } from 'vue'
 import { appointmentsService, emergencyService, strikesService, slotsService } from '@/services/appointments'
 import api from '@/services/api'
 import ProfessionalConfigAdmin from '@/components/ProfessionalConfigAdmin.vue'
+import { formatDate, formatTime } from '@/utils/date'
 
 const tab = ref('appointments')
 const loading = ref(false)
@@ -471,20 +431,20 @@ const appointmentFilters = reactive({
   professionalId: ''
 })
 const statusOptions = [
-  { text: 'Pending', value: 'PENDING' },
-  { text: 'Confirmed', value: 'CONFIRMED' },
-  { text: 'Completed', value: 'COMPLETED' },
-  { text: 'Cancelled', value: 'CANCELLED' },
-  { text: 'No Show', value: 'NO_SHOW' }
+  { text: 'Pendiente', value: 'PENDING' },
+  { text: 'Confirmada', value: 'CONFIRMED' },
+  { text: 'Completada', value: 'COMPLETED' },
+  { text: 'Cancelada', value: 'CANCELLED' },
+  { text: 'No Asistió', value: 'NO_SHOW' }
 ]
 const appointmentHeaders = [
-  { title: 'Date', key: 'date' },
-  { title: 'Time', key: 'startTime' },
-  { title: 'Patient', key: 'patient' },
-  { title: 'Professional', key: 'professional' },
-  { title: 'Status', key: 'status' },
-  { title: 'Payment', key: 'paymentStatus' },
-  { title: 'Actions', key: 'actions', sortable: false }
+  { title: 'Fecha', key: 'date' },
+  { title: 'Hora', key: 'startTime' },
+  { title: 'Paciente', key: 'patient' },
+  { title: 'Profesional', key: 'professional' },
+  { title: 'Estado', key: 'status' },
+  { title: 'Pago', key: 'paymentStatus' },
+  { title: 'Acciones', key: 'actions', sortable: false }
 ]
 
 // Dialogs
@@ -520,7 +480,10 @@ const slotHeaders = [
 const generateDialog = ref(false)
 const generatingSlots = ref(false)
 const loadingProfessionals = ref(false)
+const loadingProfessionalsForFilter = ref(false)
+const loadingPatients = ref(false)
 const professionalsList = ref<{ id: string; label: string }[]>([])
+const patientsList = ref<{ id: string; label: string }[]>([])
 const generateData = reactive({
   professionalId: '',
   startDate: '',
@@ -547,6 +510,7 @@ onMounted(async () => {
   await loadAppointments()
   await loadSlots()
   await loadProfessionals()
+  await loadPatients()
 })
 
 async function loadData() {
@@ -565,20 +529,36 @@ async function loadData() {
 
 async function loadProfessionals() {
   loadingProfessionals.value = true
+  loadingProfessionalsForFilter.value = true
   try {
-    const response = await api.get('/auth/users?role=PROFESSIONAL')
+    const response = await api.get('/auth/professionals')
     professionalsList.value = response.data.map((u: any) => ({
       id: u.id,
-      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
+      label: `${u.firstName || ''} ${u.lastName || ''} (${u.email})`.trim()
     }))
-    // Set default professional if available
     if (professionalsList.value.length > 0 && !generateData.professionalId) {
-      generateData.professionalId = professionalsList.value[0].id
+      generateData.professionalId = professionalsList.value[0]!.id
     }
   } catch (error) {
     console.error('Failed to load professionals:', error)
   } finally {
     loadingProfessionals.value = false
+    loadingProfessionalsForFilter.value = false
+  }
+}
+
+async function loadPatients() {
+  loadingPatients.value = true
+  try {
+    const response = await api.get('/auth/users?role=PATIENT')
+    patientsList.value = response.data.map((u: any) => ({
+      id: u.id,
+      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
+    }))
+  } catch (error) {
+    console.error('Failed to load patients:', error)
+  } finally {
+    loadingPatients.value = false
   }
 }
 
@@ -745,16 +725,6 @@ async function deleteSlot(slot: any) {
       alert('Failed to delete slot')
     }
   }
-}
-
-function formatDate(dateStr: string) {
-  if (!dateStr) return ''
-  return new Date(dateStr).toLocaleDateString()
-}
-
-function formatTime(timeStr: string) {
-  if (!timeStr) return ''
-  return new Date(timeStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
 }
 
 async function updateStatus(id: string, status: string) {

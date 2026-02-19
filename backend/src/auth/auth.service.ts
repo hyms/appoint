@@ -214,4 +214,19 @@ export class AuthService {
 
     return users.map(user => this.sanitizeUser(user));
   }
+
+  async getProfessionals() {
+    const users = await this.prisma.user.findMany({
+      where: { role: 'PROFESSIONAL' },
+      include: { profile: true },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    return users.map(user => ({
+      id: user.id,
+      email: user.email,
+      firstName: user.profile?.firstName,
+      lastName: user.profile?.lastName,
+    }));
+  }
 }

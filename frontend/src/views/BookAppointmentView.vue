@@ -7,21 +7,21 @@
           {{ $t('appointments.book') }}
         </h1>
         <p class="text-body-2 text-medium-emphasis">
-          Follow the steps below to schedule your appointment
+          Sigue los pasos para agendar tu cita
         </p>
       </v-col>
     </v-row>
 
     <!-- Step 1: Professional -->
     <v-card class="mb-4">
-      <v-card-title>1. Select Professional</v-card-title>
+      <v-card-title>1. Selecciona Profesional</v-card-title>
       <v-card-text>
         <v-select
           v-model="selectedProfessional"
           :items="professionals"
           item-title="label"
           item-value="id"
-          label="Choose your doctor"
+          label="Elige tu doctor"
           prepend-inner-icon="mdi-doctor"
           :loading="loadingProfessionals"
           @update:modelValue="onProfessionalSelect"
@@ -31,7 +31,7 @@
 
     <!-- Step 2: Date -->
     <v-card class="mb-4">
-      <v-card-title>2. Select Date</v-card-title>
+      <v-card-title>2. Selecciona Fecha</v-card-title>
       <v-card-text>
         <v-date-picker
           v-model="selectedDate"
@@ -46,23 +46,23 @@
 
     <!-- Step 3: Available Slots -->
     <v-card class="mb-4">
-      <v-card-title>3. Select Time</v-card-title>
+      <v-card-title>3. Selecciona Hora</v-card-title>
       <v-card-text>
         <div v-if="loadingSlots" class="text-center py-4">
           <v-progress-circular indeterminate color="primary" />
-          <p class="mt-2">Loading available slots...</p>
+          <p class="mt-2">Cargando horarios disponibles...</p>
         </div>
         
         <div v-else-if="availableSlots.length === 0" class="text-center py-4">
           <v-icon icon="mdi-calendar-remove" size="48" color="grey" />
-          <p class="mt-2">No available slots for this date</p>
+          <p class="mt-2">No hay horarios disponibles para esta fecha</p>
           <v-btn color="primary" variant="text" @click="loadAvailableSlots">
-            Try another date
+            Intenta con otra fecha
           </v-btn>
         </div>
         
         <div v-else>
-          <p class="mb-2">Available times:</p>
+          <p class="mb-2">Horarios disponibles:</p>
           <v-chip-group v-model="selectedSlot" column>
             <v-chip
               v-for="slot in availableSlots"
@@ -81,26 +81,26 @@
 
     <!-- Step 4: Confirm -->
     <v-card v-if="selectedSlot" class="mb-4">
-      <v-card-title>4. Confirm Booking</v-card-title>
+      <v-card-title>4. Confirmar Cita</v-card-title>
       <v-card-text>
         <v-list>
           <v-list-item>
-            <v-list-item-title>Professional</v-list-item-title>
+            <v-list-item-title>Profesional</v-list-item-title>
             <v-list-item-subtitle>{{ selectedProfessionalName }}</v-list-item-subtitle>
           </v-list-item>
           <v-list-item>
-            <v-list-item-title>Date</v-list-item-title>
-            <v-list-item-subtitle>{{ formatDateFull(selectedDate) }}</v-list-item-subtitle>
+            <v-list-item-title>Fecha</v-list-item-title>
+            <v-list-item-subtitle>{{ formatLongDate(selectedDate) }}</v-list-item-subtitle>
           </v-list-item>
           <v-list-item>
-            <v-list-item-title>Time</v-list-item-title>
+            <v-list-item-title>Hora</v-list-item-title>
             <v-list-item-subtitle>{{ selectedSlot ? formatTime(selectedSlot.startTime) : '' }}</v-list-item-subtitle>
           </v-list-item>
         </v-list>
 
         <v-textarea
           v-model="notes"
-          label="Additional notes (optional)"
+          label="Notas adicionales (opcional)"
           rows="2"
           class="mt-2"
         />
@@ -112,19 +112,19 @@
           :loading="booking"
           @click="confirmBooking"
         >
-          Book Appointment
+          Reservar Cita
         </v-btn>
       </v-card-text>
     </v-card>
 
     <!-- Debug Info -->
     <v-card class="mb-4" v-if="$vuetify.display.mdAndUp">
-      <v-card-title class="text-caption">Debug Info</v-card-title>
+      <v-card-title class="text-caption">Info de Depuración</v-card-title>
       <v-card-text>
-        <p>Professional: {{ selectedProfessional }}</p>
-        <p>Date: {{ selectedDate }}</p>
-        <p>Slots loaded: {{ availableSlots.length }}</p>
-        <p>Selected slot: {{ selectedSlot?.id }}</p>
+        <p>Profesional: {{ selectedProfessional }}</p>
+        <p>Fecha: {{ selectedDate }}</p>
+        <p>Horarios cargados: {{ availableSlots.length }}</p>
+        <p>Horario seleccionado: {{ selectedSlot?.id }}</p>
       </v-card-text>
     </v-card>
   </v-container>
@@ -137,6 +137,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { appointmentsService, slotsService, type Slot } from '@/services/appointments'
 import api from '@/services/api'
+import { formatLongDate, formatTime } from '@/utils/date'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -171,15 +172,15 @@ onMounted(async () => {
 async function loadProfessionals() {
   loadingProfessionals.value = true
   try {
-    const response = await api.get('/auth/users?role=PROFESSIONAL')
+    const response = await api.get('/auth/professionals')
     professionals.value = response.data.map((u: any) => ({
       id: u.id,
-      label: `Dr. ${u.profile?.firstName || ''} ${u.profile?.lastName || ''}`.trim()
+      label: `Dr. ${u.firstName || ''} ${u.lastName || ''}`.trim()
     }))
     
     // Auto-select first professional
     if (professionals.value.length > 0) {
-      selectedProfessional.value = professionals.value[0].id
+      selectedProfessional.value = professionals.value[0]!.id
     }
   } catch (err) {
     console.error('Failed to load professionals:', err)
@@ -246,7 +247,6 @@ async function confirmBooking() {
   booking.value = true
   try {
     await appointmentsService.create({
-      patientId: authStore.user?.id,
       professionalId: selectedProfessional.value,
       slotId: selectedSlot.value.id,
       notes: notes.value
@@ -259,22 +259,5 @@ async function confirmBooking() {
   } finally {
     booking.value = false
   }
-}
-
-function formatDateFull(date: Date | null) {
-  if (!date) return ''
-  return date.toLocaleDateString(undefined, {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric'
-  })
-}
-
-function formatTime(time: string | Date) {
-  return new Date(time).toLocaleTimeString([], {
-    hour: '2-digit',
-    minute: '2-digit'
-  })
 }
 </script>

@@ -156,6 +156,7 @@ import { appointmentsService, type Appointment } from '@/services/appointments'
 import BaseCard from '@/components/base/BaseCard.vue'
 import EmptyState from '@/components/base/EmptyState.vue'
 import SkeletonLoader from '@/components/base/SkeletonLoader.vue'
+import { formatDate, formatTime } from '@/utils/date'
 
 const authStore = useAuthStore()
 const upcomingAppointments = ref<Appointment[]>([])
@@ -177,21 +178,6 @@ onMounted(async () => {
     loading.value = false
   }
 })
-
-function formatDate(date: string) {
-  return new Date(date).toLocaleDateString(undefined, {
-    weekday: 'short',
-    month: 'short',
-    day: 'numeric'
-  })
-}
-
-function formatTime(time: string) {
-  return new Date(time).toLocaleTimeString([], { 
-    hour: '2-digit', 
-    minute: '2-digit'
-  })
-}
 
 function formatStatus(status: string) {
   return status.toLowerCase().replace('_', ' ')
