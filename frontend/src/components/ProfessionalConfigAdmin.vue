@@ -121,7 +121,10 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { professionalConfigService, type ProfessionalConfig } from '@/services/professional-config'
+import { useToast } from '@/composables/useToast'
 import api from '@/services/api'
+
+const { success, error } = useToast()
 
 const professionals = ref<{ id: string; label: string }[]>([])
 const selectedProfessional = ref<string | null>(null)
@@ -188,10 +191,10 @@ async function saveConfig() {
       breakBetweenSlotsMinutes: config.value.breakBetweenSlotsMinutes,
       workingHours: config.value.workingHours
     })
-    alert('Configuración guardada correctamente')
-  } catch (error) {
-    console.error('Error saving config:', error)
-    alert('Error al guardar la configuración')
+    success('Configuración guardada correctamente')
+  } catch (err) {
+    console.error('Error saving config:', err)
+    error('Error al guardar la configuración')
   } finally {
     saving.value = false
   }

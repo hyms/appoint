@@ -9,11 +9,19 @@ import {
   HttpStatus,
   Req,
   Ip,
+  Param,
+  Put,
+  Delete,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
 import { AuthService } from './auth.service';
-import { RegisterDto, LoginDto, MagicLinkDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  MagicLinkDto,
+  UpdateUserDto,
+} from './dto/auth.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
@@ -76,8 +84,39 @@ export class AuthController {
 
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY')
+  @Roles('ADMIN')
   async getUsers(@Query('role') role?: string) {
     return this.authService.getUsers(role);
+  }
+
+  @Get('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async getUserById(@Param('id') id: string) {
+    return this.authService.getUserById(id);
+  }
+
+  @Post('users')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async createUser(@Body() createUserDto: RegisterDto) {
+    return this.authService.createUser(createUserDto);
+  }
+
+  @Put('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async updateUser(
+    @Param('id') id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.authService.updateUser(id, updateUserDto);
+  }
+
+  @Delete('users/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  async deleteUser(@Param('id') id: string) {
+    return this.authService.deleteUser(id);
   }
 }

@@ -1,16 +1,22 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   SendNotificationDto,
   NotificationType,
   ProviderType,
 } from '../dto/notification.dto';
+import { NotificationProviderRegistry } from './notification-provider.registry';
+import { NotificationConfigService } from './notification-config.service';
 
 @Injectable()
-export class NotificationProvider {
-  private readonly logger = new Logger(NotificationProvider.name);
+export class NotificationProviderService {
+  private readonly logger = new Logger(NotificationProviderService.name);
 
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private registry: NotificationProviderRegistry,
+    private configService: NotificationConfigService,
+  ) {}
 
   async sendNotification(dto: SendNotificationDto) {
     const notification = await this.prisma.notificationLog.create({
@@ -25,33 +31,36 @@ export class NotificationProvider {
     });
 
     try {
-      let result: { success: boolean; messageId?: string };
+      const providerType = dto.provider || ProviderType.EMAIL;
+      const provider = this.registry.get(providerType);
 
-      switch (dto.provider) {
-        case ProviderType.WHATSAPP:
-          result = await this.sendWhatsApp(dto.recipient, dto.content);
-          break;
-        case ProviderType.TELEGRAM:
-          result = await this.sendTelegram(dto.recipient, dto.content);
-          break;
-        default:
-          result = await this.sendEmail(
-            dto.recipient,
-            dto.subject || '',
-            dto.content,
-          );
+      if (!provider) {
+        throw new BadRequestException(`Provider ${providerType} not available`);
       }
 
-      const updatedNotification = await this.prisma.notificationLog.update({
-        where: { id: notification.id },
-        data: {
-          status: result.success ? 'SENT' : 'FAILED',
-          sentAt: result.success ? new Date() : null,
-          errorMessage: result.success ? null : 'Sending failed',
-        },
-      });
+      if (!provider.isConfigured()) {
+        this.logger.warn(
+          `Provider ${providerType} not configured, using fallback`,
+        );
+        const fallbackProvider = this.registry.getDefault();
+        if (!fallbackProvider) {
+          throw new BadRequestException('No notification provider available');
+        }
+        const fallbackResult = await fallbackProvider.send(
+          dto.recipient,
+          dto.content,
+          dto.subject,
+        );
+        return this.updateNotificationStatus(notification.id, fallbackResult);
+      }
 
-      return updatedNotification;
+      const result = await provider.send(
+        dto.recipient,
+        dto.content,
+        dto.subject,
+      );
+
+      return this.updateNotificationStatus(notification.id, result);
     } catch (error) {
       this.logger.error(
         `Failed to send notification ${notification.id}:`,
@@ -68,115 +77,22 @@ export class NotificationProvider {
     }
   }
 
-  async sendWhatsApp(
-    phone: string,
-    message: string,
-  ): Promise<{ success: boolean; messageId?: string }> {
-    const whatsappToken = process.env.WHATSAPP_TOKEN;
-    const whatsappPhoneId = process.env.WHATSAPP_PHONE_ID;
-
-    if (!whatsappToken || !whatsappPhoneId) {
-      this.logger.warn('WhatsApp credentials not configured. Simulating send.');
-      return this.simulateSend(phone, 'WhatsApp', message);
-    }
-
-    try {
-      const response = await fetch(
-        `https://graph.facebook.com/v18.0/${whatsappPhoneId}/messages`,
-        {
-          method: 'POST',
-          headers: {
-            Authorization: `Bearer ${whatsappToken}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            messaging_product: 'whatsapp',
-            to: phone,
-            type: 'text',
-            text: { body: message },
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`WhatsApp API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return { success: true, messageId: data.messages?.[0]?.id };
-    } catch (error) {
-      this.logger.error('WhatsApp send failed:', error);
-      return { success: false };
-    }
-  }
-
-  async sendTelegram(
-    chatId: string,
-    message: string,
-  ): Promise<{ success: boolean; messageId?: string }> {
-    const telegramToken = process.env.TELEGRAM_BOT_TOKEN;
-
-    if (!telegramToken) {
-      this.logger.warn('Telegram credentials not configured. Simulating send.');
-      return this.simulateSend(chatId, 'Telegram', message);
-    }
-
-    try {
-      const response = await fetch(
-        `https://api.telegram.org/bot${telegramToken}/sendMessage`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            chat_id: chatId,
-            text: message,
-            parse_mode: 'HTML',
-          }),
-        },
-      );
-
-      if (!response.ok) {
-        throw new Error(`Telegram API error: ${response.statusText}`);
-      }
-
-      const data = await response.json();
-      return { success: true, messageId: data.result?.message_id?.toString() };
-    } catch (error) {
-      this.logger.error('Telegram send failed:', error);
-      return { success: false };
-    }
-  }
-
-  async sendEmail(
-    to: string,
-    subject: string,
-    body: string,
-  ): Promise<{ success: boolean; messageId?: string }> {
-    const smtpHost = process.env.SMTP_HOST;
-    const smtpUser = process.env.SMTP_USER;
-
-    if (!smtpHost || !smtpUser) {
-      this.logger.warn('Email credentials not configured. Simulating send.');
-      return this.simulateSend(to, 'Email', `${subject}: ${body}`);
-    }
-
-    console.log(`[EMAIL] To: ${to}, Subject: ${subject}`);
-    console.log(`[EMAIL] Body: ${body}`);
-
-    return { success: true, messageId: `email-${Date.now()}` };
-  }
-
-  private simulateSend(recipient: string, provider: string, message: string) {
-    this.logger.log(
-      `[${provider}] Simulated send to ${recipient}: ${message.substring(0, 50)}...`,
-    );
-    return { success: true, messageId: `simulated-${Date.now()}` };
+  private async updateNotificationStatus(
+    notificationId: string,
+    result: { success: boolean; messageId?: string; error?: string },
+  ) {
+    return this.prisma.notificationLog.update({
+      where: { id: notificationId },
+      data: {
+        status: result.success ? 'SENT' : 'FAILED',
+        sentAt: result.success ? new Date() : null,
+        errorMessage: result.success ? null : result.error,
+      },
+    });
   }
 
   async sendAppointmentReminder(appointment: any) {
     const patient = appointment.patient;
-    const professional = appointment.professional;
-
     const message = this.formatReminderMessage(appointment);
 
     return this.sendNotification({

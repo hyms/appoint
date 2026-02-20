@@ -7,6 +7,8 @@ import {
 import { AppointmentsService } from './appointment.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { StrikeService } from '../../strikes/services/strike.service';
+import { AuthorizationService } from '../../common/services/authorization.service';
+import { AppointmentAuditService } from './appointment-audit.service';
 
 describe('AppointmentsService', () => {
   let appointmentsService: AppointmentsService;
@@ -29,7 +31,25 @@ describe('AppointmentsService', () => {
   };
 
   const mockStrikeService = {
-    isPatientBlockedForAny: jest.fn(),
+    checkPatientBlocked: jest.fn().mockResolvedValue(false),
+  };
+
+  const mockAuthorizationService = {
+    canBookForOthers: jest.fn().mockReturnValue(true),
+    canAccessAppointment: jest
+      .fn()
+      .mockImplementation((role, userId, patientId, professionalId) => {
+        // Return false for unauthorized access test
+        if (userId === 'other-user') return false;
+        return true;
+      }),
+    canUpdateAppointmentStatus: jest.fn().mockReturnValue(true),
+    canCancelAppointment: jest.fn().mockReturnValue(true),
+    isAdminOrSecretary: jest.fn().mockReturnValue(false),
+  };
+
+  const mockAuditService = {
+    logChange: jest.fn().mockResolvedValue({}),
   };
 
   beforeEach(async () => {
@@ -43,6 +63,14 @@ describe('AppointmentsService', () => {
         {
           provide: StrikeService,
           useValue: mockStrikeService,
+        },
+        {
+          provide: AuthorizationService,
+          useValue: mockAuthorizationService,
+        },
+        {
+          provide: AppointmentAuditService,
+          useValue: mockAuditService,
         },
       ],
     }).compile();

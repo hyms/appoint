@@ -63,9 +63,11 @@
 import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const { error: showError } = useToast()
 
 const form = reactive({
   email: '',
@@ -82,8 +84,8 @@ async function handleRegister() {
   try {
     await authStore.register(form)
     router.push('/dashboard')
-  } catch (error: any) {
-    alert(error.response?.data?.message || 'Registration failed')
+  } catch (err: any) {
+    showError(err.response?.data?.message || 'Registration failed')
   } finally {
     loading.value = false
   }

@@ -2,8 +2,9 @@ import { IsString, IsDateString, IsOptional, IsEnum } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class CreateAppointmentDto {
+  @IsOptional()
   @IsString()
-  patientId: string;
+  patientId?: string;
 
   @IsString()
   professionalId: string;

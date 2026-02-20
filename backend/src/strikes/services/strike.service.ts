@@ -10,6 +10,7 @@ import { CreateStrikeDto, ResolveStrikeDto } from '../dto/strike.dto';
 @Injectable()
 export class StrikeService {
   private readonly BLOCK_DURATION_DAYS = 2;
+  private readonly STRIKE_THRESHOLD_FOR_BLOCK = 3;
 
   constructor(private prisma: PrismaService) {}
 
@@ -63,15 +64,12 @@ export class StrikeService {
       );
     }
 
-    const blockedUntil = new Date();
-    blockedUntil.setDate(blockedUntil.getDate() + this.BLOCK_DURATION_DAYS);
-
+    // Create the strike first
     const strike = await this.prisma.strike.create({
       data: {
         patientId: dto.patientId,
         professionalId,
         reason: dto.reason,
-        blockedUntil,
       },
       include: {
         patient: { include: { profile: true } },
@@ -79,14 +77,64 @@ export class StrikeService {
       },
     });
 
-    // Only block slots for THIS professional, not all
-    await this.blockPatientSlotsForProfessional(dto.patientId, professionalId, blockedUntil);
+    // Check and block if 3+ active strikes (3-2 Rule)
+    await this.checkAndBlockPatient(dto.patientId);
 
     return {
       ...strike,
-      blockedUntil,
-      message: `Patient blocked for ${this.BLOCK_DURATION_DAYS} days with this professional`,
+      message: 'Strike recorded successfully',
     };
+  }
+
+  async checkAndBlockPatient(
+    patientId: string,
+  ): Promise<{ blocked: boolean; activeStrikes: number }> {
+    // Count ALL active strikes for this patient (across all professionals)
+    const activeStrikes = await this.prisma.strike.count({
+      where: {
+        patientId,
+        isActive: true,
+        OR: [{ blockedUntil: null }, { blockedUntil: { lt: new Date() } }],
+      },
+    });
+
+    if (activeStrikes >= this.STRIKE_THRESHOLD_FOR_BLOCK) {
+      const blockedUntil = new Date();
+      blockedUntil.setDate(blockedUntil.getDate() + this.BLOCK_DURATION_DAYS);
+
+      // Update all active strikes to have blockedUntil
+      await this.prisma.strike.updateMany({
+        where: {
+          patientId,
+          isActive: true,
+        },
+        data: {
+          blockedUntil,
+        },
+      });
+
+      // Block patient slots with ALL professionals
+      const patientStrikes = await this.prisma.strike.findMany({
+        where: {
+          patientId,
+          isActive: true,
+        },
+        select: { professionalId: true },
+        distinct: ['professionalId'],
+      });
+
+      for (const strike of patientStrikes) {
+        await this.blockPatientSlotsForProfessional(
+          patientId,
+          strike.professionalId,
+          blockedUntil,
+        );
+      }
+
+      return { blocked: true, activeStrikes };
+    }
+
+    return { blocked: false, activeStrikes };
   }
 
   // Get strikes for a specific patient (for patient view)
@@ -112,7 +160,10 @@ export class StrikeService {
   }
 
   // Admin: Get all strikes or filter by patient/professional
-  async getAllStrikes(filters?: { patientId?: string; professionalId?: string }) {
+  async getAllStrikes(filters?: {
+    patientId?: string;
+    professionalId?: string;
+  }) {
     const where: any = {};
     if (filters?.patientId) where.patientId = filters.patientId;
     if (filters?.professionalId) where.professionalId = filters.professionalId;
@@ -159,7 +210,10 @@ export class StrikeService {
     });
 
     // Unblock only slots for THIS professional
-    await this.unblockPatientSlotsForProfessional(strike.patientId, strike.professionalId);
+    await this.unblockPatientSlotsForProfessional(
+      strike.patientId,
+      strike.professionalId,
+    );
 
     return {
       ...updatedStrike,
@@ -184,8 +238,40 @@ export class StrikeService {
     return !!activeStrike;
   }
 
+  // Get global block status for a patient
+  async getPatientBlockStatus(patientId: string): Promise<{
+    blocked: boolean;
+    blockedUntil: Date | null;
+    activeStrikes: number;
+  }> {
+    const activeStrikes = await this.prisma.strike.count({
+      where: {
+        patientId,
+        isActive: true,
+      },
+    });
+
+    const activeBlock = await this.prisma.strike.findFirst({
+      where: {
+        patientId,
+        isActive: true,
+        blockedUntil: { gte: new Date() },
+      },
+      orderBy: { strikeDate: 'desc' },
+    });
+
+    return {
+      blocked: !!activeBlock,
+      blockedUntil: activeBlock?.blockedUntil || null,
+      activeStrikes,
+    };
+  }
+
   // Get all strikes for a patient with a specific professional
-  async getPatientStrikesWithProfessional(patientId: string, professionalId: string) {
+  async getPatientStrikesWithProfessional(
+    patientId: string,
+    professionalId: string,
+  ) {
     return this.prisma.strike.findMany({
       where: { patientId, professionalId },
       include: {
@@ -216,11 +302,17 @@ export class StrikeService {
     };
   }
 
-  async cancelUpcomingAppointmentsForBlockedPatient(patientId: string, professionalId: string) {
+  async cancelUpcomingAppointmentsForBlockedPatient(
+    patientId: string,
+    professionalId: string,
+  ) {
     const isBlocked = await this.checkPatientBlocked(patientId, professionalId);
 
     if (!isBlocked) {
-      return { cancelled: 0, message: 'Patient is not blocked with this professional' };
+      return {
+        cancelled: 0,
+        message: 'Patient is not blocked with this professional',
+      };
     }
 
     // Only cancel appointments with THIS professional

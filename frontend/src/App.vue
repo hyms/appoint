@@ -20,7 +20,7 @@
           <v-btn
             v-if="!$vuetify.display.mobile"
             variant="text"
-            icon="mdi-chevron-left"
+            :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
             @click="rail = !rail"
           />
         </template>
@@ -50,19 +50,20 @@
             color="white"
             rounded="lg"
           />
-          <v-list-item
-            prepend-icon="mdi-logout"
-            :title="rail ? '' : $t('nav.logout')"
-            @click="logout"
-            color="white"
-            rounded="lg"
-          />
         </v-list>
       </template>
     </v-navigation-drawer>
 
     <!-- App Bar -->
     <v-app-bar color="primary" density="comfortable" elevation="2">
+      <v-btn
+        v-if="authStore.isAuthenticated && !$vuetify.display.mobile"
+        icon
+        variant="text"
+        @click="rail = !rail"
+      >
+        <v-icon>{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
+      </v-btn>
       <v-app-bar-nav-icon
         v-if="authStore.isAuthenticated && $vuetify.display.mobile"
         @click="drawerOpen = !drawerOpen"
@@ -76,24 +77,46 @@
         <v-btn to="/register" variant="text">{{ $t('nav.register') }}</v-btn>
       </template>
       <template v-else>
-        <v-btn
-          v-if="!$vuetify.display.mobile"
-          icon="mdi-menu"
-          variant="text"
-          @click="rail = !rail"
-        />
+        <!-- User Menu -->
         <v-menu>
           <template v-slot:activator="{ props }">
             <v-btn v-bind="props" icon variant="text">
-              <v-icon>mdi-translate</v-icon>
+              <v-icon>mdi-account-circle</v-icon>
             </v-btn>
           </template>
-          <v-list>
+          <v-list density="compact" min-width="200">
+            <v-list-item>
+              <template v-slot:prepend>
+                <v-icon color="primary">mdi-account</v-icon>
+              </template>
+              <v-list-item-title class="font-weight-medium">
+                {{ authStore.user?.email }}
+              </v-list-item-title>
+              <v-list-item-subtitle>
+                {{ authStore.user?.role }}
+              </v-list-item-subtitle>
+            </v-list-item>
+            <v-divider class="my-1" />
             <v-list-item @click="changeLocale('en')">
+              <template v-slot:prepend>
+                <v-icon size="small">mdi-translate</v-icon>
+              </template>
               <v-list-item-title>English</v-list-item-title>
             </v-list-item>
             <v-list-item @click="changeLocale('es')">
+              <template v-slot:prepend>
+                <v-icon size="small">mdi-translate</v-icon>
+              </template>
               <v-list-item-title>Español</v-list-item-title>
+            </v-list-item>
+            <v-divider class="my-1" />
+            <v-list-item @click="logout">
+              <template v-slot:prepend>
+                <v-icon size="small" color="error">mdi-logout</v-icon>
+              </template>
+              <v-list-item-title class="text-error">
+                {{ $t('nav.logout') }}
+              </v-list-item-title>
             </v-list-item>
           </v-list>
         </v-menu>
@@ -134,6 +157,7 @@ import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import { useVuetify } from '@/composables/useVuetify'
+import { useAuthorization } from '@/composables/useAuthorization'
 import ToastContainer from '@/components/ToastContainer.vue'
 
 const { locale, t } = useI18n()
@@ -141,6 +165,7 @@ const authStore = useAuthStore()
 const router = useRouter()
 const route = useRoute()
 const vuetify = useVuetify()
+const { isProfessional, isAdminOrSecretary } = useAuthorization()
 
 const drawerOpen = ref(true)
 const rail = ref(false)
@@ -153,13 +178,11 @@ const menuItems = computed(() => {
     { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
   ]
   
-  // Add administrative tools for professionals
-  if (authStore.user?.role === 'PROFESSIONAL') {
+  if (isProfessional.value) {
     items.push({ to: '/professional-config', label: 'Herramientas Administrativas', icon: 'mdi-account-cog' })
   }
   
-  // Add admin panel for admins and secretaries
-  if (['ADMIN', 'SECRETARY'].includes(authStore.user?.role || '')) {
+  if (isAdminOrSecretary.value) {
     items.push({ to: '/admin', label: 'Admin', icon: 'mdi-shield-account' })
   }
   
@@ -173,8 +196,12 @@ const bottomNavItems = computed(() => {
     { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
   ]
   
-  if (authStore.user?.role === 'PROFESSIONAL') {
+  if (isProfessional.value) {
     items.push({ to: '/professional-config', label: 'Admin', icon: 'mdi-account-cog' })
+  }
+  
+  if (isAdminOrSecretary.value) {
+    items.push({ to: '/admin', label: 'Admin', icon: 'mdi-shield-account' })
   }
   
   return items

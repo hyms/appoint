@@ -5,13 +5,17 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { VerifyPaymentDto, UploadPaymentDto } from '../dto/payment.dto';
+import { AppConfigService } from '../../config/config.service';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
 import * as fs from 'fs';
 
 @Injectable()
 export class PaymentsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: AppConfigService,
+  ) {}
 
   async generatePaymentQR(appointmentId: string): Promise<string> {
     const appointment = await this.prisma.appointment.findUnique({
@@ -47,8 +51,7 @@ export class PaymentsService {
       width: 300,
     });
 
-    const baseUrl = process.env.API_URL || 'http://localhost:3000';
-    return `${baseUrl}/uploads/payments/${fileName}`;
+    return `${this.configService.apiUrl}/uploads/payments/${fileName}`;
   }
 
   async uploadPayment(appointmentId: string, file: Express.Multer.File) {
@@ -60,8 +63,7 @@ export class PaymentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    const baseUrl = process.env.API_URL || 'http://localhost:3000';
-    const qrImageUrl = `${baseUrl}/uploads/payments/${file.filename}`;
+    const qrImageUrl = `${this.configService.apiUrl}/uploads/payments/${file.filename}`;
 
     const payment = await this.prisma.payment.upsert({
       where: { appointmentId },

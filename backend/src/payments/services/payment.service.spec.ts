@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { PaymentsService } from './payment.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { AppConfigService } from '../../config/config.service';
 import { NotFoundException } from '@nestjs/common';
 
 describe('PaymentsService', () => {
@@ -20,6 +21,11 @@ describe('PaymentsService', () => {
     },
   };
 
+  const mockConfigService = {
+    apiUrl: 'http://localhost:3000',
+    isProduction: false,
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -27,6 +33,10 @@ describe('PaymentsService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: AppConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();

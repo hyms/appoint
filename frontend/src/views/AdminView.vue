@@ -9,6 +9,7 @@
     <v-tabs v-model="tab" color="primary" class="mb-4">
       <v-tab value="appointments">Appointments</v-tab>
       <v-tab value="slots">Slots</v-tab>
+      <v-tab value="users">Usuarios</v-tab>
       <v-tab value="professionals">Profesionales</v-tab>
       <v-tab value="emergency">{{ $t('dashboard.emergencies') }}</v-tab>
       <v-tab value="strikes">Strikes</v-tab>
@@ -347,6 +348,106 @@
         </v-dialog>
       </v-window-item>
 
+      <v-window-item value="users">
+        <v-card>
+          <v-card-title class="d-flex justify-space-between align-center">
+            <span>Gestión de Usuarios</span>
+            <v-btn color="primary" size="small" @click="openUserDialog()" prepend-icon="mdi-plus">
+              Nuevo Usuario
+            </v-btn>
+          </v-card-title>
+          <v-card-text>
+            <v-row class="mb-4">
+              <v-col cols="12" md="3">
+                <v-select
+                  v-model="userFilters.role"
+                  label="Filtrar por Rol"
+                  :items="roleOptions"
+                  item-title="text"
+                  item-value="value"
+                  density="compact"
+                  clearable
+                  @update:model-value="loadUsers"
+                />
+              </v-col>
+              <v-col cols="12" md="3">
+                <v-select
+                  v-model="userFilters.isActive"
+                  label="Estado"
+                  :items="activeOptions"
+                  item-title="text"
+                  item-value="value"
+                  density="compact"
+                  clearable
+                  @update:model-value="loadUsers"
+                />
+              </v-col>
+              <v-col cols="12" md="6" class="d-flex align-center">
+                <v-spacer />
+                <v-btn color="primary" variant="text" @click="loadUsers" prepend-icon="mdi-refresh">
+                  Actualizar
+                </v-btn>
+              </v-col>
+            </v-row>
+
+            <v-data-table
+              :headers="userHeaders"
+              :items="users"
+              :loading="usersLoading"
+              :items-per-page="10"
+            >
+              <template v-slot:item.profile.firstName="{ item }">
+                {{ item.profile?.firstName }} {{ item.profile?.lastName }}
+              </template>
+              <template v-slot:item.role="{ item }">
+                <v-chip :color="getRoleColor(item.role)" size="small">
+                  {{ item.role }}
+                </v-chip>
+              </template>
+              <template v-slot:item.isActive="{ item }">
+                <v-chip :color="item.isActive ? 'success' : 'error'" size="small">
+                  {{ item.isActive ? 'Activo' : 'Inactivo' }}
+                </v-chip>
+              </template>
+              <template v-slot:item.createdAt="{ item }">
+                {{ formatDate(item.createdAt) }}
+              </template>
+              <template v-slot:item.actions="{ item }">
+                <v-btn size="small" color="primary" variant="text" @click="openUserDialog(item)">
+                  Editar
+                </v-btn>
+                <v-btn size="small" color="error" variant="text" icon="mdi-delete" @click="deleteUser(item)" />
+              </template>
+            </v-data-table>
+          </v-card-text>
+        </v-card>
+
+        <v-dialog v-model="userDialog" max-width="600">
+          <v-card>
+            <v-card-title>{{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}</v-card-title>
+            <v-card-text>
+              <v-form ref="userForm" @submit.prevent="saveUser">
+                <v-text-field v-model="userFormData.email" label="Email" :rules="[v => !!v || 'Email requerido']" />
+                <v-text-field v-if="!editingUser" v-model="userFormData.password" label="Contraseña" type="password" :rules="[v => !!v || 'Contraseña requerida']" />
+                <v-text-field v-model="userFormData.phone" label="Teléfono" />
+                <v-text-field v-model="userFormData.firstName" label="Nombre" :rules="[v => !!v || 'Nombre requerido']" />
+                <v-text-field v-model="userFormData.lastName" label="Apellido" :rules="[v => !!v || 'Apellido requerido']" />
+                <v-text-field v-model="userFormData.dni" label="DNI" />
+                <v-select v-model="userFormData.role" label="Rol" :items="roleOptions" item-title="text" item-value="value" :rules="[v => !!v || 'Rol requerido']" />
+                <v-switch v-if="editingUser" v-model="userFormData.isActive" label="Usuario activo" color="success" />
+              </v-form>
+            </v-card-text>
+            <v-card-actions>
+              <v-spacer />
+              <v-btn @click="userDialog = false">Cancelar</v-btn>
+              <v-btn color="primary" @click="saveUser" :loading="savingUser">
+                {{ editingUser ? 'Actualizar' : 'Crear' }}
+              </v-btn>
+            </v-card-actions>
+          </v-card>
+        </v-dialog>
+      </v-window-item>
+
       <v-window-item value="emergency">
         <v-card>
           <v-card-title>{{ $t('dashboard.emergencies') }}</v-card-title>
@@ -411,10 +512,17 @@
 
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
-import { appointmentsService, emergencyService, strikesService, slotsService } from '@/services/appointments'
+import { appointmentsService } from '@/services/appointments'
+import { emergencyService } from '@/services/emergency'
+import { strikesService } from '@/services/strikes'
+import { slotsService } from '@/services/slots'
+import { usersService, type User, type CreateUserDto, type UpdateUserDto } from '@/services/users'
 import api from '@/services/api'
 import ProfessionalConfigAdmin from '@/components/ProfessionalConfigAdmin.vue'
 import { formatDate, formatTime } from '@/utils/date'
+import { useToast } from '@/composables/useToast'
+
+const { success, error } = useToast()
 
 const tab = ref('appointments')
 const loading = ref(false)
@@ -479,6 +587,55 @@ const slotHeaders = [
 // Generate dialog
 const generateDialog = ref(false)
 const generatingSlots = ref(false)
+
+// Users state
+const users = ref<User[]>([])
+const usersLoading = ref(false)
+const userDialog = ref(false)
+const editingUser = ref<User | null>(null)
+const savingUser = ref(false)
+const userFilters = reactive({
+  role: '',
+  isActive: undefined as boolean | undefined
+})
+const userFormData = reactive<{
+  email: string
+  password: string
+  phone: string
+  firstName: string
+  lastName: string
+  dni: string
+  role: string
+  isActive: boolean
+}>({
+  email: '',
+  password: '',
+  phone: '',
+  firstName: '',
+  lastName: '',
+  dni: '',
+  role: 'PATIENT',
+  isActive: true
+})
+const roleOptions = [
+  { text: 'Administrador', value: 'ADMIN' },
+  { text: 'Secretario', value: 'SECRETARY' },
+  { text: 'Profesional', value: 'PROFESSIONAL' },
+  { text: 'Paciente', value: 'PATIENT' }
+]
+const activeOptions = [
+  { text: 'Activo', value: true },
+  { text: 'Inactivo', value: false }
+]
+const userHeaders = [
+  { title: 'Nombre', key: 'profile.firstName' },
+  { title: 'Email', key: 'email' },
+  { title: 'Teléfono', key: 'phone' },
+  { title: 'Rol', key: 'role' },
+  { title: 'Estado', key: 'isActive' },
+  { title: 'Creado', key: 'createdAt' },
+  { title: 'Acciones', key: 'actions', sortable: false }
+]
 const loadingProfessionals = ref(false)
 const loadingProfessionalsForFilter = ref(false)
 const loadingPatients = ref(false)
@@ -509,6 +666,7 @@ onMounted(async () => {
   await loadData()
   await loadAppointments()
   await loadSlots()
+  await loadUsers()
   await loadProfessionals()
   await loadPatients()
 })
@@ -562,6 +720,118 @@ async function loadPatients() {
   }
 }
 
+async function loadUsers() {
+  usersLoading.value = true
+  try {
+    const params: any = {}
+    if (userFilters.role) params.role = userFilters.role
+    if (userFilters.isActive !== undefined) params.isActive = userFilters.isActive
+    users.value = await usersService.getAll(params.role)
+  } catch (error) {
+    console.error('Failed to load users:', error)
+    error('Error al cargar usuarios')
+  } finally {
+    usersLoading.value = false
+  }
+}
+
+function openUserDialog(user?: User) {
+  if (user) {
+    editingUser.value = user
+    userFormData.email = user.email
+    userFormData.password = ''
+    userFormData.phone = user.phone || ''
+    userFormData.firstName = user.profile?.firstName || ''
+    userFormData.lastName = user.profile?.lastName || ''
+    userFormData.dni = user.profile?.dni || ''
+    userFormData.role = user.role
+    userFormData.isActive = user.isActive
+  } else {
+    editingUser.value = null
+    userFormData.email = ''
+    userFormData.password = ''
+    userFormData.phone = ''
+    userFormData.firstName = ''
+    userFormData.lastName = ''
+    userFormData.dni = ''
+    userFormData.role = 'PATIENT'
+    userFormData.isActive = true
+  }
+  userDialog.value = true
+}
+
+async function saveUser() {
+  if (!userFormData.email || !userFormData.firstName || !userFormData.lastName || !userFormData.role) {
+    error('Por favor complete todos los campos requeridos')
+    return
+  }
+  
+  savingUser.value = true
+  try {
+    if (editingUser.value) {
+      const updateData: UpdateUserDto = {
+        email: userFormData.email,
+        phone: userFormData.phone,
+        firstName: userFormData.firstName,
+        lastName: userFormData.lastName,
+        dni: userFormData.dni,
+        role: userFormData.role,
+        isActive: userFormData.isActive
+      }
+      await usersService.update(editingUser.value.id, updateData)
+      success('Usuario actualizado')
+    } else {
+      if (!userFormData.password) {
+        error('Contraseña requerida')
+        savingUser.value = false
+        return
+      }
+      const createData: CreateUserDto = {
+        email: userFormData.email,
+        password: userFormData.password,
+        phone: userFormData.phone,
+        firstName: userFormData.firstName,
+        lastName: userFormData.lastName,
+        dni: userFormData.dni,
+        role: userFormData.role
+      }
+      await usersService.create(createData)
+      success('Usuario creado')
+    }
+    userDialog.value = false
+    await loadUsers()
+  } catch (err: any) {
+    console.error('Failed to save user:', err)
+    error(err.response?.data?.message || 'Error al guardar usuario')
+  } finally {
+    savingUser.value = false
+  }
+}
+
+async function deleteUser(user: User) {
+  if (!confirm(`¿Está seguro de eliminar al usuario ${user.profile?.firstName} ${user.profile?.lastName}?`)) {
+    return
+  }
+  try {
+    await usersService.delete(user.id)
+    success('Usuario eliminado')
+    await loadUsers()
+  } catch (err) {
+    console.error('Failed to delete user:', err)
+    error('Error al eliminar usuario')
+  }
+}
+
+function getRoleColor(role: string) {
+  const colors: Record<string, string> = {
+    ADMIN: 'purple',
+    SECRETARY: 'blue',
+    PROFESSIONAL: 'green',
+    PATIENT: 'orange'
+  }
+  return colors[role] || 'grey'
+}
+
 // Appointments functions
 async function loadAppointments() {
   appointmentsLoading.value = true
@@ -596,8 +866,9 @@ async function confirmAppointment(item: any) {
   try {
     await appointmentsService.updateStatus(item.id, 'CONFIRMED')
     await loadAppointments()
-  } catch (error) {
-    alert('Failed to confirm appointment')
+    success('Appointment confirmed')
+  } catch (err) {
+    error('Failed to confirm appointment')
   }
 }
 
@@ -605,8 +876,9 @@ async function completeAppointment(item: any) {
   try {
     await appointmentsService.updateStatus(item.id, 'COMPLETED')
     await loadAppointments()
-  } catch (error) {
-    alert('Failed to complete appointment')
+    success('Appointment completed')
+  } catch (err) {
+    error('Failed to complete appointment')
   }
 }
 
@@ -615,8 +887,9 @@ async function noShowAppointment(item: any) {
     try {
       await appointmentsService.updateStatus(item.id, 'NO_SHOW')
       await loadAppointments()
-    } catch (error) {
-      alert('Failed to mark as no show')
+      success('Marked as no-show')
+    } catch (err) {
+      error('Failed to mark as no show')
     }
   }
 }
@@ -629,7 +902,7 @@ function cancelAppointmentDialog(item: any) {
 
 async function confirmCancelAppointment() {
   if (!cancelReason.value.trim()) {
-    alert('Please enter a cancellation reason')
+    error('Please enter a cancellation reason')
     return
   }
   cancelling.value = true
@@ -637,8 +910,9 @@ async function confirmCancelAppointment() {
     await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
     cancelDialog.value = false
     await loadAppointments()
-  } catch (error) {
-    alert('Failed to cancel appointment')
+    success('Appointment cancelled')
+  } catch (err) {
+    error('Failed to cancel appointment')
   } finally {
     cancelling.value = false
   }
@@ -649,8 +923,9 @@ async function deleteAppointment(item: any) {
     try {
       await appointmentsService.delete(item.id)
       await loadAppointments()
-    } catch (error) {
-      alert('Failed to delete appointment')
+      success('Appointment deleted')
+    } catch (err) {
+      error('Failed to delete appointment')
     }
   }
 }
@@ -685,11 +960,11 @@ async function generateSlots() {
       startDate: generateData.startDate,
       endDate: generateData.endDate
     })
-    alert('Slots generated successfully')
+    success('Slots generated successfully')
     generateDialog.value = false
     await loadSlots()
-  } catch (error) {
-    alert('Failed to generate slots')
+  } catch (err) {
+    error('Failed to generate slots')
   } finally {
     generatingSlots.value = false
   }
@@ -701,8 +976,9 @@ async function blockSlot(slot: any) {
     try {
       await slotsService.block(slot.id, reason)
       await loadSlots()
-    } catch (error) {
-      alert('Failed to block slot')
+      success('Slot blocked')
+    } catch (err) {
+      error('Failed to block slot')
     }
   }
 }
@@ -711,8 +987,9 @@ async function unblockSlot(slot: any) {
   try {
     await slotsService.unblock(slot.id)
     await loadSlots()
-  } catch (error) {
-    alert('Failed to unblock slot')
+    success('Slot unblocked')
+  } catch (err) {
+    error('Failed to unblock slot')
   }
 }
 
@@ -721,8 +998,9 @@ async function deleteSlot(slot: any) {
     try {
       await slotsService.delete(slot.id)
       await loadSlots()
-    } catch (error) {
-      alert('Failed to delete slot')
+      success('Slot deleted')
+    } catch (err) {
+      error('Failed to delete slot')
     }
   }
 }
@@ -731,8 +1009,9 @@ async function updateStatus(id: string, status: string) {
   try {
     await appointmentsService.updateStatus(id, status)
     await loadData()
-  } catch (error) {
-    alert('Failed to update status')
+    success('Status updated')
+  } catch (err) {
+    error('Failed to update status')
   }
 }
 
@@ -741,8 +1020,9 @@ async function cancelAppointment(item: any) {
     try {
       await appointmentsService.cancel(item.id, 'Cancelled by admin')
       await loadData()
-    } catch (error) {
-      alert('Failed to cancel')
+      success('Appointment cancelled')
+    } catch (err) {
+      error('Failed to cancel')
     }
   }
 }
@@ -753,8 +1033,9 @@ async function activateEmergency() {
     try {
       await emergencyService.activate(message)
       await loadData()
-    } catch (error) {
-      alert('Failed to activate emergency')
+      success('Emergency activated')
+    } catch (err) {
+      error('Failed to activate emergency')
     }
   }
 }
@@ -765,8 +1046,9 @@ async function deactivateEmergency() {
     try {
       await emergencyService.deactivate(reason)
       await loadData()
-    } catch (error) {
-      alert('Failed to deactivate emergency')
+      success('Emergency deactivated')
+    } catch (err) {
+      error('Failed to deactivate emergency')
     }
   }
 }
@@ -777,8 +1059,9 @@ async function resolveStrike(id: string) {
     try {
       await strikesService.resolve(id, resolution)
       await loadData()
-    } catch (error) {
-      alert('Failed to resolve strike')
+      success('Strike resolved')
+    } catch (err) {
+      error('Failed to resolve strike')
     }
   }
 }

@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsInt, IsBoolean, IsJSON } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsInt,
+  IsBoolean,
+  IsJSON,
+} from 'class-validator';
 
 export class WorkingHoursDto {
   @IsString()

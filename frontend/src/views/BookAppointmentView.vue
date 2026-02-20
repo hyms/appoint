@@ -7,31 +7,46 @@
           {{ $t('appointments.book') }}
         </h1>
         <p class="text-body-2 text-medium-emphasis">
-          Sigue los pasos para agendar tu cita
+          {{ $t('appointments.bookingInstructions') }}
         </p>
       </v-col>
     </v-row>
 
     <!-- Step 1: Professional -->
-    <v-card class="mb-4">
-      <v-card-title>1. Selecciona Profesional</v-card-title>
+    <v-card class="mb-4" :elevation="2">
+      <v-card-item>
+        <template v-slot:prepend>
+          <v-avatar color="primary" size="32">
+            <span class="text-white">1</span>
+          </v-avatar>
+        </template>
+        <v-card-title>{{ $t('appointments.selectProfessional') }}</v-card-title>
+      </v-card-item>
       <v-card-text>
         <v-select
           v-model="selectedProfessional"
           :items="professionals"
           item-title="label"
           item-value="id"
-          label="Elige tu doctor"
+          :label="$t('appointments.chooseDoctor')"
           prepend-inner-icon="mdi-doctor"
           :loading="loadingProfessionals"
+          variant="outlined"
           @update:modelValue="onProfessionalSelect"
         />
       </v-card-text>
     </v-card>
 
     <!-- Step 2: Date -->
-    <v-card class="mb-4">
-      <v-card-title>2. Selecciona Fecha</v-card-title>
+    <v-card class="mb-4" :elevation="2">
+      <v-card-item>
+        <template v-slot:prepend>
+          <v-avatar color="primary" size="32">
+            <span class="text-white">2</span>
+          </v-avatar>
+        </template>
+        <v-card-title>{{ $t('appointments.selectDate') }}</v-card-title>
+      </v-card-item>
       <v-card-text>
         <v-date-picker
           v-model="selectedDate"
@@ -40,29 +55,42 @@
           :max="maxDate"
           @update:modelValue="onDateSelect"
           full-width
+          show-adjacent-months
         />
       </v-card-text>
     </v-card>
 
     <!-- Step 3: Available Slots -->
-    <v-card class="mb-4">
-      <v-card-title>3. Selecciona Hora</v-card-title>
+    <v-card class="mb-4" :elevation="2">
+      <v-card-item>
+        <template v-slot:prepend>
+          <v-avatar color="primary" size="32">
+            <span class="text-white">3</span>
+          </v-avatar>
+        </template>
+        <v-card-title>{{ $t('appointments.selectTime') }}</v-card-title>
+      </v-card-item>
       <v-card-text>
         <div v-if="loadingSlots" class="text-center py-4">
           <v-progress-circular indeterminate color="primary" />
-          <p class="mt-2">Cargando horarios disponibles...</p>
+          <p class="mt-2">{{ $t('appointments.loadingSlots') }}</p>
+        </div>
+        
+        <div v-else-if="!selectedDate" class="text-center py-4">
+          <v-icon icon="mdi-calendar-question" size="48" color="grey" />
+          <p class="mt-2 text-medium-emphasis">{{ $t('appointments.selectDate') }}</p>
         </div>
         
         <div v-else-if="availableSlots.length === 0" class="text-center py-4">
           <v-icon icon="mdi-calendar-remove" size="48" color="grey" />
-          <p class="mt-2">No hay horarios disponibles para esta fecha</p>
+          <p class="mt-2">{{ $t('appointments.noSlotsAvailable') }}</p>
           <v-btn color="primary" variant="text" @click="loadAvailableSlots">
-            Intenta con otra fecha
+            {{ $t('appointments.tryAnotherDate') }}
           </v-btn>
         </div>
         
         <div v-else>
-          <p class="mb-2">Horarios disponibles:</p>
+          <p class="mb-2 font-weight-medium">{{ $t('appointments.availableSlots') }}</p>
           <v-chip-group v-model="selectedSlot" column>
             <v-chip
               v-for="slot in availableSlots"
@@ -71,7 +99,9 @@
               filter
               variant="outlined"
               size="large"
+              color="primary"
             >
+              <v-icon start icon="mdi-clock-outline" />
               {{ formatTime(slot.startTime) }}
             </v-chip>
           </v-chip-group>
@@ -80,28 +110,48 @@
     </v-card>
 
     <!-- Step 4: Confirm -->
-    <v-card v-if="selectedSlot" class="mb-4">
-      <v-card-title>4. Confirmar Cita</v-card-title>
+    <v-card v-if="selectedSlot" class="mb-4" :elevation="2">
+      <v-card-item>
+        <template v-slot:prepend>
+          <v-avatar color="success" size="32">
+            <v-icon icon="mdi-check" color="white" />
+          </v-avatar>
+        </template>
+        <v-card-title>{{ $t('appointments.confirmAppointment') }}</v-card-title>
+      </v-card-item>
       <v-card-text>
-        <v-list>
+        <v-list density="compact" class="bg-grey-lighten-4 rounded-lg mb-3">
           <v-list-item>
-            <v-list-item-title>Profesional</v-list-item-title>
-            <v-list-item-subtitle>{{ selectedProfessionalName }}</v-list-item-subtitle>
+            <template v-slot:prepend>
+              <v-icon icon="mdi-doctor" color="primary" />
+            </template>
+            <v-list-item-title class="text-caption">{{ $t('appointments.professional') }}</v-list-item-title>
+            <v-list-item-subtitle class="text-body-2">{{ selectedProfessionalName }}</v-list-item-subtitle>
           </v-list-item>
+          <v-divider />
           <v-list-item>
-            <v-list-item-title>Fecha</v-list-item-title>
-            <v-list-item-subtitle>{{ formatLongDate(selectedDate) }}</v-list-item-subtitle>
+            <template v-slot:prepend>
+              <v-icon icon="mdi-calendar" color="primary" />
+            </template>
+            <v-list-item-title class="text-caption">{{ $t('appointments.date') }}</v-list-item-title>
+            <v-list-item-subtitle class="text-body-2">{{ formatLongDate(selectedDate) }}</v-list-item-subtitle>
           </v-list-item>
+          <v-divider />
           <v-list-item>
-            <v-list-item-title>Hora</v-list-item-title>
-            <v-list-item-subtitle>{{ selectedSlot ? formatTime(selectedSlot.startTime) : '' }}</v-list-item-subtitle>
+            <template v-slot:prepend>
+              <v-icon icon="mdi-clock" color="primary" />
+            </template>
+            <v-list-item-title class="text-caption">{{ $t('appointments.time') }}</v-list-item-title>
+            <v-list-item-subtitle class="text-body-2">{{ selectedSlot ? formatTime(selectedSlot.startTime) : '' }}</v-list-item-subtitle>
           </v-list-item>
         </v-list>
 
         <v-textarea
           v-model="notes"
-          label="Notas adicionales (opcional)"
+          :label="$t('appointments.notes')"
+          :placeholder="$t('appointments.notesPlaceholder')"
           rows="2"
+          variant="outlined"
           class="mt-2"
         />
 
@@ -110,21 +160,12 @@
           size="large"
           block
           :loading="booking"
+          :disabled="!selectedSlot"
           @click="confirmBooking"
         >
-          Reservar Cita
+          <v-icon start icon="mdi-check-circle" />
+          {{ $t('appointments.bookAppointment') }}
         </v-btn>
-      </v-card-text>
-    </v-card>
-
-    <!-- Debug Info -->
-    <v-card class="mb-4" v-if="$vuetify.display.mdAndUp">
-      <v-card-title class="text-caption">Info de Depuración</v-card-title>
-      <v-card-text>
-        <p>Profesional: {{ selectedProfessional }}</p>
-        <p>Fecha: {{ selectedDate }}</p>
-        <p>Horarios cargados: {{ availableSlots.length }}</p>
-        <p>Horario seleccionado: {{ selectedSlot?.id }}</p>
       </v-card-text>
     </v-card>
   </v-container>
@@ -135,7 +176,8 @@ import { ref, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
-import { appointmentsService, slotsService, type Slot } from '@/services/appointments'
+import { appointmentsService } from '@/services/appointments'
+import { slotsService, type Slot } from '@/services/slots'
 import api from '@/services/api'
 import { formatLongDate, formatTime } from '@/utils/date'
 
@@ -178,7 +220,6 @@ async function loadProfessionals() {
       label: `Dr. ${u.firstName || ''} ${u.lastName || ''}`.trim()
     }))
     
-    // Auto-select first professional
     if (professionals.value.length > 0) {
       selectedProfessional.value = professionals.value[0]!.id
     }
@@ -191,14 +232,11 @@ async function loadProfessionals() {
 }
 
 function onProfessionalSelect() {
-  console.log('Professional selected:', selectedProfessional.value)
-  // Reset slots when professional changes
   availableSlots.value = []
   selectedSlot.value = null
 }
 
 function onDateSelect() {
-  console.log('Date selected:', selectedDate.value)
   if (selectedProfessional.value && selectedDate.value) {
     loadAvailableSlots()
   }
@@ -206,33 +244,26 @@ function onDateSelect() {
 
 async function loadAvailableSlots() {
   if (!selectedProfessional.value || !selectedDate.value) {
-    console.log('Missing professional or date')
     return
   }
   
   loadingSlots.value = true
-  console.log('Loading slots for:', selectedProfessional.value, selectedDate.value)
   
   try {
-    // Format date as YYYY-MM-DD
     const year = selectedDate.value.getFullYear()
     const month = String(selectedDate.value.getMonth() + 1).padStart(2, '0')
     const day = String(selectedDate.value.getDate()).padStart(2, '0')
     const dateStr = `${year}-${month}-${day}`
-    
-    console.log('Fetching from API:', dateStr)
     
     const response = await slotsService.getAvailable(
       selectedProfessional.value,
       dateStr
     )
     
-    console.log('API Response:', response)
     availableSlots.value = response.slots || []
-    console.log('Slots loaded:', availableSlots.value.length)
   } catch (err: any) {
     console.error('Failed to load slots:', err)
-    error('Failed to load available slots: ' + (err.message || 'Unknown error'))
+    error('Failed to load available slots')
   } finally {
     loadingSlots.value = false
   }

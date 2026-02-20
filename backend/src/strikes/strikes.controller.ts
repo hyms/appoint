@@ -23,10 +23,7 @@ export class StrikesController {
   @Post()
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('PROFESSIONAL', 'ADMIN')
-  async createStrike(
-    @Body() dto: CreateStrikeDto,
-    @CurrentUser() user: any,
-  ) {
+  async createStrike(@Body() dto: CreateStrikeDto, @CurrentUser() user: any) {
     return this.strikeService.createStrike(user.id, dto);
   }
 
@@ -54,7 +51,10 @@ export class StrikesController {
   ) {
     // If professional, only show strikes they created for this patient
     if (user.role === 'PROFESSIONAL') {
-      return this.strikeService.getPatientStrikesWithProfessional(patientId, user.id);
+      return this.strikeService.getPatientStrikesWithProfessional(
+        patientId,
+        user.id,
+      );
     }
     // Admin/Secretary can see all
     return this.strikeService.getAllStrikes({ patientId });

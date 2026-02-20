@@ -1,5 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { NotificationProvider } from './notification-provider.service';
+import { NotificationProviderService } from './notification-provider.service';
+import { NotificationConfigService } from './notification-config.service';
+import { NotificationProviderRegistry } from './notification-provider.registry';
+import { WhatsAppProvider } from '../providers/whatsapp.provider';
+import { TelegramProvider } from '../providers/telegram.provider';
+import { EmailProvider } from '../providers/email.provider';
 import { PrismaService } from '../../prisma/prisma.service';
 import {
   SendNotificationDto,
@@ -7,8 +12,8 @@ import {
   ProviderType,
 } from '../dto/notification.dto';
 
-describe('NotificationProvider', () => {
-  let notificationProvider: NotificationProvider;
+describe('NotificationProviderService', () => {
+  let service: NotificationProviderService;
   let prismaService: PrismaService;
 
   const mockPrismaService = {
@@ -19,32 +24,64 @@ describe('NotificationProvider', () => {
     },
   };
 
+  const mockConfigService = {
+    isWhatsAppConfigured: jest.fn().mockReturnValue(false),
+    isTelegramConfigured: jest.fn().mockReturnValue(false),
+    isEmailConfigured: jest.fn().mockReturnValue(false),
+    getWhatsAppConfig: jest.fn().mockReturnValue(null),
+    getTelegramConfig: jest.fn().mockReturnValue(null),
+    getEmailConfig: jest.fn().mockReturnValue(null),
+  };
+
+  const mockRegistry = {
+    get: jest.fn(),
+    getDefault: jest.fn(),
+    isProviderAvailable: jest.fn(),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
-        NotificationProvider,
+        NotificationProviderService,
+        NotificationConfigService,
+        NotificationProviderRegistry,
+        WhatsAppProvider,
+        TelegramProvider,
+        EmailProvider,
         {
           provide: PrismaService,
           useValue: mockPrismaService,
         },
+        {
+          provide: NotificationConfigService,
+          useValue: mockConfigService,
+        },
+        {
+          provide: NotificationProviderRegistry,
+          useValue: mockRegistry,
+        },
       ],
     }).compile();
 
-    notificationProvider =
-      module.get<NotificationProvider>(NotificationProvider);
+    service = module.get<NotificationProviderService>(
+      NotificationProviderService,
+    );
     prismaService = module.get<PrismaService>(PrismaService);
 
     jest.clearAllMocks();
   });
 
+  it('should be defined', () => {
+    expect(service).toBeDefined();
+  });
+
   describe('sendNotification', () => {
-    it('should send WhatsApp notification successfully', async () => {
+    it('should send notification successfully using default provider', async () => {
       const dto: SendNotificationDto = {
         userId: 'user-1',
         type: NotificationType.APPOINTMENT_REMINDER,
-        recipient: '+1234567890',
+        recipient: 'test@example.com',
         content: 'Test message',
-        provider: ProviderType.WHATSAPP,
       };
 
       mockPrismaService.notificationLog.create.mockResolvedValue({
@@ -52,12 +89,22 @@ describe('NotificationProvider', () => {
         ...dto,
         status: 'PENDING',
       });
+
+      const mockEmailProvider = {
+        type: ProviderType.EMAIL,
+        isConfigured: jest.fn().mockReturnValue(true),
+        send: jest
+          .fn()
+          .mockResolvedValue({ success: true, messageId: 'msg-1' }),
+      };
+
+      mockRegistry.get.mockReturnValue(mockEmailProvider);
       mockPrismaService.notificationLog.update.mockResolvedValue({
         id: 'notif-1',
         status: 'SENT',
       });
 
-      const result = await notificationProvider.sendNotification(dto);
+      const result = await service.sendNotification(dto);
 
       expect(result.status).toBe('SENT');
     });
@@ -74,61 +121,25 @@ describe('NotificationProvider', () => {
         id: 'notif-1',
         status: 'PENDING',
       });
+
+      const mockEmailProvider = {
+        type: ProviderType.EMAIL,
+        isConfigured: jest.fn().mockReturnValue(true),
+        send: jest
+          .fn()
+          .mockResolvedValue({ success: false, error: 'Send failed' }),
+      };
+
+      mockRegistry.get.mockReturnValue(mockEmailProvider);
       mockPrismaService.notificationLog.update.mockResolvedValue({
         id: 'notif-1',
         status: 'FAILED',
-        errorMessage: 'Sending failed',
+        errorMessage: 'Send failed',
       });
 
-      jest
-        .spyOn(notificationProvider, 'sendEmail')
-        .mockResolvedValue({ success: false });
-
-      const result = await notificationProvider.sendNotification(dto);
+      const result = await service.sendNotification(dto);
 
       expect(result.status).toBe('FAILED');
-    });
-  });
-
-  describe('sendWhatsApp', () => {
-    it('should simulate WhatsApp when credentials not configured', async () => {
-      delete process.env.WHATSAPP_TOKEN;
-      delete process.env.WHATSAPP_PHONE_ID;
-
-      const result = await notificationProvider.sendWhatsApp(
-        '+1234567890',
-        'Test message',
-      );
-
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('sendTelegram', () => {
-    it('should simulate Telegram when token not configured', async () => {
-      delete process.env.TELEGRAM_BOT_TOKEN;
-
-      const result = await notificationProvider.sendTelegram(
-        '123456',
-        'Test message',
-      );
-
-      expect(result.success).toBe(true);
-    });
-  });
-
-  describe('sendEmail', () => {
-    it('should simulate email when SMTP not configured', async () => {
-      delete process.env.SMTP_HOST;
-      delete process.env.SMTP_USER;
-
-      const result = await notificationProvider.sendEmail(
-        'test@example.com',
-        'Test Subject',
-        'Test body',
-      );
-
-      expect(result.success).toBe(true);
     });
   });
 
@@ -154,13 +165,20 @@ describe('NotificationProvider', () => {
         id: 'notif-1',
         status: 'PENDING',
       });
+
+      const mockProvider = {
+        type: ProviderType.WHATSAPP,
+        isConfigured: jest.fn().mockReturnValue(false),
+        send: jest.fn().mockResolvedValue({ success: true }),
+      };
+
+      mockRegistry.get.mockReturnValue(mockProvider);
       mockPrismaService.notificationLog.update.mockResolvedValue({
         id: 'notif-1',
         status: 'SENT',
       });
 
-      const result =
-        await notificationProvider.sendAppointmentReminder(appointment);
+      const result = await service.sendAppointmentReminder(appointment);
 
       expect(result).toBeDefined();
     });
@@ -186,34 +204,22 @@ describe('NotificationProvider', () => {
         id: 'notif-1',
         status: 'PENDING',
       });
+
+      const mockProvider = {
+        type: ProviderType.EMAIL,
+        isConfigured: jest.fn().mockReturnValue(false),
+        send: jest.fn().mockResolvedValue({ success: true }),
+      };
+
+      mockRegistry.get.mockReturnValue(mockProvider);
       mockPrismaService.notificationLog.update.mockResolvedValue({
         id: 'notif-1',
         status: 'SENT',
       });
 
-      const result = await notificationProvider.sendConfirmation(appointment);
+      const result = await service.sendConfirmation(appointment);
 
       expect(result).toBeDefined();
-    });
-  });
-
-  describe('sendEmergencyNotification', () => {
-    it('should send notifications to all affected patients', async () => {
-      const affectedPatients = [
-        { id: 'patient-1', email: 'patient1@example.com' },
-        { id: 'patient-2', email: 'patient2@example.com' },
-      ];
-
-      mockPrismaService.notificationLog.createMany.mockResolvedValue({
-        count: 2,
-      });
-
-      const result = await notificationProvider.sendEmergencyNotification(
-        'Emergency message',
-        affectedPatients,
-      );
-
-      expect(result).toHaveLength(2);
     });
   });
 });

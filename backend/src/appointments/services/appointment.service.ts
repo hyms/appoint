@@ -12,12 +12,20 @@ import {
   UpdateAppointmentDto,
 } from '../dto/appointment.dto';
 import { StrikeService } from '../../strikes/services/strike.service';
+import { AuthorizationService } from '../../common/services/authorization.service';
+import {
+  AppointmentAuditService,
+  AuditAction,
+} from './appointment-audit.service';
+import { Permission } from '../../common/enums/permissions.enum';
 
 @Injectable()
 export class AppointmentsService {
   constructor(
     private prisma: PrismaService,
     private strikeService: StrikeService,
+    private authService: AuthorizationService,
+    private auditService: AppointmentAuditService,
   ) {}
 
   // ============ ADMIN CRUD ============
@@ -138,7 +146,7 @@ export class AppointmentsService {
     });
   }
 
-  async deleteAppointment(id: string) {
+  async deleteAppointment(id: string, userId?: string) {
     const appointment = await this.prisma.appointment.findUnique({
       where: { id },
     });
@@ -156,12 +164,24 @@ export class AppointmentsService {
       );
     }
 
+    const oldStatus = appointment.status;
+
     await this.prisma.appointment.delete({ where: { id } });
 
     if (appointment.slotId) {
       await this.prisma.slot.update({
         where: { id: appointment.slotId },
         data: { isBooked: false },
+      });
+    }
+
+    if (userId) {
+      await this.auditService.logChange({
+        appointmentId: id,
+        userId,
+        action: AuditAction.DELETE,
+        oldStatus,
+        newStatus: 'DELETED',
       });
     }
 
@@ -173,13 +193,9 @@ export class AppointmentsService {
     userId: string,
     userRole: string,
   ) {
-    // Validate patientId authorization
-    // Patients can only book for themselves
-    // Admin, Secretary, and Professional can book for any patient
-    if (
-      dto.patientId !== userId &&
-      !['ADMIN', 'SECRETARY', 'PROFESSIONAL'].includes(userRole)
-    ) {
+    const patientId = dto.patientId || userId;
+
+    if (!this.authService.canBookForOthers(userRole, userId, patientId)) {
       throw new ForbiddenException(
         'You can only book appointments for yourself',
       );
@@ -199,7 +215,7 @@ export class AppointmentsService {
 
     // Check if patient is blocked with THIS specific professional
     const isBlocked = await this.strikeService.checkPatientBlocked(
-      dto.patientId,
+      patientId,
       dto.professionalId,
     );
     if (isBlocked) {
@@ -210,7 +226,7 @@ export class AppointmentsService {
 
     const appointment = await this.prisma.appointment.create({
       data: {
-        patientId: dto.patientId,
+        patientId: patientId,
         professionalId: dto.professionalId,
         locationId: dto.locationId || slot.locationId,
         slotId: dto.slotId,
@@ -231,6 +247,13 @@ export class AppointmentsService {
     await this.prisma.slot.update({
       where: { id: dto.slotId },
       data: { isBooked: true },
+    });
+
+    await this.auditService.logChange({
+      appointmentId: appointment.id,
+      userId: userId,
+      action: AuditAction.CREATE,
+      newStatus: 'PENDING',
     });
 
     return appointment;
@@ -255,13 +278,14 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
-    const canAccess =
-      userRole === 'ADMIN' ||
-      userRole === 'SECRETARY' ||
-      appointment.patientId === userId ||
-      appointment.professionalId === userId;
-
-    if (!canAccess) {
+    if (
+      !this.authService.canAccessAppointment(
+        userRole,
+        userId,
+        appointment.patientId,
+        appointment.professionalId,
+      )
+    ) {
       throw new ForbiddenException('Access denied');
     }
 
@@ -280,12 +304,13 @@ export class AppointmentsService {
       userRole,
     );
 
-    const canUpdate =
-      userRole === 'ADMIN' ||
-      userRole === 'SECRETARY' ||
-      appointment.professionalId === userId;
-
-    if (!canUpdate) {
+    if (
+      !this.authService.canUpdateAppointmentStatus(
+        userRole,
+        userId,
+        appointment.professionalId,
+      )
+    ) {
       throw new ForbiddenException(
         'Only professionals or staff can update appointment status',
       );
@@ -295,7 +320,10 @@ export class AppointmentsService {
 
     if (dto.status === 'NO_SHOW') {
       // Validate: Only the assigned professional can mark NO_SHOW
-      if (appointment.professionalId !== userId && userRole !== 'ADMIN') {
+      if (
+        !this.authService.isAdmin(userRole) &&
+        appointment.professionalId !== userId
+      ) {
         throw new ForbiddenException(
           'Only the assigned professional can mark an appointment as NO_SHOW',
         );
@@ -328,14 +356,26 @@ export class AppointmentsService {
       updateData.notes = dto.notes;
     }
 
-    return this.prisma.appointment.update({
-      where: { id: appointmentId },
-      data: updateData,
-      include: {
-        patient: { include: { profile: true } },
-        professional: { include: { profile: true } },
-      },
-    });
+    return this.prisma.appointment
+      .update({
+        where: { id: appointmentId },
+        data: updateData,
+        include: {
+          patient: { include: { profile: true } },
+          professional: { include: { profile: true } },
+        },
+      })
+      .then(async (updated) => {
+        await this.auditService.logChange({
+          appointmentId: updated.id,
+          userId: userId,
+          action: AuditAction.UPDATE_STATUS,
+          oldStatus: appointment.status,
+          newStatus: dto.status,
+          reason: dto.notes,
+        });
+        return updated;
+      });
   }
 
   async cancelAppointment(
@@ -354,13 +394,14 @@ export class AppointmentsService {
       throw new BadRequestException('Appointment is already cancelled');
     }
 
-    const canCancel =
-      userRole === 'ADMIN' ||
-      userRole === 'SECRETARY' ||
-      appointment.patientId === userId ||
-      appointment.professionalId === userId;
-
-    if (!canCancel) {
+    if (
+      !this.authService.canCancelAppointment(
+        userRole,
+        userId,
+        appointment.patientId,
+        appointment.professionalId,
+      )
+    ) {
       throw new ForbiddenException('You cannot cancel this appointment');
     }
 
@@ -377,6 +418,15 @@ export class AppointmentsService {
         data: { isBooked: false },
       }),
     ]);
+
+    await this.auditService.logChange({
+      appointmentId: updatedAppointment.id,
+      userId: userId,
+      action: AuditAction.CANCEL,
+      oldStatus: appointment.status,
+      newStatus: 'CANCELLED',
+      reason: dto.reason,
+    });
 
     return updatedAppointment;
   }

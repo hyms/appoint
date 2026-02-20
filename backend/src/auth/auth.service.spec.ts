@@ -8,6 +8,7 @@ import {
 import { AuthService } from './auth.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
+import { AppConfigService } from '../config/config.service';
 import { UserRole } from '@prisma/client';
 
 describe('AuthService', () => {
@@ -30,9 +31,17 @@ describe('AuthService', () => {
 
   const mockBruteForceProtectionService = {
     recordFailedAttempt: jest.fn(),
-    recordSuccessfulAttempt: jest.fn(),
+    recordSuccessfulAttempt: jest.fn().mockResolvedValue(undefined),
     isBlocked: jest.fn().mockResolvedValue(false),
     getBlockTimeRemaining: jest.fn().mockReturnValue(0),
+  };
+
+  const mockConfigService = {
+    frontendUrl: 'http://localhost:5173',
+    magicLinkExpiryMinutes: 15,
+    isProduction: false,
+    getJwtSecret: jest.fn().mockReturnValue('test-secret'),
+    getJwtExpiresIn: jest.fn().mockReturnValue('1d'),
   };
 
   beforeEach(async () => {
@@ -50,6 +59,10 @@ describe('AuthService', () => {
         {
           provide: BruteForceProtectionService,
           useValue: mockBruteForceProtectionService,
+        },
+        {
+          provide: AppConfigService,
+          useValue: mockConfigService,
         },
       ],
     }).compile();

@@ -4,12 +4,37 @@ import { UpdateProfessionalConfigDto } from './dto/professional-config.dto';
 
 const defaultWorkingHours = [
   { dayOfWeek: 'MONDAY', startTime: '09:00', endTime: '17:00', isActive: true },
-  { dayOfWeek: 'TUESDAY', startTime: '09:00', endTime: '17:00', isActive: true },
-  { dayOfWeek: 'WEDNESDAY', startTime: '09:00', endTime: '17:00', isActive: true },
-  { dayOfWeek: 'THURSDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+  {
+    dayOfWeek: 'TUESDAY',
+    startTime: '09:00',
+    endTime: '17:00',
+    isActive: true,
+  },
+  {
+    dayOfWeek: 'WEDNESDAY',
+    startTime: '09:00',
+    endTime: '17:00',
+    isActive: true,
+  },
+  {
+    dayOfWeek: 'THURSDAY',
+    startTime: '09:00',
+    endTime: '17:00',
+    isActive: true,
+  },
   { dayOfWeek: 'FRIDAY', startTime: '09:00', endTime: '17:00', isActive: true },
-  { dayOfWeek: 'SATURDAY', startTime: '09:00', endTime: '13:00', isActive: false },
-  { dayOfWeek: 'SUNDAY', startTime: '09:00', endTime: '13:00', isActive: false },
+  {
+    dayOfWeek: 'SATURDAY',
+    startTime: '09:00',
+    endTime: '13:00',
+    isActive: false,
+  },
+  {
+    dayOfWeek: 'SUNDAY',
+    startTime: '09:00',
+    endTime: '13:00',
+    isActive: false,
+  },
 ];
 
 @Injectable()
@@ -48,7 +73,9 @@ export class ProfessionalConfigService {
           slotDurationMinutes: dto.slotDurationMinutes,
           breakBetweenSlotsMinutes: dto.breakBetweenSlotsMinutes,
           locationId: dto.locationId,
-          workingHours: dto.workingHours ? dto.workingHours as any : undefined,
+          workingHours: dto.workingHours
+            ? (dto.workingHours as any)
+            : undefined,
         },
         include: { location: true },
       });
@@ -69,13 +96,15 @@ export class ProfessionalConfigService {
   async getWorkingHoursForDay(professionalId: string, dayOfWeek: string) {
     const config = await this.getConfig(professionalId);
     const workingHours = config.workingHours as any[];
-    const dayConfig = workingHours.find(wh => wh.dayOfWeek === dayOfWeek);
-    
-    return dayConfig || {
-      dayOfWeek,
-      startTime: '09:00',
-      endTime: '17:00',
-      isActive: false,
-    };
+    const dayConfig = workingHours.find((wh) => wh.dayOfWeek === dayOfWeek);
+
+    return (
+      dayConfig || {
+        dayOfWeek,
+        startTime: '09:00',
+        endTime: '17:00',
+        isActive: false,
+      }
+    );
   }
 }

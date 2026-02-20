@@ -1,5 +1,13 @@
-import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
-import { NotificationProvider } from './services/notification-provider.service';
+import {
+  Controller,
+  Post,
+  Body,
+  Get,
+  Query,
+  UseGuards,
+  Inject,
+} from '@nestjs/common';
+import { NotificationProviderService } from './services/notification-provider.service';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   SendNotificationDto,
@@ -8,19 +16,25 @@ import {
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
+import { WhatsAppProvider } from './providers/whatsapp.provider';
+import { TelegramProvider } from './providers/telegram.provider';
+import { EmailProvider } from './providers/email.provider';
 
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    private readonly notificationProvider: NotificationProvider,
+    private readonly notificationService: NotificationProviderService,
     private readonly prisma: PrismaService,
+    private readonly whatsappProvider: WhatsAppProvider,
+    private readonly telegramProvider: TelegramProvider,
+    private readonly emailProvider: EmailProvider,
   ) {}
 
   @Post('send')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN', 'SECRETARY')
   async sendNotification(@Body() dto: SendNotificationDto) {
-    return this.notificationProvider.sendNotification(dto);
+    return this.notificationService.sendNotification(dto);
   }
 
   @Post('bulk')
@@ -52,14 +66,14 @@ export class NotificationsController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async testWhatsApp(@Body() body: { phone: string; message: string }) {
-    return this.notificationProvider.sendWhatsApp(body.phone, body.message);
+    return this.whatsappProvider.send(body.phone, body.message);
   }
 
   @Post('test/telegram')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async testTelegram(@Body() body: { chatId: string; message: string }) {
-    return this.notificationProvider.sendTelegram(body.chatId, body.message);
+    return this.telegramProvider.send(body.chatId, body.message);
   }
 
   @Post('test/email')
@@ -68,10 +82,6 @@ export class NotificationsController {
   async testEmail(
     @Body() body: { to: string; subject: string; message: string },
   ) {
-    return this.notificationProvider.sendEmail(
-      body.to,
-      body.subject,
-      body.message,
-    );
+    return this.emailProvider.send(body.to, body.message, body.subject);
   }
 }

@@ -236,21 +236,21 @@ describe('StrikeService', () => {
 
       mockPrismaService.strike.findMany.mockResolvedValue(mockStrikes);
 
-      const result = await strikeService.isPatientBlockedForAny('patient-1');
+      const result = await strikeService.isPatientBlockedGlobally('patient-1');
 
-      expect(result.blocked).toBe(true);
-      expect(result.strikes).toHaveLength(1);
+      expect(result).toBe(true);
     });
   });
 
   describe('cancelUpcomingAppointmentsForBlockedPatient', () => {
     it('should cancel appointments for blocked patient', async () => {
-      mockPrismaService.strike.findMany.mockResolvedValue([{ id: 'strike-1' }]);
+      mockPrismaService.strike.findFirst.mockResolvedValue({ id: 'strike-1' });
       mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 3 });
 
       const result =
         await strikeService.cancelUpcomingAppointmentsForBlockedPatient(
           'patient-1',
+          'prof-1',
         );
 
       expect(result.cancelled).toBe(3);
@@ -258,11 +258,12 @@ describe('StrikeService', () => {
     });
 
     it('should return zero if patient not blocked', async () => {
-      mockPrismaService.strike.findMany.mockResolvedValue([]);
+      mockPrismaService.strike.findFirst.mockResolvedValue(null);
 
       const result =
         await strikeService.cancelUpcomingAppointmentsForBlockedPatient(
           'patient-1',
+          'prof-1',
         );
 
       expect(result.cancelled).toBe(0);

@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { SlotService } from './slot.service';
 import { PrismaService } from '../../prisma/prisma.service';
+import { ProfessionalConfigService } from '../../professional-config/professional-config.service';
 
 describe('SlotService', () => {
   let slotService: SlotService;
@@ -24,6 +25,18 @@ describe('SlotService', () => {
     },
   };
 
+  const mockProfessionalConfigService = {
+    getConfig: jest.fn().mockResolvedValue({
+      slotDurationMinutes: 30,
+      breakBetweenSlotsMinutes: 5,
+    }),
+    getWorkingHoursForDay: jest.fn().mockResolvedValue({
+      startTime: '09:00',
+      endTime: '17:00',
+      isActive: true,
+    }),
+  };
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -31,6 +44,10 @@ describe('SlotService', () => {
         {
           provide: PrismaService,
           useValue: mockPrismaService,
+        },
+        {
+          provide: ProfessionalConfigService,
+          useValue: mockProfessionalConfigService,
         },
       ],
     }).compile();

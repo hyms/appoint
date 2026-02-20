@@ -1,4 +1,10 @@
-import { IsString, IsOptional, IsUUID, MinLength, MaxLength } from 'class-validator';
+import {
+  IsString,
+  IsOptional,
+  IsUUID,
+  MinLength,
+  MaxLength,
+} from 'class-validator';
 
 export class CreateStrikeDto {
   @IsUUID()

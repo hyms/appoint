@@ -95,6 +95,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import { paymentsService, type QRPayment } from '@/services/payments'
+import { useToast } from '@/composables/useToast'
+
+const { success, error } = useToast()
 
 const route = useRoute()
 const appointmentId = computed(() => route.query.appointmentId as string)
@@ -129,8 +132,8 @@ async function generateQR() {
       appointmentId: appointmentId.value
     })
     qrImageUrl.value = response.data.qrImageUrl
-  } catch (error) {
-    alert('Failed to generate QR')
+  } catch (err) {
+    error('Failed to generate QR')
   }
 }
 
@@ -148,11 +151,11 @@ async function uploadPayment() {
   try {
     const payment = await paymentsService.uploadPayment(appointmentId.value, paymentFile.value)
     paymentHistory.value.unshift(payment)
-    alert('Payment uploaded successfully!')
+    success('Payment uploaded successfully!')
     paymentFile.value = null
     previewUrl.value = ''
-  } catch (error) {
-    alert('Failed to upload payment')
+  } catch (err) {
+    error('Failed to upload payment')
   } finally {
     uploading.value = false
   }

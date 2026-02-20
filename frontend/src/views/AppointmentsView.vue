@@ -385,6 +385,9 @@ import { appointmentsService, type Appointment } from '@/services/appointments'
 import { paymentsService, type QRPayment } from '@/services/payments'
 import api from '@/services/api'
 import { formatDate, formatTime } from '@/utils/date'
+import { useToast } from '@/composables/useToast'
+
+const { success, error } = useToast()
 
 const authStore = useAuthStore()
 const tab = ref('upcoming')
@@ -561,11 +564,11 @@ async function uploadPayment() {
   uploading.value = true
   try {
     await paymentsService.uploadPayment(selectedAppointment.value.id, paymentFile.value)
-    alert('Payment uploaded successfully!')
+    success('Payment uploaded successfully!')
     paymentDialog.value = false
     await loadPaymentRecords()
-  } catch (error) {
-    alert('Failed to upload payment')
+  } catch (err) {
+    error('Failed to upload payment')
   } finally {
     uploading.value = false
   }
@@ -576,8 +579,9 @@ async function cancelAppointment(apt: Appointment) {
     try {
       await appointmentsService.cancel(apt.id, 'Cancelled by patient')
       upcomingAppointments.value = upcomingAppointments.value.filter(a => a.id !== apt.id)
-    } catch (error) {
-      alert('Failed to cancel appointment')
+      success('Appointment cancelled')
+    } catch (err) {
+      error('Failed to cancel appointment')
     }
   }
 }
