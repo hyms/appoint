@@ -4,7 +4,11 @@ import {
   MinLength,
   IsOptional,
   IsEnum,
+  IsInt,
+  IsBoolean,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { IsUUID } from 'class-validator';
 import { UserRole } from '@prisma/client';
 
 export class RegisterDto {
@@ -73,6 +77,32 @@ export class UpdateUserDto {
   role?: UserRole;
 
   @IsOptional()
-  @IsString()
+  @IsBoolean()
   isActive?: boolean;
+}
+
+export class ValidateMagicLinkDto {
+  @IsString()
+  token: string;
+}
+
+export class GetUsersQueryDto {
+  @IsOptional()
+  @IsString()
+  role?: string;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  page?: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  limit?: number = 10;
+}
+
+export class UserIdParamDto {
+  @IsUUID('4')
+  id: string;
 }

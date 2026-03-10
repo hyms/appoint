@@ -7,13 +7,13 @@
       :rail="rail && !$vuetify.display.mobile"
       :permanent="!$vuetify.display.mobile"
       :temporary="$vuetify.display.mobile"
-      color="primary"
+      class="app-nav-drawer"
     >
       <v-list-item nav class="py-4">
         <template v-slot:prepend>
-          <v-icon size="large" color="white">mdi-hospital-building</v-icon>
+          <v-icon size="large" color="primary">mdi-hospital-building</v-icon>
         </template>
-        <v-list-item-title class="text-h6 font-weight-bold text-white">
+        <v-list-item-title class="text-h6 font-weight-bold text-primary">
           {{ $t('app.title') }}
         </v-list-item-title>
         <template v-slot:append>
@@ -35,8 +35,8 @@
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.label"
-          color="white"
-          rounded="lg"
+          color="primary"
+          rounded="sm"
         />
       </v-list>
 
@@ -47,15 +47,15 @@
             prepend-icon="mdi-translate"
             :title="rail ? '' : $t('nav.language')"
             @click="toggleLocale"
-            color="white"
-            rounded="lg"
+            color="primary"
+            rounded="sm"
           />
         </v-list>
       </template>
     </v-navigation-drawer>
 
     <!-- App Bar -->
-    <v-app-bar color="primary" density="comfortable" elevation="2">
+    <v-app-bar color="surface" density="comfortable" elevation="1">
       <v-btn
         v-if="authStore.isAuthenticated && !$vuetify.display.mobile"
         icon
@@ -73,8 +73,8 @@
       </v-app-bar-title>
       <v-spacer />
       <template v-if="!authStore.isAuthenticated">
-        <v-btn to="/login" variant="text">{{ $t('nav.login') }}</v-btn>
-        <v-btn to="/register" variant="text">{{ $t('nav.register') }}</v-btn>
+        <v-btn to="/login" variant="text">Login</v-btn>
+        <v-btn to="/register" variant="text">Register</v-btn>
       </template>
       <template v-else>
         <!-- User Menu -->
@@ -115,7 +115,7 @@
                 <v-icon size="small" color="error">mdi-logout</v-icon>
               </template>
               <v-list-item-title class="text-error">
-                {{ $t('nav.logout') }}
+                Logout
               </v-list-item-title>
             </v-list-item>
           </v-list>
@@ -124,7 +124,7 @@
     </v-app-bar>
 
     <v-main>
-      <v-container fluid class="pa-4 pa-sm-6">
+      <v-container fluid class="pa-4 pa-sm-8 max-width-xl mx-auto">
         <router-view />
       </v-container>
     </v-main>
@@ -223,18 +223,39 @@ function logout() {
 }
 </script>
 
-<style>
-.v-btn {
-  min-height: 44px;
-  min-width: 44px;
+<style scoped>
+.app-nav-drawer {
+    background-color: #0A0A0A !important;
+    border-right: 1px solid rgba(var(--v-border-color), 0.2) !important;
 }
 
-@media (max-width: 600px) {
-  .v-btn {
-    font-size: 0.875rem;
-  }
-  .v-card-title {
-    font-size: 1.125rem;
-  }
+.max-width-xl {
+  max-width: 1600px;
+}
+
+.app-nav-drawer .v-list-item {
+    margin-bottom: 4px;
+    color: rgba(255, 255, 255, 0.7);
+}
+
+.app-nav-drawer .v-list-item--active {
+  color: rgb(var(--v-theme-primary));
+  background-color: rgba(var(--v-theme-primary), 0.2);
+}
+
+.app-nav-drawer .v-list-item .v-icon {
+    color: rgba(255, 255, 255, 0.7) !important;
+}
+
+.app-nav-drawer .v-list-item--active .v-icon {
+    color: rgb(var(--v-theme-primary)) !important;
+}
+
+.v-app-bar {
+    border-bottom: 1px solid rgba(var(--v-border-color), 0.1);
+}
+
+.v-list-item-title {
+  letter-spacing: 0.5px;
 }
 </style>

@@ -1,23 +1,70 @@
 @import './base.css';
 
+:root {
+  --v-font-family: 'Inter', sans-serif;
+  --display-font: 'Syne', sans-serif;
+  --mono-font: 'Roboto Mono', monospace;
+}
+
 #app {
-  /*max-width: 1280px;*/
   margin: 0 auto;
-  /*padding: 2rem;*/
   font-weight: normal;
 }
 
-a,
-.green {
-  text-decoration: none;
-  color: hsla(160, 100%, 37%, 1);
-  transition: 0.4s;
-  padding: 3px;
+h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
+  font-family: var(--display-font) !important;
 }
 
-@media (hover: hover) {
-  a:hover {
-    background-color: hsla(160, 100%, 37%, 0.2);
-  }
+.text-overline, .text-caption, .font-family-mono {
+  font-family: var(--mono-font) !important;
 }
 
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #1A1A1A;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #424242;
+}
+
+/* Dark mode scrollbar */
+.v-theme--dark ::-webkit-scrollbar-track {
+  background: #121212;
+}
+
+.v-theme--dark ::-webkit-scrollbar-thumb {
+  background: #EEEEEE;
+}
+
+/* Industrial touches */
+.border-thick {
+  border: 3px solid currentColor !important;
+}
+
+.border-thin {
+  border: 1px solid rgba(var(--v-border-color), 0.8) !important;
+}
+
+.letter-spacing-1 { letter-spacing: 1px !important; }
+.letter-spacing-2 { letter-spacing: 2px !important; }
+
+/* Selection color */
+::selection {
+  background: #1A1A1A;
+  color: white;
+}
+
+.v-theme--dark ::selection {
+  background: #EEEEEE;
+  color: black;
+}

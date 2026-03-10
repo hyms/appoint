@@ -21,6 +21,9 @@ import {
   LoginDto,
   MagicLinkDto,
   UpdateUserDto,
+  ValidateMagicLinkDto,
+  GetUsersQueryDto,
+  UserIdParamDto,
 } from './dto/auth.dto';
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
@@ -64,10 +67,10 @@ export class AuthController {
     return this.authService.generateMagicLink(magicLinkDto, clientIp);
   }
 
-  @Post('magic-link/validate')
+   @Post('magic-link/validate')
   @HttpCode(HttpStatus.OK)
-  async validateMagicLink(@Body('token') token: string) {
-    return this.authService.validateMagicLink(token);
+  async validateMagicLink(@Body() dto: ValidateMagicLinkDto) {
+    return this.authService.validateMagicLink(dto.token);
   }
 
   @Get('me')
@@ -85,15 +88,15 @@ export class AuthController {
   @Get('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async getUsers(@Query('role') role?: string) {
-    return this.authService.getUsers(role);
+  async getUsers(@Query() query: GetUsersQueryDto) {
+    return this.authService.getUsers(query.role);
   }
 
   @Get('users/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async getUserById(@Param('id') id: string) {
-    return this.authService.getUserById(id);
+  async getUserById(@Param() params: UserIdParamDto) {
+    return this.authService.getUserById(params.id);
   }
 
   @Post('users')
@@ -107,16 +110,16 @@ export class AuthController {
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
   async updateUser(
-    @Param('id') id: string,
+    @Param() params: UserIdParamDto,
     @Body() updateUserDto: UpdateUserDto,
   ) {
-    return this.authService.updateUser(id, updateUserDto);
+    return this.authService.updateUser(params.id, updateUserDto);
   }
 
   @Delete('users/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async deleteUser(@Param('id') id: string) {
-    return this.authService.deleteUser(id);
+  async deleteUser(@Param() params: UserIdParamDto) {
+    return this.authService.deleteUser(params.id);
   }
 }

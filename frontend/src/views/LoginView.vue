@@ -1,141 +1,124 @@
 <template>
-<!--  <v-container class="fill-height" fluid>-->
-    <v-row align="center" justify="center">
-      <v-col cols="12" sm="10" md="8" lg="5" xl="4">
-        <v-card class="pa-4 pa-sm-6" elevation="4">
-          <!-- Logo/Icon -->
-          <div class="text-center mb-6">
-            <v-avatar color="primary" size="64" class="mb-4">
-              <v-icon icon="mdi-calendar-check" size="36" color="white" />
-            </v-avatar>
-            <h1 class="text-h5 font-weight-bold mb-1">{{ $t('nav.login') }}</h1>
-            <p class="text-body-2 text-medium-emphasis">
-              {{ $t('app.title') }}
-            </p>
+  <v-row align="center" justify="center" class="fill-height ma-0 bg-neutral-light">
+    <v-col cols="12" sm="10" md="8" lg="5" xl="4">
+      <!-- Decorative element -->
+      <div class="login-decoration mb-n8 ml-4 opacity-20 text-h1 font-weight-black text-primary">360</div>
+      
+      <v-card class="pa-8 pa-sm-12 border-thick elevation-0 position-relative overflow-visible" color="surface">
+        <!-- Logo/Header -->
+        <div class="mb-10">
+          <div class="d-flex align-center mb-4">
+            <v-icon icon="mdi-shield-lock" size="48" color="primary" class="mr-4" />
+            <div>
+              <span class="text-overline font-weight-black text-primary letter-spacing-2">AUTHENTICATION</span>
+              <h1 class="text-h3 font-weight-black text-uppercase mt-n1">{{ $t('nav.login') }}</h1>
+            </div>
           </div>
+          <p class="text-body-1 text-medium-emphasis font-weight-medium">
+            Access the <span class="text-primary font-weight-bold">{{ $t('app.title') }}</span> secure management portal.
+          </p>
+        </div>
 
-          <!-- Login Form -->
-          <v-form @submit.prevent="handleLogin" ref="formRef">
+        <!-- Login Form -->
+        <v-form @submit.prevent="handleLogin" ref="formRef" class="mt-6">
+          <div class="mb-6">
+            <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.email') }}</label>
             <BaseInput
               v-model="form.email"
-              :label="$t('auth.email')"
               type="email"
               required
-              prepend-icon="mdi-email"
+              prepend-inner-icon="mdi-email-outline"
               :rules="emailRules"
-              class="mb-4"
+              placeholder="operator@system360.com"
             />
+          </div>
+          
+          <div class="mb-2">
+            <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.password') }}</label>
             <BaseInput
               v-model="form.password"
-              :label="$t('auth.password')"
               type="password"
               required
-              prepend-icon="mdi-lock"
+              prepend-inner-icon="mdi-lock-outline"
               :rules="passwordRules"
-              class="mb-2"
+              placeholder="••••••••"
             />
+          </div>
 
-            <div class="d-flex justify-end mb-6">
-              <v-btn
-                variant="text"
-                size="small"
-                color="primary"
-                @click="showMagicLink = true"
-                class="text-none"
-              >
-                {{ $t('auth.forgotPassword') || 'Forgot password?' }}
-              </v-btn>
-            </div>
-
-            <BaseButton
-              type="submit"
+          <div class="d-flex justify-end mb-8">
+            <v-btn
+              variant="text"
+              size="small"
               color="primary"
-              size="large"
-              block
-              :loading="loading"
-              append-icon="mdi-arrow-right"
-              min-height="52"
+              @click="showMagicLink = true"
+              class="text-none font-weight-bold"
             >
-              {{ $t('auth.login') }}
-            </BaseButton>
-          </v-form>
+              {{ $t('auth.forgotPassword') || 'LOST ACCESS?' }}
+            </v-btn>
+          </div>
 
-          <!-- Divider -->
-          <v-divider class="my-6">
-            <span class="text-caption text-medium-emphasis px-2">{{ $t('common.or') }}</span>
-          </v-divider>
-
-          <!-- Magic Link Button -->
           <BaseButton
+            type="submit"
+            color="primary"
+            size="large"
+            block
+            :loading="loading"
+            append-icon="mdi-arrow-right"
+            height="64"
+            class="text-h6"
+          >
+            {{ $t('auth.login').toUpperCase() }}
+          </BaseButton>
+        </v-form>
+
+        <!-- Divider -->
+        <div class="divider-container my-10">
+          <div class="divider-line"></div>
+          <span class="divider-text mx-4 text-overline font-weight-black opacity-50">{{ $t('common.or') }}</span>
+          <div class="divider-line"></div>
+        </div>
+
+        <!-- Alternative Auth -->
+        <div class="d-flex flex-column gap-4">
+          <v-btn
             variant="outlined"
             color="primary"
             size="large"
             block
             prepend-icon="mdi-cellphone-link"
             @click="showMagicLink = true"
-            min-height="52"
+            height="56"
           >
-            {{ $t('auth.enterWithMagic') }}
-          </BaseButton>
+            {{ $t('auth.enterWithMagic').toUpperCase() }}
+          </v-btn>
 
-          <!-- Register Link -->
-          <div class="text-center mt-6">
-            <span class="text-body-2 text-medium-emphasis">
-              {{ $t('auth.dontHaveAccount') }}
-            </span>
-            <v-btn
-              variant="text"
-              color="primary"
-              to="/register"
-              class="text-none font-weight-bold"
-            >
-              {{ $t('nav.register') }}
-            </v-btn>
-          </div>
-        </v-card>
-      </v-col>
-    </v-row>
-
-    <!-- Magic Link Dialog -->
-    <v-dialog v-model="showMagicLink" max-width="420" persistent>
-      <v-card class="pa-4">
-        <v-card-title class="text-h6 mb-4">
-          <v-icon icon="mdi-cellphone-link" class="mr-2" color="primary" />
-          {{ $t('auth.enterWithMagic') }}
-        </v-card-title>
-        <v-card-text>
-          <p class="text-body-2 text-medium-emphasis mb-4">
-            Enter your phone number and we'll send you a magic link to login instantly.
-          </p>
-          <BaseInput
-            v-model="magicPhone"
-            :label="$t('auth.phone')"
-            type="tel"
-            required
-            prepend-icon="mdi-phone"
-            placeholder="+1 (555) 000-0000"
-          />
-        </v-card-text>
-        <v-card-actions class="pa-4 pt-0">
-          <v-spacer />
           <v-btn
             variant="text"
-            @click="showMagicLink = false"
+            color="medium-emphasis"
+            size="large"
+            block
+            to="/register"
+            height="56"
+            class="mt-4"
           >
-            {{ $t('common.cancel') }}
+            {{ $t('auth.dontHaveAccount') }} <span class="text-primary font-weight-black ml-2">{{ $t('nav.register').toUpperCase() }}</span>
           </v-btn>
-          <BaseButton
-            color="primary"
-            :loading="sendingMagic"
-            :disabled="!magicPhone"
-            @click="sendMagicLink"
-          >
-            {{ $t('auth.magicLink') }}
-          </BaseButton>
-        </v-card-actions>
+        </div>
       </v-card>
-    </v-dialog>
-<!--  </v-container>-->
+      
+      <!-- System Info Footer -->
+      <div class="text-center mt-8 text-overline font-weight-black opacity-30 letter-spacing-1">
+        v1.0.4-PROD // SECURE NODE: {{ systemId }}
+      </div>
+    </v-col>
+  </v-row>
+
+  <!-- Magic Link Dialog -->
+  <MagicLinkDialog
+    v-model="showMagicLink"
+    :loading="sendingMagic"
+    @send="sendMagicLink"
+  />
 </template>
 
 <script setup lang="ts">
@@ -145,6 +128,7 @@ import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
+import MagicLinkDialog from '@/components/auth/MagicLinkDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -159,8 +143,8 @@ const form = reactive({
 
 const loading = ref(false)
 const showMagicLink = ref(false)
-const magicPhone = ref('')
 const sendingMagic = ref(false)
+const systemId = ref('AP-360-' + Math.random().toString(36).substring(2, 7).toUpperCase())
 
 const emailRules = [
   (v: string) => !!v || 'Email is required',
@@ -190,15 +174,12 @@ async function handleLogin() {
   }
 }
 
-async function sendMagicLink() {
-  if (!magicPhone.value) return
-
+async function sendMagicLink(phone: string) {
   sendingMagic.value = true
   try {
-    await authStore.magicLink(magicPhone.value)
+    await authStore.magicLink(phone)
     success('Magic link sent! Check your phone.')
     showMagicLink.value = false
-    magicPhone.value = ''
   } catch (err: any) {
     error(err.response?.data?.message || 'Failed to send magic link')
   } finally {
@@ -206,6 +187,46 @@ async function sendMagicLink() {
   }
 }
 </script>
+
+<style scoped>
+.bg-neutral-light {
+  background-color: #f0f2f5;
+}
+
+.border-thick {
+  border: 4px solid #1A1A1A !important;
+}
+
+.login-decoration {
+  user-select: none;
+  pointer-events: none;
+  z-index: 0;
+}
+
+.letter-spacing-2 {
+  letter-spacing: 2px;
+}
+
+.letter-spacing-1 {
+  letter-spacing: 1px;
+}
+
+.divider-container {
+  display: flex;
+  align-items: center;
+  width: 100%;
+}
+
+.divider-line {
+  flex: 1;
+  height: 2px;
+  background-color: rgba(0, 0, 0, 0.1);
+}
+
+.gap-4 {
+  gap: 16px;
+}
+</style>
 
 <style scoped>
 :deep(.v-divider) {

@@ -72,10 +72,12 @@ export const useAuthStore = defineStore('auth', () => {
     localStorage.removeItem('token')
   }
 
-  if (token.value) {
-    fetchCurrentUser()
+  async function initializeSession() {
+    if (token.value) {
+      await fetchCurrentUser()
+    }
   }
-
+  
   return {
     user,
     token,
@@ -85,6 +87,7 @@ export const useAuthStore = defineStore('auth', () => {
     magicLink,
     validateMagicLink,
     fetchCurrentUser,
-    logout
+    logout,
+    initializeSession
   }
 })
