@@ -54,12 +54,14 @@ defineProps<{
 
 <style scoped>
 .action-card {
-  transition: transform 0.2s ease, box-shadow 0.2s ease;
-  border-left: 4px solid currentColor !important;
+  transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  /* Industrial style: sharp border-left */
+  border-left: 4px solid currentColor !important; 
+  border-radius: 4px !important; /* Sharper corners */
 }
 
 .action-card:hover {
   transform: translateY(-4px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important; /* Stronger, defined shadow */
 }
 </style>

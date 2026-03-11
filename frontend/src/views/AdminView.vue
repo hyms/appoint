@@ -1,543 +1,233 @@
 <template>
-  <v-container>
+  <v-container fluid class="pa-4 pa-sm-8 max-width-md mx-auto">
     <v-row>
       <v-col cols="12">
-        <h1 class="text-h4 mb-4">{{ $t('dashboard.admin') }}</h1>
+        <h1 class="text-h3 font-weight-black text-uppercase letter-spacing-1 mb-1">
+          {{ $t('appointments.title') }}
+        </h1>
+        <p class="text-body-1 text-medium-emphasis mb-6">
+          Manage all your scheduled appointments here.
+        </p>
       </v-col>
     </v-row>
 
-    <v-tabs v-model="tab" color="primary" class="mb-4">
-      <v-tab value="appointments">Appointments</v-tab>
-      <v-tab value="slots">Slots</v-tab>
-      <v-tab value="users">Usuarios</v-tab>
-      <v-tab value="professionals">Profesionales</v-tab>
-      <v-tab value="emergency">{{ $t('dashboard.emergencies') }}</v-tab>
-      <v-tab value="strikes">Strikes</v-tab>
-    </v-tabs>
-
-    <v-window v-model="tab">
-      <v-window-item value="appointments">
-        <v-card>
-          <v-card-title class="d-flex justify-space-between align-center">
-            <span>Gestión de Citas</span>
-            <v-btn color="primary" size="small" @click="refreshAppointments" prepend-icon="mdi-refresh">
-              Actualizar
-            </v-btn>
+    <!-- ADMIN VIEW -->
+    <template v-if="authStore.user?.role === 'ADMIN'">
+      <AdminAppointmentsTab 
+        v-model:filters="appointmentFilters"
+        :loading-patients="loadingPatients"
+        :loading-professionals="loadingProfessionalsForFilter"
+        :patients-list="patientsList"
+        :professionals-list="professionalsList"
+        @update-list="loadAppointments"
+        @view-details="(item) => { selectedAppointment = item; viewDialog = true; }"
+      />
+      
+      <v-dialog v-model="viewDialog" max-width="600">
+        <v-card v-if="selectedAppointment">
+          <v-card-title class="d-flex justify-space-between">
+            <span>Appointment Details</span>
+            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
           </v-card-title>
           <v-card-text>
-            <!-- Filters -->
-            <v-row class="mb-4">
-              <v-col cols="12" md="2">
-                <v-text-field
-                  v-model="appointmentFilters.startDate"
-                  label="Fecha Inicio"
-                  type="date"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadAppointments"
-                />
-              </v-col>
-              <v-col cols="12" md="2">
-                <v-text-field
-                  v-model="appointmentFilters.endDate"
-                  label="Fecha Fin"
-                  type="date"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadAppointments"
-                />
-              </v-col>
-              <v-col cols="12" md="2">
-                <v-select
-                  v-model="appointmentFilters.status"
-                  label="Estado"
-                  :items="statusOptions"
-                  item-title="text"
-                  item-value="value"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadAppointments"
-                />
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="appointmentFilters.patientId"
-                  label="Paciente"
-                  :items="patientsList"
-                  item-title="label"
-                  item-value="id"
-                  density="compact"
-                  clearable
-                  :loading="loadingPatients"
-                  @update:model-value="loadAppointments"
-                />
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="appointmentFilters.professionalId"
-                  label="Profesional"
-                  :items="professionalsList"
-                  item-title="label"
-                  item-value="id"
-                  density="compact"
-                  clearable
-                  :loading="loadingProfessionalsForFilter"
-                  @update:model-value="loadAppointments"
-                />
-              </v-col>
-            </v-row>
-
-            <v-data-table
-              :headers="appointmentHeaders"
-              :items="appointments"
-              :loading="appointmentsLoading"
-              :items-per-page="10"
-              class="elevation-1"
-            >
-              <template v-slot:item.date="{ item }">
-                {{ formatDate(item.date) }}
-              </template>
-              <template v-slot:item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template v-slot:item.patient="{ item }">
-                <div v-if="item.patient">
-                  <div class="font-weight-medium">{{ item.patient.profile?.firstName }} {{ item.patient.profile?.lastName }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ item.patient.email }}</div>
-                </div>
-                <div v-else class="text-medium-emphasis">N/A</div>
-              </template>
-              <template v-slot:item.professional="{ item }">
-                <div v-if="item.professional">
-                  <div class="font-weight-medium">{{ item.professional.profile?.firstName }} {{ item.professional.profile?.lastName }}</div>
-                  <div class="text-caption text-medium-emphasis">{{ item.professional.email }}</div>
-                </div>
-                <div v-else class="text-medium-emphasis">N/A</div>
-              </template>
-              <template v-slot:item.status="{ item }">
-                <v-chip :color="getStatusColor(item.status)" size="small">
-                  {{ item.status }}
-                </v-chip>
-              </template>
-              <template v-slot:item.paymentStatus="{ item }">
-                <v-chip :color="getPaymentColor(item.paymentStatus)" size="x-small" variant="outlined">
-                  {{ item.paymentStatus || 'N/A' }}
-                </v-chip>
-              </template>
-              <template v-slot:item.actions="{ item }">
-                <v-btn
-                  size="small"
-                  color="primary"
-                  variant="text"
-                  prepend-icon="mdi-eye"
-                  @click="viewAppointment(item)"
-                >
-                  Ver
-                </v-btn>
-              </template>
-            </v-data-table>
+            <AppointmentDetailCard :appointment="selectedAppointment" />
           </v-card-text>
         </v-card>
+      </v-dialog>
 
-        <!-- View Appointment Dialog -->
-        <v-dialog v-model="viewDialog" max-width="600">
-          <v-card v-if="selectedAppointment">
-            <v-card-title class="d-flex justify-space-between">
-              <span>Detalles de la Cita</span>
-              <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
-            </v-card-title>
+      <!-- Cancel Appointment Dialog (Kept here for dependency reasons until componentized) -->
+      <v-dialog v-model="cancelDialog" max-width="400">
+        <v-card>
+          <v-card-title>Cancel Appointment</v-card-title>
+          <v-card-text>
+            <p class="mb-4">Are you sure you want to cancel this appointment?</p>
+            <v-textarea
+              v-model="cancelReason"
+              label="Cancellation Reason"
+              rows="3"
+              placeholder="Enter reason for cancellation"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn @click="cancelDialog = false">No</v-btn>
+            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">Yes, Cancel</v-btn>
+          </v-card-actions>
+        </v-card>
+      </v-dialog>
+    </template>
+
+    <!-- PATIENT/PROFESSIONAL VIEW -->
+    <template v-else>
+      <v-tabs v-model="tab" color="primary" class="mb-6">
+        <v-tab value="upcoming">Próximas</v-tab>
+        <v-tab value="past">Pasadas</v-tab>
+        <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>
+      </v-tabs>
+
+      <v-window v-model="tab">
+        <v-window-item value="upcoming">
+          <AppointmentList
+            :appointments="upcomingAppointments"
+            :loading="loading"
+            view-all-route="/appointments"
+            :has-action="true"
+          />
+        </v-window-item>
+
+        <v-window-item value="past">
+          <AppointmentList
+            :appointments="pastAppointments"
+            :loading="loading"
+            :view-all-route="null"
+            :has-action="false"
+          />
+        </v-window-item>
+
+        <v-window-item value="payments" v-if="showPaymentTab">
+          <!-- Payment Tracking Table (Will be componentized later if needed) -->
+          <v-card flat>
+            <v-card-title>Seguimiento de Pagos</v-card-title>
             <v-card-text>
-              <v-list>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">ID</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedAppointment.id }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Fecha y Hora</v-list-item-title>
-                  <v-list-item-subtitle>{{ formatDate(selectedAppointment.date) }} {{ formatTime(selectedAppointment.startTime) }} - {{ formatTime(selectedAppointment.endTime) }}</v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Paciente</v-list-item-title>
-                  <v-list-item-subtitle v-if="selectedAppointment.patient">
-                    {{ selectedAppointment.patient.profile?.firstName }} {{ selectedAppointment.patient.profile?.lastName }} ({{ selectedAppointment.patient.email }})
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Profesional</v-list-item-title>
-                  <v-list-item-subtitle v-if="selectedAppointment.professional">
-                    {{ selectedAppointment.professional.profile?.firstName }} {{ selectedAppointment.professional.profile?.lastName }} ({{ selectedAppointment.professional.email }})
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Estado</v-list-item-title>
-                  <v-list-item-subtitle>
-                    <v-chip :color="getStatusColor(selectedAppointment.status)" size="small">
-                      {{ selectedAppointment.status }}
-                    </v-chip>
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item>
-                  <v-list-item-title class="text-caption text-medium-emphasis">Estado de Pago</v-list-item-title>
-                  <v-list-item-subtitle>
-                    <v-chip :color="getPaymentColor(selectedAppointment.paymentStatus)" size="small">
-                      {{ selectedAppointment.paymentStatus || 'N/A' }}
-                    </v-chip>
-                  </v-list-item-subtitle>
-                </v-list-item>
-                <v-list-item v-if="selectedAppointment.notes">
-                  <v-list-item-title class="text-caption text-medium-emphasis">Notas</v-list-item-title>
-                  <v-list-item-subtitle>{{ selectedAppointment.notes }}</v-list-item-subtitle>
-                </v-list-item>
-              </v-list>
+              <v-data-table
+                :headers="paymentHeaders"
+                :items="paymentRecords"
+                :loading="loadingPayments"
+              >
+                <template v-slot:item.status="{ item }">
+                  <v-chip :color="getPaymentStatusColor(item.status)" size="small">
+                    {{ item.status }}
+                  </v-chip>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                  <v-btn
+                    v-if="item.status === 'PENDING'"
+                    size="small"
+                    color="primary"
+                    variant="text"
+                    @click="openPaymentDialog(item.appointment)"
+                  >
+                    Subir Pago
+                  </v-btn>
+                  <v-btn
+                    v-if="item.status === 'UPLOADED'"
+                    size="small"
+                    color="info"
+                    variant="text"
+                    @click="viewPayment(item)"
+                  >
+                    Ver
+                  </v-btn>
+                </template>
+              </v-data-table>
             </v-card-text>
           </v-card>
-        </v-dialog>
+        </v-window-item>
+      </v-window>
+    </template>
 
-        <!-- Cancel Appointment Dialog -->
-        <v-dialog v-model="cancelDialog" max-width="400">
-          <v-card>
-            <v-card-title>Cancelar Cita</v-card-title>
-            <v-card-text>
-              <p class="mb-4">Are you sure you want to cancel this appointment?</p>
-              <v-textarea
-                v-model="cancelReason"
-                label="Cancellation Reason"
-                rows="3"
-                placeholder="Enter reason for cancellation"
-              />
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn @click="cancelDialog = false">No</v-btn>
-              <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">Yes, Cancel</v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-window-item>
-
-      <v-window-item value="slots">
-        <v-card>
-          <v-card-title class="d-flex justify-space-between align-center">
-            <span>Slot Management</span>
-            <v-btn color="primary" size="small" @click="openGenerateDialog">
-              Generate Slots
-            </v-btn>
-          </v-card-title>
+    <!-- Modals remain here for now -->
+    <v-dialog v-model="paymentDialog" max-width="500">
+        <v-card class="pa-4">
+          <v-card-title>Subir Comprobante de Pago</v-card-title>
           <v-card-text>
-            <v-row class="mb-4">
-              <v-col cols="12" md="3">
-                <v-text-field
-                  v-model="slotFilters.date"
-                  label="Filter by Date"
-                  type="date"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadSlots"
-                />
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="slotFilters.isBooked"
-                  label="Filter by Status"
-                  :items="slotStatusOptions"
-                  item-title="text"
-                  item-value="value"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadSlots"
-                />
-              </v-col>
-              <v-col cols="12" md="6" class="d-flex align-center">
-                <v-spacer />
-                <v-btn color="primary" variant="text" @click="loadSlots" prepend-icon="mdi-refresh">
-                  Refresh
-                </v-btn>
-              </v-col>
-            </v-row>
-
-            <v-data-table
-              :headers="slotHeaders"
-              :items="slots"
-              :loading="slotsLoading"
-              :items-per-page="10"
-            >
-              <template v-slot:item.date="{ item }">
-                {{ formatDate(item.date) }}
-              </template>
-              <template v-slot:item.startTime="{ item }">
-                {{ formatTime(item.startTime) }}
-              </template>
-              <template v-slot:item.endTime="{ item }">
-                {{ formatTime(item.endTime) }}
-              </template>
-              <template v-slot:item.isBooked="{ item }">
-                <v-chip :color="item.isBooked ? 'warning' : 'success'" size="small">
-                  {{ item.isBooked ? 'Booked' : 'Available' }}
-                </v-chip>
-              </template>
-              <template v-slot:item.isBlocked="{ item }">
-                <v-chip :color="item.isBlocked ? 'error' : 'default'" size="small" :variant="item.isBlocked ? 'flat' : 'outlined'">
-                  {{ item.isBlocked ? 'Blocked' : 'Open' }}
-                </v-chip>
-              </template>
-              <template v-slot:item.actions="{ item }">
-                <v-btn
-                  v-if="!item.isBlocked"
-                  size="small"
-                  color="error"
-                  variant="tonal"
-                  @click="blockSlot(item)"
-                  :disabled="item.isBooked"
-                >
-                  Block
-                </v-btn>
-                <v-btn
-                  v-else
-                  size="small"
-                  color="success"
-                  variant="tonal"
-                  @click="unblockSlot(item)"
-                >
-                  Unblock
-                </v-btn>
-                <v-btn
-                  size="small"
-                  color="error"
-                  variant="text"
-                  icon="mdi-delete"
-                  @click="deleteSlot(item)"
-                  :disabled="item.isBooked"
-                />
-              </template>
-            </v-data-table>
+            <p class="mb-4">
+              Cita: {{ selectedAppointment ? formatDate(selectedAppointment.date) : '' }}
+            </p>
+            <BaseInput
+              v-model="paymentFile"
+              type="file"
+              label="Subir captura de pantalla del pago"
+              accept="image/*"
+              prepend-inner-icon="mdi-camera"
+            />
+            <v-img
+              v-if="previewUrl"
+              :src="previewUrl"
+              max-height="200"
+              class="mt-4"
+            />
           </v-card-text>
-        </v-card>
-
-        <!-- Generate Slots Dialog -->
-        <v-dialog v-model="generateDialog" max-width="500">
-          <v-card>
-            <v-card-title>Generate Slots</v-card-title>
-            <v-card-text>
-              <v-select
-                v-model="generateData.professionalId"
-                :items="professionalsList"
-                item-title="label"
-                item-value="id"
-                label="Select Professional"
-                :loading="loadingProfessionals"
-              />
-              <v-text-field
-                v-model="generateData.startDate"
-                label="Start Date"
-                type="date"
-              />
-              <v-text-field
-                v-model="generateData.endDate"
-                label="End Date"
-                type="date"
-              />
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn @click="generateDialog = false">Cancel</v-btn>
-              <v-btn color="primary" @click="generateSlots" :loading="generatingSlots">
-                Generate
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-window-item>
-
-      <v-window-item value="users">
-        <v-card>
-          <v-card-title class="d-flex justify-space-between align-center">
-            <span>Gestión de Usuarios</span>
-            <v-btn color="primary" size="small" @click="openUserDialog()" prepend-icon="mdi-plus">
-              Nuevo Usuario
-            </v-btn>
-          </v-card-title>
-          <v-card-text>
-            <v-row class="mb-4">
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="userFilters.role"
-                  label="Filtrar por Rol"
-                  :items="roleOptions"
-                  item-title="text"
-                  item-value="value"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadUsers"
-                />
-              </v-col>
-              <v-col cols="12" md="3">
-                <v-select
-                  v-model="userFilters.isActive"
-                  label="Estado"
-                  :items="activeOptions"
-                  item-title="text"
-                  item-value="value"
-                  density="compact"
-                  clearable
-                  @update:model-value="loadUsers"
-                />
-              </v-col>
-              <v-col cols="12" md="6" class="d-flex align-center">
-                <v-spacer />
-                <v-btn color="primary" variant="text" @click="loadUsers" prepend-icon="mdi-refresh">
-                  Actualizar
-                </v-btn>
-              </v-col>
-            </v-row>
-
-            <v-data-table
-              :headers="userHeaders"
-              :items="users"
-              :loading="usersLoading"
-              :items-per-page="10"
+          <v-card-actions>
+            <v-spacer />
+            <v-btn @click="paymentDialog = false">Cancelar</v-btn>
+            <BaseButton
+              color="primary"
+              :loading="uploading"
+              :disabled="!paymentFile"
+              @click="uploadPayment"
             >
-              <template v-slot:item.profile.firstName="{ item }">
-                {{ item.profile?.firstName }} {{ item.profile?.lastName }}
-              </template>
-              <template v-slot:item.role="{ item }">
-                <v-chip :color="getRoleColor(item.role)" size="small">
-                  {{ item.role }}
-                </v-chip>
-              </template>
-              <template v-slot:item.isActive="{ item }">
-                <v-chip :color="item.isActive ? 'success' : 'error'" size="small">
-                  {{ item.isActive ? 'Activo' : 'Inactivo' }}
-                </v-chip>
-              </template>
-              <template v-slot:item.createdAt="{ item }">
-                {{ formatDate(item.createdAt) }}
-              </template>
-              <template v-slot:item.actions="{ item }">
-                <v-btn size="small" color="primary" variant="text" @click="openUserDialog(item)">
-                  Editar
-                </v-btn>
-                <v-btn size="small" color="error" variant="text" icon="mdi-delete" @click="deleteUser(item)" />
-              </template>
-            </v-data-table>
-          </v-card-text>
+              Subir
+            </BaseButton>
+          </v-card-actions>
         </v-card>
+    </v-dialog>
 
-        <v-dialog v-model="userDialog" max-width="600">
-          <v-card>
-            <v-card-title>{{ editingUser ? 'Editar Usuario' : 'Nuevo Usuario' }}</v-card-title>
-            <v-card-text>
-              <v-form ref="userForm" @submit.prevent="saveUser">
-                <v-text-field v-model="userFormData.email" label="Email" :rules="[v => !!v || 'Email requerido']" />
-                <v-text-field v-if="!editingUser" v-model="userFormData.password" label="Contraseña" type="password" :rules="[v => !!v || 'Contraseña requerida']" />
-                <v-text-field v-model="userFormData.phone" label="Teléfono" />
-                <v-text-field v-model="userFormData.firstName" label="Nombre" :rules="[v => !!v || 'Nombre requerido']" />
-                <v-text-field v-model="userFormData.lastName" label="Apellido" :rules="[v => !!v || 'Apellido requerido']" />
-                <v-text-field v-model="userFormData.dni" label="DNI" />
-                <v-select v-model="userFormData.role" label="Rol" :items="roleOptions" item-title="text" item-value="value" :rules="[v => !!v || 'Rol requerido']" />
-                <v-switch v-if="editingUser" v-model="userFormData.isActive" label="Usuario activo" color="success" />
-              </v-form>
-            </v-card-text>
-            <v-card-actions>
-              <v-spacer />
-              <v-btn @click="userDialog = false">Cancelar</v-btn>
-              <v-btn color="primary" @click="saveUser" :loading="savingUser">
-                {{ editingUser ? 'Actualizar' : 'Crear' }}
-              </v-btn>
-            </v-card-actions>
-          </v-card>
-        </v-dialog>
-      </v-window-item>
+    <v-dialog v-model="paymentViewDialog" max-width="500">
+      <v-card class="pa-4">
+        <v-card-title>Detalles del Pago</v-card-title>
+        <v-card-text v-if="selectedPayment">
+          <v-img
+            :src="selectedPayment.qrImageUrl"
+            max-height="300"
+            class="mb-4"
+          />
+          <v-chip :color="getPaymentStatusColor(selectedPayment.status)">
+            {{ selectedPayment.status }}
+          </v-chip>
+          <p v-if="selectedPayment.uploadedAt" class="mt-2">
+            Subido: {{ new Date(selectedPayment.uploadedAt).toLocaleString() }}
+          </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
 
-      <v-window-item value="emergency">
-        <v-card>
-          <v-card-title>{{ $t('dashboard.emergencies') }}</v-card-title>
-          <v-card-text>
-            <v-alert v-if="emergencyStatus.isActive" type="error" class="mb-4">
-              Emergency mode is ACTIVE
-              <br>{{ emergencyStatus.message }}
-            </v-alert>
-            <v-btn
-              v-if="!emergencyStatus.isActive"
-              color="error"
-              @click="activateEmergency"
-            >
-              Activate Emergency
-            </v-btn>
-            <v-btn
-              v-else
-              color="success"
-              @click="deactivateEmergency"
-            >
-              Deactivate Emergency
-            </v-btn>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-
-      <v-window-item value="professionals">
-        <ProfessionalConfigAdmin />
-      </v-window-item>
-
-      <v-window-item value="strikes">
-        <v-card>
-          <v-card-title>Strike Management</v-card-title>
-          <v-card-text>
-            <v-data-table
-              :headers="strikeHeaders"
-              :items="strikes"
-              :loading="loading"
-            >
-              <template v-slot:item.isActive="{ item }">
-                <v-chip :color="item.isActive ? 'error' : 'success'" size="small">
-                  {{ item.isActive ? 'Active' : 'Resolved' }}
-                </v-chip>
-              </template>
-              <template v-slot:item.actions="{ item }">
-                <v-btn
-                  v-if="item.isActive"
-                  size="small"
-                  color="success"
-                  @click="resolveStrike(item.id)"
-                >
-                  Resolve
-                </v-btn>
-              </template>
-            </v-data-table>
-          </v-card-text>
-        </v-card>
-      </v-window-item>
-    </v-window>
   </v-container>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
-import { appointmentsService } from '@/services/appointments'
+import { ref, computed, onMounted, reactive } from 'vue'
+import { useAuthStore } from '@/stores/auth'
+import { appointmentsService, type Appointment } from '@/services/appointments'
+import { paymentsService, type QRPayment } from '@/services/payments'
 import { emergencyService } from '@/services/emergency'
 import { strikesService } from '@/services/strikes'
 import { slotsService } from '@/services/slots'
-import { usersService, type User, type CreateUserDto, type UpdateUserDto } from '@/services/users'
+import { usersService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/users'
 import api from '@/services/api'
-import ProfessionalConfigAdmin from '@/components/ProfessionalConfigAdmin.vue'
 import { formatDate, formatTime } from '@/utils/date'
 import { useToast } from '@/composables/useToast'
+import BaseButton from '@/components/base/BaseButton.vue'
+import BaseInput from '@/components/base/BaseInput.vue'
+import BaseSelect from '@/components/base/BaseSelect.vue'
+import AppointmentList from '@/components/appointments/AppointmentList.vue'
+import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue' 
+import AdminAppointmentsTab from './admin/AdminAppointmentsTab.vue'
+import AdminSlotsTab from './admin/AdminSlotsTab.vue'
+import AdminUsersTab from './admin/AdminUsersTab.vue'
+import AdminProfessionalsTab from './admin/AdminProfessionalsTab.vue'
+import AdminEmergencyTab from './admin/AdminEmergencyTab.vue'
+import AdminStrikesTab from './admin/AdminStrikesTab.vue'
 
 const { success, error } = useToast()
 
+const authStore = useAuthStore()
 const tab = ref('appointments')
 const loading = ref(false)
 
-// Appointments state
+// --- Appointments State ---
 const appointments = ref<any[]>([])
 const appointmentsLoading = ref(false)
-const appointmentsMeta = ref({ total: 0, page: 1, limit: 10, totalPages: 0 })
-const appointmentFilters = reactive({
-  startDate: '',
-  endDate: '',
-  status: '',
-  patientId: '',
-  professionalId: ''
-})
+const appointmentFilters = reactive({ startDate: '', endDate: '', status: '', patientId: '', professionalId: '' })
+const appointmentHeaders = [
+  { title: 'Date', key: 'date' },
+  { title: 'Time', key: 'startTime' },
+  { title: 'Patient', key: 'patient' },
+  { title: 'Professional', key: 'professional' },
+  { title: 'Status', key: 'status' },
+  { title: 'Payment', key: 'paymentStatus' },
+  { title: 'Actions', key: 'actions', sortable: false }
+]
 const statusOptions = [
   { text: 'Pendiente', value: 'PENDING' },
   { text: 'Confirmada', value: 'CONFIRMED' },
@@ -545,298 +235,91 @@ const statusOptions = [
   { text: 'Cancelada', value: 'CANCELLED' },
   { text: 'No Asistió', value: 'NO_SHOW' }
 ]
-const appointmentHeaders = [
-  { title: 'Fecha', key: 'date' },
-  { title: 'Hora', key: 'startTime' },
-  { title: 'Paciente', key: 'patient' },
-  { title: 'Profesional', key: 'professional' },
-  { title: 'Estado', key: 'status' },
-  { title: 'Pago', key: 'paymentStatus' },
-  { title: 'Acciones', key: 'actions', sortable: false }
-]
 
-// Dialogs
-const viewDialog = ref(false)
-const cancelDialog = ref(false)
-const selectedAppointment = ref<any>(null)
-const cancelReason = ref('')
-const cancelling = ref(false)
-
-// Slots state
+// --- Slots State ---
 const slots = ref<any[]>([])
 const slotsLoading = ref(false)
-const slotsMeta = ref({ total: 0, page: 1, limit: 10, totalPages: 0 })
-const slotFilters = reactive({
-  date: '',
-  isBooked: undefined as boolean | undefined
-})
-const slotStatusOptions = [
-  { text: 'Available', value: false },
-  { text: 'Booked', value: true }
-]
+const slotFilters = reactive({ date: '', isBooked: undefined as boolean | undefined })
 const slotHeaders = [
-  { title: 'Date', key: 'date' },
-  { title: 'Start', key: 'startTime' },
-  { title: 'End', key: 'endTime' },
-  { title: 'Status', key: 'isBooked' },
-  { title: 'Blocked', key: 'isBlocked' },
-  { title: 'Professional', key: 'professional.email' },
-  { title: 'Actions', key: 'actions', sortable: false }
+    { title: 'Date', key: 'date' }, { title: 'Start', key: 'startTime' }, { title: 'End', key: 'endTime' },
+    { title: 'Status', key: 'isBooked' }, { title: 'Blocked', key: 'isBlocked' }, { title: 'Professional', key: 'professional.profile.lastName' },
+    { title: 'Actions', key: 'actions', sortable: false }
 ]
-
-// Generate dialog
+const slotStatusOptions = [{ text: 'Available', value: false }, { text: 'Booked', value: true }]
 const generateDialog = ref(false)
 const generatingSlots = ref(false)
+const generateData = reactive({ professionalId: '', startDate: '', endDate: '' })
 
-// Users state
+// --- User State ---
 const users = ref<User[]>([])
 const usersLoading = ref(false)
 const userDialog = ref(false)
 const editingUser = ref<User | null>(null)
 const savingUser = ref(false)
-const userFilters = reactive({
-  role: '',
-  isActive: undefined as boolean | undefined
-})
-const userFormData = reactive<{
-  email: string
-  password: string
-  phone: string
-  firstName: string
-  lastName: string
-  dni: string
-  role: string
-  isActive: boolean
-}>({
-  email: '',
-  password: '',
-  phone: '',
-  firstName: '',
-  lastName: '',
-  dni: '',
-  role: 'PATIENT',
-  isActive: true
-})
+const userFilters = reactive({ role: '', isActive: undefined as boolean | undefined })
+const userFormData = reactive<any>({ email: '', password: '', phone: '', firstName: '', lastName: '', dni: '', role: 'PATIENT', isActive: true })
+const userFormRef = ref()
 const roleOptions = [
-  { text: 'Administrador', value: 'ADMIN' },
-  { text: 'Secretario', value: 'SECRETARY' },
-  { text: 'Profesional', value: 'PROFESSIONAL' },
-  { text: 'Paciente', value: 'PATIENT' }
+  { text: 'Administrator', value: 'ADMIN' }, { text: 'Secretary', value: 'SECRETARY' },
+  { text: 'Professional', value: 'PROFESSIONAL' }, { text: 'Patient', value: 'PATIENT' }
 ]
-const activeOptions = [
-  { text: 'Activo', value: true },
-  { text: 'Inactivo', value: false }
-]
-const userHeaders = [
-  { title: 'Nombre', key: 'profile.firstName' },
-  { title: 'Email', key: 'email' },
-  { title: 'Teléfono', key: 'phone' },
-  { title: 'Rol', key: 'role' },
-  { title: 'Estado', key: 'isActive' },
-  { title: 'Creado', key: 'createdAt' },
-  { title: 'Acciones', key: 'actions', sortable: false }
-]
+const activeOptions = [{ text: 'Active', value: true }, { text: 'Inactive', value: false }]
+
+// --- Professional State ---
+const professionalsList = ref<{ id: string; label: string }[]>([])
 const loadingProfessionals = ref(false)
 const loadingProfessionalsForFilter = ref(false)
-const loadingPatients = ref(false)
-const professionalsList = ref<{ id: string; label: string }[]>([])
-const patientsList = ref<{ id: string; label: string }[]>([])
-const generateData = reactive({
-  professionalId: '',
-  startDate: '',
-  endDate: ''
-})
+const configTab = ref('schedule')
 
-// Legacy state
-const slotStartDate = ref('')
-const slotEndDate = ref('')
+// --- General State ---
+const paymentHeaders = [
+  { title: 'Date', key: 'appointment.date' },
+  { title: 'Professional', key: 'appointment.professional.profile.firstName' },
+  { title: 'Status', key: 'status' },
+  { title: 'Actions', key: 'actions', sortable: false }
+]
+const paymentRecords = ref<any[]>([])
+const loadingPayments = ref(false)
+const paymentDialog = ref(false)
+const paymentViewDialog = ref(false)
+const selectedPayment = ref<QRPayment | null>(null)
+const paymentFile = ref<File | null>(null)
+const previewUrl = ref('')
+const uploading = ref(false)
 
+const showPaymentTab = computed(() => authStore.user?.role === 'PATIENT')
+
+// --- Appointment View State (Replicated from AppointmentsView.vue) ---
+const upcomingAppointments = ref<Appointment[]>([])
+const pastAppointments = ref<Appointment[]>([])
+const cancelDialog = ref(false)
+const cancelReason = ref('')
+const cancelling = ref(false)
+
+// --- Global View State ---
+const viewDialog = ref(false)
+const selectedAppointment = ref<Appointment | null>(null)
+
+// --- Emergency/Strikes State ---
 const strikes = ref<any[]>([])
 const emergencyStatus = reactive({ isActive: false, message: '' })
 
-const strikeHeaders = [
-  { title: 'Date', key: 'strikeDate' },
-  { title: 'Patient', key: 'patient.profile.firstName' },
-  { title: 'Reason', key: 'reason' },
-  { title: 'Status', key: 'isActive' },
-  { title: 'Actions', key: 'actions', sortable: false }
-]
-
+// --- Life Cycle & Fetching ---
 onMounted(async () => {
-  await loadData()
-  await loadAppointments()
-  await loadSlots()
-  await loadUsers()
-  await loadProfessionals()
-  await loadPatients()
+  if (authStore.user?.role === 'ADMIN') {
+    await loadAppointments() // Load appointment list for admin
+    await loadPatients()
+    await loadProfessionalsListForAdmin()
+  }
+  await loadEmergencyStatus()
+  await loadStrikes()
 })
 
-async function loadData() {
-  loading.value = true
-  try {
-    strikes.value = await strikesService.getProfessionalStrikes()
-    const status = await emergencyService.getStatus()
-    emergencyStatus.isActive = status.isActive
-    emergencyStatus.message = status.message || ''
-  } catch (error) {
-    console.error('Failed to load data:', error)
-  } finally {
-    loading.value = false
-  }
-}
-
-async function loadProfessionals() {
-  loadingProfessionals.value = true
-  loadingProfessionalsForFilter.value = true
-  try {
-    const response = await api.get('/auth/professionals')
-    professionalsList.value = response.data.map((u: any) => ({
-      id: u.id,
-      label: `${u.firstName || ''} ${u.lastName || ''} (${u.email})`.trim()
-    }))
-    if (professionalsList.value.length > 0 && !generateData.professionalId) {
-      generateData.professionalId = professionalsList.value[0]!.id
-    }
-  } catch (error) {
-    console.error('Failed to load professionals:', error)
-  } finally {
-    loadingProfessionals.value = false
-    loadingProfessionalsForFilter.value = false
-  }
-}
-
-async function loadPatients() {
-  loadingPatients.value = true
-  try {
-    const response = await api.get('/auth/users?role=PATIENT')
-    patientsList.value = response.data.map((u: any) => ({
-      id: u.id,
-      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
-    }))
-  } catch (error) {
-    console.error('Failed to load patients:', error)
-  } finally {
-    loadingPatients.value = false
-  }
-}
-
-async function loadUsers() {
-  usersLoading.value = true
-  try {
-    const params: any = {}
-    if (userFilters.role) params.role = userFilters.role
-    if (userFilters.isActive !== undefined) params.isActive = userFilters.isActive
-    users.value = await usersService.getAll(params.role)
-  } catch (error) {
-    console.error('Failed to load users:', error)
-    error('Error al cargar usuarios')
-  } finally {
-    usersLoading.value = false
-  }
-}
-
-function openUserDialog(user?: User) {
-  if (user) {
-    editingUser.value = user
-    userFormData.email = user.email
-    userFormData.password = ''
-    userFormData.phone = user.phone || ''
-    userFormData.firstName = user.profile?.firstName || ''
-    userFormData.lastName = user.profile?.lastName || ''
-    userFormData.dni = user.profile?.dni || ''
-    userFormData.role = user.role
-    userFormData.isActive = user.isActive
-  } else {
-    editingUser.value = null
-    userFormData.email = ''
-    userFormData.password = ''
-    userFormData.phone = ''
-    userFormData.firstName = ''
-    userFormData.lastName = ''
-    userFormData.dni = ''
-    userFormData.role = 'PATIENT'
-    userFormData.isActive = true
-  }
-  userDialog.value = true
-}
-
-async function saveUser() {
-  if (!userFormData.email || !userFormData.firstName || !userFormData.lastName || !userFormData.role) {
-    error('Por favor complete todos los campos requeridos')
-    return
-  }
-  
-  savingUser.value = true
-  try {
-    if (editingUser.value) {
-      const updateData: UpdateUserDto = {
-        email: userFormData.email,
-        phone: userFormData.phone,
-        firstName: userFormData.firstName,
-        lastName: userFormData.lastName,
-        dni: userFormData.dni,
-        role: userFormData.role,
-        isActive: userFormData.isActive
-      }
-      await usersService.update(editingUser.value.id, updateData)
-      success('Usuario actualizado')
-    } else {
-      if (!userFormData.password) {
-        error('Contraseña requerida')
-        savingUser.value = false
-        return
-      }
-      const createData: CreateUserDto = {
-        email: userFormData.email,
-        password: userFormData.password,
-        phone: userFormData.phone,
-        firstName: userFormData.firstName,
-        lastName: userFormData.lastName,
-        dni: userFormData.dni,
-        role: userFormData.role
-      }
-      await usersService.create(createData)
-      success('Usuario creado')
-    }
-    userDialog.value = false
-    await loadUsers()
-  } catch (err: any) {
-    console.error('Failed to save user:', err)
-    error(err.response?.data?.message || 'Error al guardar usuario')
-  } finally {
-    savingUser.value = false
-  }
-}
-
-async function deleteUser(user: User) {
-  if (!confirm(`¿Está seguro de eliminar al usuario ${user.profile?.firstName} ${user.profile?.lastName}?`)) {
-    return
-  }
-  try {
-    await usersService.delete(user.id)
-    success('Usuario eliminado')
-    await loadUsers()
-  } catch (err) {
-    console.error('Failed to delete user:', err)
-    error('Error al eliminar usuario')
-  }
-}
-
-function getRoleColor(role: string) {
-  const colors: Record<string, string> = {
-    ADMIN: 'purple',
-    SECRETARY: 'blue',
-    PROFESSIONAL: 'green',
-    PATIENT: 'orange'
-  }
-  return colors[role] || 'grey'
-}
-
-// Appointments functions
+// --- Appointment Admin Logic ---
 async function loadAppointments() {
   appointmentsLoading.value = true
   try {
-    const params: any = { page: 1, limit: 20 }
+    const params: any = { page: 1, limit: 50 }
     if (appointmentFilters.startDate) params.startDate = appointmentFilters.startDate
     if (appointmentFilters.endDate) params.endDate = appointmentFilters.endDate
     if (appointmentFilters.status) params.status = appointmentFilters.status
@@ -845,59 +328,19 @@ async function loadAppointments() {
     
     const response = await appointmentsService.getAll(params)
     appointments.value = response.data || response
-    appointmentsMeta.value = response.meta || { total: appointments.value.length, page: 1, limit: 20, totalPages: 1 }
   } catch (error) {
-    console.error('Failed to load appointments:', error)
+    console.error('Failed to load admin appointments:', error)
+    error('Error loading admin appointments')
   } finally {
     appointmentsLoading.value = false
   }
 }
 
-async function refreshAppointments() {
-  await loadAppointments()
-}
+async function loadAdminAppointments() { await loadAppointments() }
 
-function viewAppointment(item: any) {
+function viewAppointmentAdmin(item: any) {
   selectedAppointment.value = item
   viewDialog.value = true
-}
-
-async function confirmAppointment(item: any) {
-  try {
-    await appointmentsService.updateStatus(item.id, 'CONFIRMED')
-    await loadAppointments()
-    success('Appointment confirmed')
-  } catch (err) {
-    error('Failed to confirm appointment')
-  }
-}
-
-async function completeAppointment(item: any) {
-  try {
-    await appointmentsService.updateStatus(item.id, 'COMPLETED')
-    await loadAppointments()
-    success('Appointment completed')
-  } catch (err) {
-    error('Failed to complete appointment')
-  }
-}
-
-async function noShowAppointment(item: any) {
-  if (confirm('Mark this appointment as No Show?')) {
-    try {
-      await appointmentsService.updateStatus(item.id, 'NO_SHOW')
-      await loadAppointments()
-      success('Marked as no-show')
-    } catch (err) {
-      error('Failed to mark as no show')
-    }
-  }
-}
-
-function cancelAppointmentDialog(item: any) {
-  selectedAppointment.value = item
-  cancelReason.value = ''
-  cancelDialog.value = true
 }
 
 async function confirmCancelAppointment() {
@@ -918,19 +361,7 @@ async function confirmCancelAppointment() {
   }
 }
 
-async function deleteAppointment(item: any) {
-  if (confirm(`Are you sure you want to delete this appointment?`)) {
-    try {
-      await appointmentsService.delete(item.id)
-      await loadAppointments()
-      success('Appointment deleted')
-    } catch (err) {
-      error('Failed to delete appointment')
-    }
-  }
-}
-
-// Slots functions
+// --- Slots Logic ---
 async function loadSlots() {
   slotsLoading.value = true
   try {
@@ -940,34 +371,30 @@ async function loadSlots() {
     
     const response = await slotsService.getAll(params)
     slots.value = response.data || response
-    slotsMeta.value = response.meta || { total: slots.value.length, page: 1, limit: 20, totalPages: 1 }
   } catch (error) {
     console.error('Failed to load slots:', error)
+    error('Error loading slots')
   } finally {
     slotsLoading.value = false
   }
 }
 
-function openGenerateDialog() {
-  generateDialog.value = true
-}
-
 async function generateSlots() {
-  generatingSlots.value = true
-  try {
-    await slotsService.generate({
-      professionalId: generateData.professionalId,
-      startDate: generateData.startDate,
-      endDate: generateData.endDate
-    })
-    success('Slots generated successfully')
-    generateDialog.value = false
-    await loadSlots()
-  } catch (err) {
-    error('Failed to generate slots')
-  } finally {
-    generatingSlots.value = false
-  }
+    generatingSlots.value = true
+    try {
+        await slotsService.generate({
+            professionalId: generateData.professionalId,
+            startDate: generateData.startDate,
+            endDate: generateData.endDate
+        })
+        success('Slots generated successfully')
+        generateDialog.value = false
+        await loadSlots()
+    } catch (err) {
+        error('Failed to generate slots')
+    } finally {
+        generatingSlots.value = false
+    }
 }
 
 async function blockSlot(slot: any) {
@@ -1005,74 +432,174 @@ async function deleteSlot(slot: any) {
   }
 }
 
-async function updateStatus(id: string, status: string) {
+// --- User Logic ---
+async function loadUsers() {
+  usersLoading.value = true
   try {
-    await appointmentsService.updateStatus(id, status)
-    await loadData()
-    success('Status updated')
-  } catch (err) {
-    error('Failed to update status')
+    const params: any = {}
+    if (userFilters.role) params.role = userFilters.role
+    if (userFilters.isActive !== undefined) params.isActive = userFilters.isActive
+    users.value = await usersService.getAll(params.role)
+  } catch (error) {
+    console.error('Failed to load users:', error)
+    error('Error loading users')
+  } finally {
+    usersLoading.value = false
   }
 }
 
-async function cancelAppointment(item: any) {
-  if (confirm('Cancel this appointment?')) {
+function openUserDialog(user?: User) {
+  // Logic implemented in AdminUsersTab component
+}
+
+async function saveUser() {
+  // Logic implemented in AdminUsersTab component
+}
+
+async function deleteUser(user: User) {
+  // Logic implemented in AdminUsersTab component
+}
+
+// --- Professional Logic ---
+async function loadProfessionalsListForAdmin() {
+  loadingProfessionals.value = true
+  loadingProfessionalsForFilter.value = true
+  try {
+    const response = await api.get('/auth/professionals')
+    professionalsList.value = response.data.map((u: any) => ({
+      id: u.id,
+      label: `${u.firstName || ''} ${u.lastName || ''} (${u.email})`.trim()
+    }))
+    if (generateData.professionalId === '' && professionalsList.value.length > 0) {
+        generateData.professionalId = professionalsList.value[0]!.id
+    }
+  } catch (error) {
+    console.error('Failed to load professionals:', error)
+    error('Failed to load professionals')
+  } finally {
+    loadingProfessionals.value = false
+    loadingProfessionalsForFilter.value = false
+  }
+}
+
+// --- General/Misc Logic (For Patient/Pro & Admin) ---
+async function loadData() {
+  loading.value = true
+  try {
+    strikes.value = await strikesService.getAll()
+    const status = await emergencyService.getStatus()
+    emergencyStatus.isActive = status.isActive
+    emergencyStatus.message = status.message || ''
+  } catch (error) {
+    console.error('Failed to load general data:', error)
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loadEmergencyStatus() {
     try {
-      await appointmentsService.cancel(item.id, 'Cancelled by admin')
-      await loadData()
+        const status = await emergencyService.getStatus()
+        emergencyStatus.isActive = status.isActive
+        emergencyStatus.message = status.message || ''
+    } catch (e) {
+        error('Could not retrieve emergency status.')
+    }
+}
+
+async function loadStrikes() {
+    loading.value = true
+    try {
+        strikes.value = await strikesService.getAll()
+    } catch (e) {
+        error('Failed to load strikes.')
+    } finally {
+        loading.value = false
+    }
+}
+
+// --- Payment Logic ---
+async function loadPaymentRecords() {
+  loadingPayments.value = true
+  try {
+    paymentRecords.value = await paymentsService.getAll() 
+  } catch (error) {
+    console.error('Failed to load payments:', error)
+    error('Failed to load payment records')
+  } finally {
+    loadingPayments.value = false
+  }
+}
+
+function openPaymentDialog(apt: Appointment) {
+  selectedAppointment.value = apt
+  paymentFile.value = null
+  previewUrl.value = ''
+  paymentDialog.value = true
+}
+
+function viewPayment(payment: any) {
+  selectedPayment.value = payment
+  paymentViewDialog.value = true
+}
+
+async function uploadPayment() {
+  if (!selectedAppointment.value || !paymentFile.value) return
+
+  uploading.value = true
+  try {
+    await paymentsService.uploadPayment(selectedAppointment.value.id, paymentFile.value)
+    success('Payment uploaded successfully!')
+    paymentDialog.value = false
+    await loadPaymentRecords()
+  } catch (err) {
+    error('Failed to upload payment')
+  } finally {
+    uploading.value = false
+  }
+}
+
+// --- Patient-side Appointment Logic (For reference) ---
+async function loadAppointments() {
+  try {
+    let allAppointments: Appointment[] = []
+    
+    if (authStore.user?.role === 'PROFESSIONAL') {
+      allAppointments = await appointmentsService.getProfessionalAppointments()
+    } else {
+      allAppointments = await appointmentsService.getMyAppointments()
+    }
+    
+    const now = new Date()
+    upcomingAppointments.value = allAppointments.filter((a: Appointment) =>
+      new Date(a.date) >= now && a.status !== 'CANCELLED'
+    )
+    pastAppointments.value = allAppointments.filter((a: Appointment) =>
+      new Date(a.date) < now || a.status === 'CANCELLED'
+    )
+    await loadPaymentRecords()
+  } catch (error) {
+    console.error('Failed to load appointments:', error)
+    error('Failed to load appointments')
+  }
+}
+
+async function cancelAppointment(apt: Appointment) {
+  if (confirm('Are you sure you want to cancel this appointment?')) {
+    try {
+      await appointmentsService.cancel(apt.id, 'Cancelled by patient')
+      upcomingAppointments.value = upcomingAppointments.value.filter(a => a.id !== apt.id)
       success('Appointment cancelled')
     } catch (err) {
-      error('Failed to cancel')
+      error('Failed to cancel appointment')
     }
   }
 }
 
-async function activateEmergency() {
-  const message = prompt('Enter emergency message:')
-  if (message) {
-    try {
-      await emergencyService.activate(message)
-      await loadData()
-      success('Emergency activated')
-    } catch (err) {
-      error('Failed to activate emergency')
-    }
-  }
-}
-
-async function deactivateEmergency() {
-  const reason = prompt('Enter deactivation reason:')
-  if (reason) {
-    try {
-      await emergencyService.deactivate(reason)
-      await loadData()
-      success('Emergency deactivated')
-    } catch (err) {
-      error('Failed to deactivate emergency')
-    }
-  }
-}
-
-async function resolveStrike(id: string) {
-  const resolution = prompt('Enter resolution notes:')
-  if (resolution) {
-    try {
-      await strikesService.resolve(id, resolution)
-      await loadData()
-      success('Strike resolved')
-    } catch (err) {
-      error('Failed to resolve strike')
-    }
-  }
-}
-
+// --- Utility Functions ---
 function getStatusColor(status: string) {
   const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'orange'
+    PENDING: 'warning', CONFIRMED: 'success', COMPLETED: 'info', CANCELLED: 'error', NO_SHOW: 'error'
   }
   return colors[status] || 'grey'
 }
@@ -1080,11 +607,16 @@ function getStatusColor(status: string) {
 function getPaymentColor(status: string | undefined) {
   if (!status) return 'grey'
   const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
+    PENDING: 'warning', UPLOADED: 'info', VERIFIED: 'success', REJECTED: 'error'
   }
   return colors[status] || 'grey'
 }
 </script>
+
+<style scoped>
+.letter-spacing-1 { letter-spacing: 1px !important; }
+.gap-2 { gap: 8px; }
+.admin-tab-card { border-radius: 8px !important; border: 1px solid rgba(var(--v-border-color), 0.4) !important; }
+.border-bottom-thick { border-bottom: 2px solid rgba(var(--v-border-color), 0.15) !important; }
+.data-table-industrial { border-radius: 6px !important; }
+</style>

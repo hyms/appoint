@@ -38,15 +38,20 @@
     <!-- Upcoming Appointments Section -->
     <v-row>
       <v-col cols="12" lg="8">
-        <UpcomingAppointments 
+        <AppointmentList
           :appointments="upcomingAppointments"
           :loading="loading"
+          view-all-route="/appointments"
+          :has-action="true"
+          empty-message="You don't have any scheduled appointments. Book one now!"
+          action-label="Book Appointment"
+          action-to="/book"
         />
       </v-col>
       
       <!-- Stats Sidebar or Additional Info -->
       <v-col cols="12" lg="4">
-        <v-card variant="outlined" class="pa-6 fill-height d-flex flex-column justify-center align-center text-center">
+        <v-card variant="outlined" class="pa-6 fill-height d-flex flex-column justify-center align-center text-center card-stats">
           <div class="text-h1 font-weight-black text-primary opacity-20 mb-n4">360</div>
           <div class="text-overline font-weight-bold mb-4">PLATFORM STATUS</div>
           <v-icon icon="mdi-shield-check" size="64" color="success" class="mb-4" />
@@ -108,10 +113,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.max-width-xl {
-  max-width: 1400px;
-}
-
 .letter-spacing-2 {
   letter-spacing: 2px;
 }
@@ -151,31 +152,16 @@ onMounted(async () => {
 .opacity-70 {
   opacity: 0.7;
 }
-</style>
 
-<style scoped>
-/* Industrial/Utilitarian Aesthetic: Sharper lines, strong contrast */
-
-.v-card {
-  border-radius: 4px !important; /* Sharper corners */
-  border: 1px solid rgba(var(--v-border-color), 0.3); /* Subtle outline */
+.border-left {
+    border-left: 1px solid rgba(var(--v-border-color), 0.2);
+}
+.border-right {
+    border-right: 1px solid rgba(var(--v-border-color), 0.2);
 }
 
-.v-chip {
-  border-radius: 2px !important; /* Very low radius for data labels */
-}
-
-.v-btn {
-  min-height: 44px;
-  min-width: 44px;
-}
-
-@media (max-width: 600px) {
-  .v-btn {
-    font-size: 0.875rem;
-  }
-  .v-card-title {
-    font-size: 1.125rem;
-  }
+.card-stats {
+    border-radius: 8px !important;
+    border: 1px solid rgba(var(--v-border-color), 0.4) !important;
 }
 </style>

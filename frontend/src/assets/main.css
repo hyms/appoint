@@ -1,7 +1,7 @@
 @import './base.css';
 
 :root {
-  --v-font-family: 'Inter', sans-serif;
+  --v-font-family: 'Roboto', sans-serif;
   --display-font: 'Syne', sans-serif;
   --mono-font: 'Roboto Mono', monospace;
 }
@@ -9,6 +9,7 @@
 #app {
   margin: 0 auto;
   font-weight: normal;
+  font-family: var(--v-font-family) !important;
 }
 
 h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
@@ -57,6 +58,14 @@ h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-
 
 .letter-spacing-1 { letter-spacing: 1px !important; }
 .letter-spacing-2 { letter-spacing: 2px !important; }
+
+.max-width-xl {
+  max-width: 1600px;
+}
+
+.max-width-md {
+  max-width: 960px;
+}
 
 /* Selection color */
 ::selection {

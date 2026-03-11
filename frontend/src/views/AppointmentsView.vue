@@ -1,327 +1,133 @@
 <template>
-  <v-container>
+  <v-container fluid class="pa-4 pa-sm-8 max-width-xl mx-auto">
     <v-row>
       <v-col cols="12">
-        <h1 class="text-h4 mb-4">{{ $t('appointments.title') }}</h1>
+        <h1 class="text-h3 font-weight-black text-uppercase letter-spacing-1 mb-2">
+          {{ $t('appointments.title') }}
+        </h1>
+        <p class="text-body-1 text-medium-emphasis mb-6">
+          Manage all your scheduled appointments here.
+        </p>
       </v-col>
     </v-row>
 
     <!-- ADMIN VIEW -->
     <template v-if="authStore.user?.role === 'ADMIN'">
-      <v-card>
-        <v-card-title class="d-flex justify-space-between align-center">
-          <span>Appointment Management</span>
-          <v-btn color="primary" size="small" @click="loadAdminAppointments" prepend-icon="mdi-refresh">
-            Actualizar
-          </v-btn>
-        </v-card-title>
-        <v-card-text>
-          <v-row class="mb-4">
-            <v-col cols="12" md="2">
-              <v-text-field
-                v-model="adminFilters.startDate"
-                label="Fecha Inicio"
-                type="date"
-                density="compact"
-                clearable
-                @update:model-value="loadAdminAppointments"
-              />
-            </v-col>
-            <v-col cols="12" md="2">
-              <v-text-field
-                v-model="adminFilters.endDate"
-                label="Fecha Fin"
-                type="date"
-                density="compact"
-                clearable
-                @update:model-value="loadAdminAppointments"
-              />
-            </v-col>
-            <v-col cols="12" md="2">
-              <v-select
-                v-model="adminFilters.status"
-                label="Estado"
-                :items="statusOptions"
-                item-title="text"
-                item-value="value"
-                density="compact"
-                clearable
-                @update:model-value="loadAdminAppointments"
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-select
-                v-model="adminFilters.patientId"
-                label="Paciente"
-                :items="patientsList"
-                item-title="label"
-                item-value="id"
-                density="compact"
-                clearable
-                :loading="loadingPatients"
-                @update:model-value="loadAdminAppointments"
-              />
-            </v-col>
-            <v-col cols="12" md="3">
-              <v-select
-                v-model="adminFilters.professionalId"
-                label="Profesional"
-                :items="professionalsList"
-                item-title="label"
-                item-value="id"
-                density="compact"
-                clearable
-                :loading="loadingProfessionals"
-                @update:model-value="loadAdminAppointments"
-              />
-            </v-col>
-          </v-row>
-
-          <v-data-table
-            :headers="adminHeaders"
-            :items="adminAppointments"
-            :loading="loadingAdmin"
-            :items-per-page="10"
-            class="elevation-1"
-          >
-            <template v-slot:item.date="{ item }">
-              {{ formatDate(item.date) }}
-            </template>
-            <template v-slot:item.startTime="{ item }">
-              {{ formatTime(item.startTime) }}
-            </template>
-            <template v-slot:item.patient="{ item }">
-              <div v-if="item.patient">
-                <div class="font-weight-medium">{{ item.patient.profile?.firstName }} {{ item.patient.profile?.lastName }}</div>
-                <div class="text-caption text-medium-emphasis">{{ item.patient.email }}</div>
-              </div>
-              <div v-else class="text-medium-emphasis">N/A</div>
-            </template>
-            <template v-slot:item.professional="{ item }">
-              <div v-if="item.professional">
-                <div class="font-weight-medium">{{ item.professional.profile?.firstName }} {{ item.professional.profile?.lastName }}</div>
-                <div class="text-caption text-medium-emphasis">{{ item.professional.email }}</div>
-              </div>
-              <div v-else class="text-medium-emphasis">N/A</div>
-            </template>
-            <template v-slot:item.status="{ item }">
-              <v-chip :color="getStatusColor(item.status)" size="small">
-                {{ item.status }}
-              </v-chip>
-            </template>
-            <template v-slot:item.paymentStatus="{ item }">
-              <v-chip :color="getPaymentStatusColor(item.paymentStatus)" size="x-small" variant="outlined">
-                {{ item.paymentStatus || 'N/A' }}
-              </v-chip>
-            </template>
-            <template v-slot:item.actions="{ item }">
-              <v-btn
-                size="small"
-                color="primary"
-                variant="text"
-                prepend-icon="mdi-eye"
-                @click="viewAppointmentAdmin(item)"
-              >
-                Ver
-              </v-btn>
-            </template>
-          </v-data-table>
-        </v-card-text>
-      </v-card>
-
+      <AdminAppointmentsTab 
+        v-model:filters="adminFilters"
+        :loading-patients="loadingPatients"
+        :loading-professionals="loadingProfessionalsForFilter"
+        :patients-list="patientsList"
+        :professionals-list="professionalsList"
+        @update-list="loadAppointments"
+        @view-details="viewAppointmentAdmin"
+      />
+      
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
-            <span>Detalles de la Cita</span>
+            <span>Appointment Details</span>
             <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
           </v-card-title>
           <v-card-text>
-            <v-list>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">ID</v-list-item-title>
-                <v-list-item-subtitle>{{ selectedAppointment.id }}</v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">Fecha y Hora</v-list-item-title>
-                <v-list-item-subtitle>{{ formatDate(selectedAppointment.date) }} {{ formatTime(selectedAppointment.startTime) }} - {{ formatTime(selectedAppointment.endTime) }}</v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">Paciente</v-list-item-title>
-                <v-list-item-subtitle v-if="selectedAppointment.patient">
-                  {{ selectedAppointment.patient.profile?.firstName }} {{ selectedAppointment.patient.profile?.lastName }} ({{ selectedAppointment.patient.email }})
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">Profesional</v-list-item-title>
-                <v-list-item-subtitle v-if="selectedAppointment.professional">
-                  {{ selectedAppointment.professional.profile?.firstName }} {{ selectedAppointment.professional.profile?.lastName }} ({{ selectedAppointment.professional.email }})
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">Estado</v-list-item-title>
-                <v-list-item-subtitle>
-                  <v-chip :color="getStatusColor(selectedAppointment.status)" size="small">
-                    {{ selectedAppointment.status }}
-                  </v-chip>
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item>
-                <v-list-item-title class="text-caption text-medium-emphasis">Estado de Pago</v-list-item-title>
-                <v-list-item-subtitle>
-                  <v-chip :color="getPaymentStatusColor(selectedAppointment.paymentStatus || '')" size="small">
-                    {{ selectedAppointment.paymentStatus || 'N/A' }}
-                  </v-chip>
-                </v-list-item-subtitle>
-              </v-list-item>
-              <v-list-item v-if="selectedAppointment.notes">
-                <v-list-item-title class="text-caption text-medium-emphasis">Notas</v-list-item-title>
-                <v-list-item-subtitle>{{ selectedAppointment.notes }}</v-list-item-subtitle>
-              </v-list-item>
-            </v-list>
+            <AppointmentDetailCard :appointment="selectedAppointment" />
           </v-card-text>
+        </v-card>
+      </v-dialog>
+
+      <!-- Cancel Appointment Dialog (Keeping here for dependency reasons until componentized) -->
+      <v-dialog v-model="cancelDialog" max-width="400">
+        <v-card>
+          <v-card-title>Cancel Appointment</v-card-title>
+          <v-card-text>
+            <p class="mb-4">Are you sure you want to cancel this appointment?</p>
+            <v-textarea
+              v-model="cancelReason"
+              label="Cancellation Reason"
+              rows="3"
+              placeholder="Enter reason for cancellation"
+            />
+          </v-card-text>
+          <v-card-actions>
+            <v-spacer />
+            <v-btn @click="cancelDialog = false">No</v-btn>
+            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">Yes, Cancel</v-btn>
+          </v-card-actions>
         </v-card>
       </v-dialog>
     </template>
 
     <!-- PATIENT/PROFESSIONAL VIEW -->
     <template v-else>
-      <v-row>
-        <v-col cols="12">
-          <v-tabs v-model="tab" color="primary">
-            <v-tab value="upcoming">Próximas</v-tab>
-            <v-tab value="past">Pasadas</v-tab>
-            <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>
-          </v-tabs>
-        </v-col>
-      </v-row>
+      <v-tabs v-model="tab" color="primary" class="mb-6">
+        <v-tab value="upcoming">Próximas</v-tab>
+        <v-tab value="past">Pasadas</v-tab>
+        <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>
+      </v-tabs>
 
-      <v-row>
-        <v-col cols="12">
-          <v-window v-model="tab">
-            <v-window-item value="upcoming">
-              <v-card flat>
-                <v-list v-if="upcomingAppointments.length > 0">
-                  <v-list-item
-                    v-for="apt in upcomingAppointments"
-                    :key="apt.id"
-                    class="mb-2"
+      <v-window v-model="tab">
+        <v-window-item value="upcoming">
+          <AppointmentList
+            :appointments="upcomingAppointments"
+            :loading="loading"
+            view-all-route="/appointments"
+            :has-action="true"
+          />
+        </v-window-item>
+
+        <v-window-item value="past">
+          <AppointmentList
+            :appointments="pastAppointments"
+            :loading="loading"
+            :view-all-route="null"
+            :has-action="false"
+          />
+        </v-window-item>
+
+        <v-window-item value="payments" v-if="showPaymentTab">
+          <!-- Payment Tracking Table (Will be componentized later if needed) -->
+          <v-card flat>
+            <v-card-title>Seguimiento de Pagos</v-card-title>
+            <v-card-text>
+              <v-data-table
+                :headers="paymentHeaders"
+                :items="paymentRecords"
+                :loading="loadingPayments"
+              >
+                <template v-slot:item.status="{ item }">
+                  <v-chip :color="getPaymentStatusColor(item.status)" size="small">
+                    {{ item.status }}
+                  </v-chip>
+                </template>
+                <template v-slot:item.actions="{ item }">
+                  <v-btn
+                    v-if="item.status === 'PENDING'"
+                    size="small"
+                    color="primary"
+                    variant="text"
+                    @click="openPaymentDialog(item.appointment)"
                   >
-                    <template v-slot:prepend>
-                      <v-avatar color="primary">
-                        <v-icon>mdi-calendar</v-icon>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>
-                      {{ formatDate(apt.date) }} a las {{ formatTime(apt.startTime) }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      Dr. {{ apt.professional?.profile?.firstName }} {{ apt.professional?.profile?.lastName }}
-                    </v-list-item-subtitle>
-                    <v-list-item-subtitle v-if="apt.location">
-                      {{ apt.location.name }}
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-chip :color="getStatusColor(apt.status)" class="mr-2">
-                        {{ apt.status }}
-                      </v-chip>
-                      <v-btn
-                        v-if="apt.status !== 'CANCELLED' && apt.paymentStatus !== 'PAID' && authStore.user?.role === 'PATIENT'"
-                        color="primary"
-                        size="small"
-                        @click="openPaymentDialog(apt)"
-                      >
-                        Pagar
-                      </v-btn>
-                      <v-btn
-                        v-if="apt.status !== 'CANCELLED' && authStore.user?.role === 'PATIENT'"
-                        color="error"
-                        size="small"
-                        @click="cancelAppointment(apt)"
-                      >
-                        {{ $t('appointments.cancel') }}
-                      </v-btn>
-                    </template>
-                  </v-list-item>
-                </v-list>
-                <v-card-text v-else>
-                  No hay citas próximas
-                </v-card-text>
-              </v-card>
-            </v-window-item>
-
-            <v-window-item value="past">
-              <v-card flat>
-                <v-list v-if="pastAppointments.length > 0">
-                  <v-list-item
-                    v-for="apt in pastAppointments"
-                    :key="apt.id"
-                    class="mb-2"
+                    Subir Pago
+                  </v-btn>
+                  <v-btn
+                    v-if="item.status === 'UPLOADED'"
+                    size="small"
+                    color="info"
+                    variant="text"
+                    @click="viewPayment(item)"
                   >
-                    <template v-slot:prepend>
-                      <v-avatar color="grey">
-                        <v-icon>mdi-calendar-check</v-icon>
-                      </v-avatar>
-                    </template>
-                    <v-list-item-title>
-                      {{ formatDate(apt.date) }} - {{ formatTime(apt.startTime) }}
-                    </v-list-item-title>
-                    <v-list-item-subtitle>
-                      Dr. {{ apt.professional?.profile?.firstName }} {{ apt.professional?.profile?.lastName }}
-                    </v-list-item-subtitle>
-                    <template v-slot:append>
-                      <v-chip :color="getStatusColor(apt.status)" size="small">
-                        {{ apt.status }}
-                      </v-chip>
-                    </template>
-                  </v-list-item>
-                </v-list>
-                <v-card-text v-else>
-                  No hay citas pasadas
-                </v-card-text>
-              </v-card>
-            </v-window-item>
+                    Ver
+                  </v-btn>
+                </template>
+              </v-data-table>
+            </v-card-text>
+          </v-card>
+        </v-window-item>
+      </v-window>
+    </template>
 
-            <v-window-item value="payments">
-              <v-card flat>
-                <v-card-title>Seguimiento de Pagos</v-card-title>
-                <v-card-text>
-                  <v-data-table
-                    :headers="paymentHeaders"
-                    :items="paymentRecords"
-                    :loading="loadingPayments"
-                  >
-                    <template v-slot:item.status="{ item }">
-                      <v-chip :color="getPaymentStatusColor(item.status)" size="small">
-                        {{ item.status }}
-                      </v-chip>
-                    </template>
-                    <template v-slot:item.actions="{ item }">
-                      <v-btn
-                        v-if="item.status === 'PENDING'"
-                        size="small"
-                        color="primary"
-                        @click="openPaymentDialog(item.appointment)"
-                      >
-                        Subir Pago
-                      </v-btn>
-                      <v-btn
-                        v-if="item.status === 'UPLOADED'"
-                        size="small"
-                        color="info"
-                        @click="viewPayment(item)"
-                      >
-                        Ver
-                      </v-btn>
-                    </template>
-                  </v-data-table>
-                </v-card-text>
-              </v-card>
-            </v-window-item>
-          </v-window>
-        </v-col>
-      </v-row>
-
-      <v-dialog v-model="paymentDialog" max-width="500">
+    <!-- Modals remain here for now -->
+    <v-dialog v-model="paymentDialog" max-width="500">
         <v-card class="pa-4">
           <v-card-title>Subir Comprobante de Pago</v-card-title>
           <v-card-text>
@@ -354,27 +160,27 @@
             </v-btn>
           </v-card-actions>
         </v-card>
-      </v-dialog>
+    </v-dialog>
 
-      <v-dialog v-model="paymentViewDialog" max-width="500">
-        <v-card class="pa-4">
-          <v-card-title>Detalles del Pago</v-card-title>
-          <v-card-text v-if="selectedPayment">
-            <v-img
-              :src="selectedPayment.qrImageUrl"
-              max-height="300"
-              class="mb-4"
-            />
-            <v-chip :color="getPaymentStatusColor(selectedPayment.status)">
-              {{ selectedPayment.status }}
-            </v-chip>
-            <p v-if="selectedPayment.uploadedAt" class="mt-2">
-              Subido: {{ new Date(selectedPayment.uploadedAt).toLocaleString() }}
-            </p>
-          </v-card-text>
-        </v-card>
-      </v-dialog>
-    </template>
+    <v-dialog v-model="paymentViewDialog" max-width="500">
+      <v-card class="pa-4">
+        <v-card-title>Detalles del Pago</v-card-title>
+        <v-card-text v-if="selectedPayment">
+          <v-img
+            :src="selectedPayment.qrImageUrl"
+            max-height="300"
+            class="mb-4"
+          />
+          <v-chip :color="getPaymentStatusColor(selectedPayment.status)">
+            {{ selectedPayment.status }}
+          </v-chip>
+          <p v-if="selectedPayment.uploadedAt" class="mt-2">
+            Subido: {{ new Date(selectedPayment.uploadedAt).toLocaleString() }}
+          </p>
+        </v-card-text>
+      </v-card>
+    </v-dialog>
+
   </v-container>
 </template>
 
@@ -386,6 +192,9 @@ import { paymentsService, type QRPayment } from '@/services/payments'
 import api from '@/services/api'
 import { formatDate, formatTime } from '@/utils/date'
 import { useToast } from '@/composables/useToast'
+import AppointmentList from '@/components/appointments/AppointmentList.vue'
+import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue' 
+import AdminAppointmentsTab from '@/components/admin/AdminAppointmentsTab.vue' 
 
 const { success, error } = useToast()
 
@@ -419,6 +228,7 @@ const adminAppointments = ref<any[]>([])
 const loadingAdmin = ref(false)
 const loadingPatients = ref(false)
 const loadingProfessionals = ref(false)
+const loadingProfessionalsForFilter = ref(false)
 const patientsList = ref<{ id: string; label: string }[]>([])
 const professionalsList = ref<{ id: string; label: string }[]>([])
 const adminFilters = reactive({
@@ -428,7 +238,6 @@ const adminFilters = reactive({
   patientId: '',
   professionalId: ''
 })
-
 const statusOptions = [
   { text: 'Pendiente', value: 'PENDING' },
   { text: 'Confirmada', value: 'CONFIRMED' },
@@ -436,7 +245,6 @@ const statusOptions = [
   { text: 'Cancelada', value: 'CANCELLED' },
   { text: 'No Asistió', value: 'NO_SHOW' }
 ]
-
 const adminHeaders = [
   { title: 'Fecha', key: 'date' },
   { title: 'Hora', key: 'startTime' },
@@ -446,6 +254,32 @@ const adminHeaders = [
   { title: 'Pago', key: 'paymentStatus' },
   { title: 'Acciones', key: 'actions', sortable: false }
 ]
+
+// Dialogs
+const cancelDialog = ref(false)
+const cancelReason = ref('')
+const cancelling = ref(false)
+
+function getStatusColor(status: string) {
+  const colors: Record<string, string> = {
+    PENDING: 'warning',
+    CONFIRMED: 'success',
+    COMPLETED: 'info',
+    CANCELLED: 'error',
+    NO_SHOW: 'error'
+  }
+  return colors[status] || 'grey'
+}
+
+function getPaymentStatusColor(status: string) {
+  const colors: Record<string, string> = {
+    PENDING: 'warning',
+    UPLOADED: 'info',
+    VERIFIED: 'success',
+    REJECTED: 'error'
+  }
+  return colors[status] || 'grey'
+}
 
 onMounted(async () => {
   if (authStore.user?.role === 'ADMIN') {
@@ -457,6 +291,7 @@ onMounted(async () => {
   }
 })
 
+// --- Admin Fetching ---
 async function loadPatients() {
   loadingPatients.value = true
   try {
@@ -467,6 +302,7 @@ async function loadPatients() {
     }))
   } catch (error) {
     console.error('Failed to load patients:', error)
+    error('Failed to load patients')
   } finally {
     loadingPatients.value = false
   }
@@ -474,6 +310,7 @@ async function loadPatients() {
 
 async function loadProfessionals() {
   loadingProfessionals.value = true
+  loadingProfessionalsForFilter.value = true
   try {
     const response = await api.get('/auth/professionals')
     professionalsList.value = response.data.map((u: any) => ({
@@ -482,8 +319,10 @@ async function loadProfessionals() {
     }))
   } catch (error) {
     console.error('Failed to load professionals:', error)
+    error('Failed to load professionals')
   } finally {
     loadingProfessionals.value = false
+    loadingProfessionalsForFilter.value = false
   }
 }
 
@@ -501,6 +340,7 @@ async function loadAdminAppointments() {
     adminAppointments.value = response.data || response
   } catch (error) {
     console.error('Failed to load admin appointments:', error)
+    error('Error loading admin appointments')
   } finally {
     loadingAdmin.value = false
   }
@@ -511,11 +351,11 @@ function viewAppointmentAdmin(item: any) {
   viewDialog.value = true
 }
 
+// --- Patient/Professional Logic ---
 async function loadAppointments() {
   try {
     let allAppointments: Appointment[] = []
     
-    // Use different endpoints based on user role
     if (authStore.user?.role === 'PROFESSIONAL') {
       allAppointments = await appointmentsService.getProfessionalAppointments()
     } else {
@@ -532,6 +372,7 @@ async function loadAppointments() {
     await loadPaymentRecords()
   } catch (error) {
     console.error('Failed to load appointments:', error)
+    error('Failed to load appointments')
   }
 }
 
@@ -541,6 +382,7 @@ async function loadPaymentRecords() {
     paymentRecords.value = await paymentsService.getMyPayments()
   } catch (error) {
     console.error('Failed to load payments:', error)
+    error('Failed to load payment records')
   } finally {
     loadingPayments.value = false
   }
@@ -586,18 +428,38 @@ async function cancelAppointment(apt: Appointment) {
   }
 }
 
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'error'
+async function confirmCancelAppointment() {
+  if (!cancelReason.value.trim()) {
+    error('Please enter a cancellation reason')
+    return
   }
-  return colors[status] || 'grey'
+  cancelling.value = true
+  try {
+    await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
+    cancelDialog.value = false
+    await loadAppointments()
+    success('Appointment cancelled')
+  } catch (err) {
+    error('Failed to cancel appointment')
+  } finally {
+    cancelling.value = false
+  }
 }
 
-function getPaymentStatusColor(status: string) {
+async function deleteAppointment(item: any) {
+  if (confirm(`Are you sure you want to delete this appointment?`)) {
+    try {
+      await appointmentsService.delete(item.id)
+      await loadAppointments()
+      success('Appointment deleted')
+    } catch (err) {
+      error('Failed to delete appointment')
+    }
+  }
+}
+
+function getPaymentColor(status: string | undefined) {
+  if (!status) return 'grey'
   const colors: Record<string, string> = {
     PENDING: 'warning',
     UPLOADED: 'info',
@@ -607,3 +469,7 @@ function getPaymentStatusColor(status: string) {
   return colors[status] || 'grey'
 }
 </script>
+
+<style scoped>
+.letter-spacing-1 { letter-spacing: 1px !important; }
+</style>
