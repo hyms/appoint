@@ -79,6 +79,16 @@ export class AuthController {
     return user;
   }
 
+  @Post('one-signal-id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateOneSignalId(
+    @CurrentUser() user: any,
+    @Body('playerId') playerId: string,
+  ) {
+    return this.authService.updatePlayerId(user.id, playerId);
+  }
+
   @Get('professionals')
   @UseGuards(JwtAuthGuard)
   async getProfessionals() {

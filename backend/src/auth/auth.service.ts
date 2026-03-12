@@ -248,6 +248,8 @@ export class AuthService {
     if (updateUserDto.role) updateData.role = updateUserDto.role;
     if (updateUserDto.isActive !== undefined)
       updateData.isActive = updateUserDto.isActive;
+    if (updateUserDto.oneSignalPlayerId)
+      updateData.oneSignalPlayerId = updateUserDto.oneSignalPlayerId;
 
     const profileData: any = {};
     if (updateUserDto.firstName)
@@ -268,6 +270,11 @@ export class AuthService {
     }
 
     return { message: 'User deleted successfully' };
+  }
+
+  async updatePlayerId(userId: string, playerId: string) {
+    await this.authPrismaRepository.updateUser(userId, { oneSignalPlayerId: playerId }, {});
+    return { success: true };
   }
 
 

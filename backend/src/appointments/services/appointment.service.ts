@@ -17,6 +17,7 @@ import {
   AppointmentAuditService,
   AuditAction,
 } from './appointment-audit.service';
+import { OneSignalService } from '../../notifications/onesignal.service';
 import { Permission } from '../../common/enums/permissions.enum';
 
 @Injectable()
@@ -26,6 +27,7 @@ export class AppointmentsService {
     private strikeService: StrikeService,
     private authService: AuthorizationService,
     private auditService: AppointmentAuditService,
+    private oneSignalService: OneSignalService,
   ) {}
 
   // ============ ADMIN CRUD ============
@@ -256,6 +258,13 @@ export class AppointmentsService {
       newStatus: 'PENDING',
     });
 
+    // Notify Professional
+    await this.oneSignalService.sendNotification(
+      [dto.professionalId],
+      `New appointment request from ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName}`,
+      { appointmentId: appointment.id },
+    );
+
     return appointment;
   }
 
@@ -374,6 +383,14 @@ export class AppointmentsService {
           newStatus: dto.status,
           reason: dto.notes,
         });
+
+        // Notify Patient
+        await this.oneSignalService.sendNotification(
+          [updated.patientId],
+          `Your appointment status has been updated to ${dto.status}`,
+          { appointmentId: updated.id, status: dto.status },
+        );
+
         return updated;
       });
   }
@@ -427,6 +444,16 @@ export class AppointmentsService {
       newStatus: 'CANCELLED',
       reason: dto.reason,
     });
+
+    // Notify both participants
+    const recipients = [appointment.patientId, appointment.professionalId].filter(
+      (id) => id !== userId,
+    );
+    await this.oneSignalService.sendNotification(
+      recipients,
+      `Appointment cancelled: ${dto.reason}`,
+      { appointmentId: appointment.id, action: 'CANCELLED' },
+    );
 
     return updatedAppointment;
   }

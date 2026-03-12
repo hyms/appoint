@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
+import { useOneSignal } from '@/composables/useOneSignal'
 
 export interface User {
   id: string
@@ -19,6 +20,7 @@ export const useAuthStore = defineStore('auth', () => {
   const user = ref<User | null>(null)
   const token = ref<string | null>(localStorage.getItem('token'))
   const isAuthenticated = computed(() => !!token.value)
+  const { loginToOneSignal, logoutFromOneSignal } = useOneSignal()
 
   async function login(email: string, password: string) {
     const response = await api.post('/auth/login', { email, password })
@@ -26,6 +28,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = response.data.user
     if (token.value) {
       localStorage.setItem('token', token.value)
+      if (user.value) await loginToOneSignal(user.value.id)
     }
     return response.data
   }
@@ -36,6 +39,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = response.data.user
     if (token.value) {
       localStorage.setItem('token', token.value)
+      if (user.value) await loginToOneSignal(user.value.id)
     }
     return response.data
   }
@@ -51,6 +55,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = response.data.user
     if (token.value) {
       localStorage.setItem('token', token.value)
+      if (user.value) await loginToOneSignal(user.value.id)
     }
     return response.data
   }
@@ -59,6 +64,7 @@ export const useAuthStore = defineStore('auth', () => {
     try {
       const response = await api.get('/auth/me')
       user.value = response.data
+      if (user.value) await loginToOneSignal(user.value.id)
       return response.data
     } catch (error) {
       logout()
@@ -70,6 +76,7 @@ export const useAuthStore = defineStore('auth', () => {
     user.value = null
     token.value = null
     localStorage.removeItem('token')
+    logoutFromOneSignal()
   }
 
   async function initializeSession() {

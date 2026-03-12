@@ -7,6 +7,7 @@ import { WhatsAppProvider } from './providers/whatsapp.provider';
 import { TelegramProvider } from './providers/telegram.provider';
 import { EmailProvider } from './providers/email.provider';
 import { PrismaService } from '../prisma/prisma.service';
+import { OneSignalService } from './onesignal.service';
 
 @Module({
   controllers: [NotificationsController],
@@ -18,8 +19,9 @@ import { PrismaService } from '../prisma/prisma.service';
     TelegramProvider,
     EmailProvider,
     NotificationProviderService,
+    OneSignalService,
   ],
-  exports: [NotificationProviderService],
+  exports: [NotificationProviderService, OneSignalService],
 })
 export class NotificationsModule {
   constructor(

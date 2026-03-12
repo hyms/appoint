@@ -42,6 +42,7 @@ model User {
   magicExpiresAt DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
+  oneSignalPlayerId String?
 
   profile           Profile?
   appointments      Appointment[]     @relation("PatientAppointments")

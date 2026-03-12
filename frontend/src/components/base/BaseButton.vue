@@ -8,7 +8,7 @@
     :disabled="disabled"
     :to="to"
     :height="height || minHeight"
-    class="base-button text-uppercase"
+    class="base-button"
     v-bind="$attrs"
   >
     <v-icon v-if="prependIcon" :icon="prependIcon" class="mr-2" />
@@ -34,36 +34,19 @@ interface Props {
 
 withDefaults(defineProps<Props>(), {
   color: 'primary',
-  variant: 'flat',
-  size: 'large',
+  variant: 'elevated',
+  size: 'default',
   block: false,
   loading: false,
   disabled: false,
-  minHeight: 48,
+  minHeight: 44,
 })
 </script>
 
 <style scoped>
 .base-button {
-  font-weight: 900;
-  letter-spacing: 0.1em;
-  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-  border-radius: 0 !important;
-}
-
-.base-button:hover:not(:disabled) {
-  opacity: 0.9;
-  box-shadow: 4px 4px 0px currentColor !important;
-}
-
-.base-button:active:not(:disabled) {
-  transform: translate(2px, 2px);
-  box-shadow: 0px 0px 0px currentColor !important;
-}
-
-@media (max-width: 600px) {
-  .base-button {
-    font-size: 0.875rem;
-  }
+  text-transform: none;
+  font-weight: 500;
+  letter-spacing: 0.01em;
 }
 </style>

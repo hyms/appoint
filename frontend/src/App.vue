@@ -152,12 +152,13 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
 import { useRouter, useRoute } from 'vue-router'
 import { useVuetify } from '@/composables/useVuetify'
 import { useAuthorization } from '@/composables/useAuthorization'
+import { useOneSignal } from '@/composables/useOneSignal'
 import ToastContainer from '@/components/ToastContainer.vue'
 
 const { locale, t } = useI18n()
@@ -166,6 +167,11 @@ const router = useRouter()
 const route = useRoute()
 const vuetify = useVuetify()
 const { isProfessional, isAdminOrSecretary } = useAuthorization()
+const { initOneSignal } = useOneSignal()
+
+onMounted(async () => {
+  await initOneSignal()
+})
 
 const drawerOpen = ref(true)
 const rail = ref(false)

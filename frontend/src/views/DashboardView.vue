@@ -5,8 +5,8 @@
       <v-col cols="12">
         <div class="d-flex align-end justify-space-between mb-2">
           <div>
-            <span class="text-overline text-primary font-weight-black letter-spacing-2">SYSTEM DASHBOARD</span>
-            <h1 class="text-h4 text-sm-h3 font-weight-black text-uppercase mt-n1">
+            <span class="text-overline text-primary font-weight-medium">SYSTEM STATUS</span>
+            <h1 class="text-h4 font-weight-bold mt-n1">
               {{ $t('nav.dashboard') }}
             </h1>
           </div>
@@ -14,16 +14,16 @@
             v-if="user?.role"
             :color="getRoleColor(user.role)"
             size="small"
-            variant="flat"
-            class="font-weight-black text-uppercase mb-2"
+            variant="tonal"
+            class="font-weight-bold"
           >
             {{ user.role }}
           </v-chip>
         </div>
         <div class="d-flex align-center mt-2">
           <div class="status-dot mr-2 pulse-success"></div>
-          <p class="text-body-1 font-weight-medium">
-            USER_ID: <span class="font-family-mono text-primary">{{ user?.profile?.firstName?.toUpperCase() || 'USER_ALPHA' }}</span>
+          <p class="text-body-1 text-medium-emphasis">
+            User: <span class="font-weight-bold text-primary">{{ user?.profile?.firstName || 'User' }}</span>
           </p>
         </div>
       </v-col>
@@ -51,27 +51,29 @@
       
       <!-- Stats Sidebar or Additional Info -->
       <v-col cols="12" lg="4">
-        <v-card variant="outlined" class="pa-6 fill-height d-flex flex-column justify-center align-center text-center card-stats">
-          <div class="text-h1 font-weight-black text-primary opacity-20 mb-n4">360</div>
-          <div class="text-overline font-weight-bold mb-4">PLATFORM STATUS</div>
+        <v-card class="pa-6 fill-height d-flex flex-column justify-center align-center text-center rounded-xl" elevation="2">
+          <div class="text-h1 font-weight-black text-primary opacity-10 mb-n4">360</div>
+          <div class="text-overline font-weight-bold mb-4">PLATFORM MONITOR</div>
           <v-icon icon="mdi-shield-check" size="64" color="success" class="mb-4" />
           <div class="text-h6 font-weight-bold">ALL SYSTEMS NOMINAL</div>
-          <p class="text-caption text-medium-emphasis px-4 mt-2">
+          <p class="text-body-2 text-medium-emphasis px-4 mt-2">
             Secure connection established. All appointment data is encrypted and backed up.
           </p>
           <v-divider class="w-100 my-6" />
           <div class="d-flex w-100 justify-space-around">
             <div class="text-center">
-              <div class="text-h6 font-weight-bold">{{ upcomingAppointments.length }}</div>
-              <div class="text-caption font-weight-bold opacity-70">ACTIVE</div>
+              <div class="text-h5 font-weight-bold">{{ upcomingAppointments.length }}</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">ACTIVE</div>
             </div>
-            <div class="text-center border-left pl-4 border-right pr-4">
-              <div class="text-h6 font-weight-bold">0</div>
-              <div class="text-caption font-weight-bold opacity-70">ALERTS</div>
-            </div>
+            <v-divider vertical inset />
             <div class="text-center">
-              <div class="text-h6 font-weight-bold">100%</div>
-              <div class="text-caption font-weight-bold opacity-70">UPTIME</div>
+              <div class="text-h5 font-weight-bold">0</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">ALERTS</div>
+            </div>
+            <v-divider vertical inset />
+            <div class="text-center">
+              <div class="text-h5 font-weight-bold">100%</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">UPTIME</div>
             </div>
           </div>
         </v-card>
@@ -85,7 +87,7 @@ import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, type Appointment } from '@/services/appointments'
 import DashboardQuickActions from '@/components/dashboard/DashboardQuickActions.vue'
-import UpcomingAppointments from '@/components/dashboard/UpcomingAppointments.vue'
+import AppointmentList from '@/components/appointments/AppointmentList.vue'
 import { useAppColors } from '@/composables/useAppColors'
 
 const authStore = useAuthStore()
@@ -113,14 +115,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.letter-spacing-2 {
-  letter-spacing: 2px;
-}
-
-.font-family-mono {
-  font-family: 'Roboto Mono', monospace;
-}
-
 .status-dot {
   width: 8px;
   height: 8px;
@@ -128,40 +122,24 @@ onMounted(async () => {
 }
 
 .pulse-success {
-  background-color: #00C853;
-  box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.7);
+  background-color: #4CAF50;
+  box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(0, 200, 83, 0.4);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(0, 200, 83, 0);
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(0, 200, 83, 0);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
   }
 }
 
-.opacity-20 {
+.opacity-10 {
   opacity: 0.1;
-}
-
-.opacity-70 {
-  opacity: 0.7;
-}
-
-.border-left {
-    border-left: 1px solid rgba(var(--v-border-color), 0.2);
-}
-.border-right {
-    border-right: 1px solid rgba(var(--v-border-color), 0.2);
-}
-
-.card-stats {
-    border-radius: 8px !important;
-    border: 1px solid rgba(var(--v-border-color), 0.4) !important;
 }
 </style>

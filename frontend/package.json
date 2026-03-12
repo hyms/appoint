@@ -23,7 +23,8 @@
     "vue": "^3.5.27",
     "vue-i18n": "^9.14.5",
     "vue-router": "^5.0.1",
-    "vuetify": "^3.11.8"
+    "vuetify": "^3.11.8",
+    "onesignal-web-sdk": "^1.0.1"
   },
   "devDependencies": {
     "@tsconfig/node24": "^24.0.4",
@@ -45,7 +46,9 @@
     "oxlint": "~1.42.0",
     "prettier": "3.8.1",
     "typescript": "~5.9.3",
-    "vite": "^7.3.1",
+    "vite": "^6.0.0",
+    "vite-plugin-pwa": "^0.21.1",
+    "sass": "^1.83.0",
     "vite-plugin-vue-devtools": "^8.0.5",
     "vitest": "^4.0.18",
     "vue-tsc": "^3.2.4"

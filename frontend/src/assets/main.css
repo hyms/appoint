@@ -1,8 +1,8 @@
 @import './base.css';
 
 :root {
-  --v-font-family: 'Roboto', sans-serif;
-  --display-font: 'Syne', sans-serif;
+  --v-font-family: 'Noto Sans', sans-serif;
+  --display-font: 'Noto Sans', sans-serif;
   --mono-font: 'Roboto Mono', monospace;
 }
 
@@ -14,66 +14,56 @@
 
 h1, h2, h3, h4, h5, h6, .text-h1, .text-h2, .text-h3, .text-h4, .text-h5, .text-h6 {
   font-family: var(--display-font) !important;
+  letter-spacing: normal !important;
 }
 
 .text-overline, .text-caption, .font-family-mono {
   font-family: var(--mono-font) !important;
 }
 
-/* Custom Scrollbar */
+/* Custom Scrollbar (Standard Material-ish) */
 ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
 ::-webkit-scrollbar-track {
-  background: #f1f1f1;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-thumb {
-  background: #1A1A1A;
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: #424242;
+  background: rgba(0, 0, 0, 0.3);
 }
 
 /* Dark mode scrollbar */
-.v-theme--dark ::-webkit-scrollbar-track {
-  background: #121212;
-}
-
 .v-theme--dark ::-webkit-scrollbar-thumb {
-  background: #EEEEEE;
+  background: rgba(255, 255, 255, 0.2);
 }
 
-/* Industrial touches */
-.border-thick {
-  border: 3px solid currentColor !important;
-}
-
-.border-thin {
-  border: 1px solid rgba(var(--v-border-color), 0.8) !important;
-}
-
-.letter-spacing-1 { letter-spacing: 1px !important; }
-.letter-spacing-2 { letter-spacing: 2px !important; }
+/* Utility Classes */
+.letter-spacing-1 { letter-spacing: 0.5px !important; }
+.letter-spacing-2 { letter-spacing: 1px !important; }
 
 .max-width-xl {
-  max-width: 1600px;
+  max-width: 1400px;
 }
 
 .max-width-md {
   max-width: 960px;
 }
 
-/* Selection color */
-::selection {
-  background: #1A1A1A;
-  color: white;
+/* Material Elevation Helpers */
+.elevation-md {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06) !important;
 }
 
-.v-theme--dark ::selection {
-  background: #EEEEEE;
-  color: black;
+/* Selection color */
+::selection {
+  background: rgb(var(--v-theme-primary));
+  color: rgb(var(--v-theme-on-primary));
 }

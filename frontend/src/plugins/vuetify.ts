@@ -21,29 +21,29 @@ export default createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#673AB7',
-          secondary: '#512DA8',
-          accent: '#FF4081',
-          error: '#F44336',
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
-          background: '#F5F7FA',
+          primary: '#673AB7', // Material Deep Purple
+          secondary: '#9C27B0', // Material Purple
+          accent: '#FF4081', // Material Pink
+          error: '#F44336', // Material Red
+          info: '#2196F3', // Material Blue
+          success: '#4CAF50', // Material Green
+          warning: '#FFC107', // Material Amber
+          background: '#F5F5F5',
           surface: '#FFFFFF',
         },
       },
       dark: {
         dark: true,
         colors: {
-          primary: '#9575CD',
-          secondary: '#7E57C2',
-          accent: '#FF4081',
-          error: '#FF5252',
+          primary: '#D1C4E9',
+          secondary: '#E1BEE7',
+          accent: '#FF80AB',
+          error: '#CF6679',
           info: '#2196F3',
           success: '#4CAF50',
-          warning: '#FB8C00',
-          background: '#0F0F0F',
-          surface: '#1A1A1A',
+          warning: '#FFC107',
+          background: '#121212',
+          surface: '#1E1E1E',
         },
       },
     },
@@ -54,33 +54,32 @@ export default createVuetify({
     },
     VBtn: {
       variant: 'elevated',
-      rounded: 'md',
-      elevation: 2,
-      class: 'text-none font-weight-bold',
+      rounded: 'lg',
+      elevation: 1,
+      class: 'text-none',
     },
     VCard: {
-      variant: 'flat',
-      rounded: 'lg',
-      elevation: 0,
-      class: 'border-thin',
+      variant: 'elevated',
+      rounded: 'xl',
+      elevation: 2,
     },
     VTextField: {
       variant: 'outlined',
       density: 'comfortable',
-      rounded: 'md',
+      rounded: 'lg',
       hideDetails: 'auto',
     },
     VSelect: {
       variant: 'outlined',
       density: 'comfortable',
-      rounded: 'md',
+      rounded: 'lg',
       hideDetails: 'auto',
     },
     VListItem: {
-      rounded: 'md',
+      rounded: 'lg',
     },
     VChip: {
-      rounded: 'md',
+      rounded: 'pill',
     },
   },
   display: {
