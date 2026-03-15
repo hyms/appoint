@@ -1,8 +1,8 @@
 @import './base.css';
 
 :root {
-  --v-font-family: 'Noto Sans', sans-serif;
-  --display-font: 'Noto Sans', sans-serif;
+  --v-font-family: 'Roboto', sans-serif;
+  --display-font: 'Syne', sans-serif;
   --mono-font: 'Roboto Mono', monospace;
 }
 

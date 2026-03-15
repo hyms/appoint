@@ -73,8 +73,8 @@
       </v-app-bar-title>
       <v-spacer />
       <template v-if="!authStore.isAuthenticated">
-        <v-btn to="/login" variant="text">Login</v-btn>
-        <v-btn to="/register" variant="text">Register</v-btn>
+        <v-btn to="/login" variant="text">{{ $t('nav.login') }}</v-btn>
+        <v-btn to="/register" variant="text">{{ $t('nav.register') }}</v-btn>
       </template>
       <template v-else>
         <!-- User Menu -->
@@ -101,13 +101,13 @@
               <template v-slot:prepend>
                 <v-icon size="small">mdi-translate</v-icon>
               </template>
-              <v-list-item-title>English</v-list-item-title>
+              <v-list-item-title>{{ $t('nav.english') }}</v-list-item-title>
             </v-list-item>
             <v-list-item @click="changeLocale('es')">
               <template v-slot:prepend>
                 <v-icon size="small">mdi-translate</v-icon>
               </template>
-              <v-list-item-title>Español</v-list-item-title>
+              <v-list-item-title>{{ $t('nav.spanish') }}</v-list-item-title>
             </v-list-item>
             <v-divider class="my-1" />
             <v-list-item @click="logout">
@@ -115,7 +115,7 @@
                 <v-icon size="small" color="error">mdi-logout</v-icon>
               </template>
               <v-list-item-title class="text-error">
-                Logout
+                {{ $t('nav.logout') }}
               </v-list-item-title>
             </v-list-item>
           </v-list>
@@ -185,11 +185,11 @@ const menuItems = computed(() => {
   ]
   
   if (isProfessional.value) {
-    items.push({ to: '/professional-config', label: 'Herramientas Administrativas', icon: 'mdi-account-cog' })
+    items.push({ to: '/professional-config', label: t('nav.administrativeTools'), icon: 'mdi-account-cog' })
   }
   
   if (isAdminOrSecretary.value) {
-    items.push({ to: '/admin', label: 'Admin', icon: 'mdi-shield-account' })
+    items.push({ to: '/admin', label: t('nav.adminPanel'), icon: 'mdi-shield-account' })
   }
   
   return items
@@ -203,11 +203,11 @@ const bottomNavItems = computed(() => {
   ]
   
   if (isProfessional.value) {
-    items.push({ to: '/professional-config', label: 'Admin', icon: 'mdi-account-cog' })
+    items.push({ to: '/professional-config', label: t('nav.adminPanel'), icon: 'mdi-account-cog' })
   }
   
   if (isAdminOrSecretary.value) {
-    items.push({ to: '/admin', label: 'Admin', icon: 'mdi-shield-account' })
+    items.push({ to: '/admin', label: t('nav.adminPanel'), icon: 'mdi-shield-account' })
   }
   
   return items

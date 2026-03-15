@@ -4,15 +4,15 @@
       <v-col cols="12" sm="8" md="4">
         <v-card class="pa-4">
           <v-card-title class="text-center">
-            Magic Link Login
+            {{ $t('auth.magicLinkLogin') }}
           </v-card-title>
           <v-card-text class="text-center">
             <p v-if="!validating && !error">
-              Enter the token from your magic link:
+              {{ $t('auth.enterMagicLinkToken') }}
             </p>
             <v-text-field
               v-model="token"
-              label="Token"
+              :label="$t('auth.token')"
               :disabled="validating"
               class="mb-4"
             />
@@ -23,7 +23,7 @@
               :disabled="!token"
               @click="validateToken"
             >
-              Validate Token
+              {{ $t('auth.validateToken') }}
             </v-btn>
             <v-alert v-if="error" type="error" class="mt-4">
               {{ error }}
@@ -39,10 +39,12 @@
 import { ref, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
+const { t } = useI18n()
 
 const token = ref('')
 const validating = ref(false)
@@ -63,7 +65,7 @@ async function validateToken() {
     await authStore.validateMagicLink(token.value)
     router.push('/dashboard')
   } catch (err: any) {
-    error.value = err.response?.data?.message || 'Invalid or expired token'
+    error.value = err.response?.data?.message || t('auth.invalidOrExpiredToken')
   } finally {
     validating.value = false
   }

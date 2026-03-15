@@ -13,7 +13,7 @@
 
 <script setup lang="ts">
 import { type Appointment } from '@/services/appointments'
-import AppointmentList from './AppointmentList.vue'
+import AppointmentList from '../appointments/AppointmentList.vue'
 
 defineProps<{
   appointments: Appointment[]

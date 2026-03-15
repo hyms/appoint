@@ -12,7 +12,7 @@
 
 <script setup lang="ts">
 interface Props {
-  type?: 'card' | 'list-item' | 'list-item-avatar' | 'article' | 'paragraph' | 'heading'
+  type?: 'card' | 'list-item' | 'list-item-avatar' | 'list-item-three-line' | 'article' | 'paragraph' | 'heading'
   count?: number
 }
 

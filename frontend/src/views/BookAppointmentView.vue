@@ -21,7 +21,7 @@
         color="primary"
         class="bg-transparent elevation-0"
       >
-        <template v-slot:default="{ prevStep, nextStep }">
+        <template v-slot:default>
           <v-stepper-window>
             <!-- Step 1: Professional Selection -->
             <v-stepper-content :step="1" class="pa-0">
@@ -196,7 +196,7 @@
                     v-model="notes"
                     label="Notes (Optional)"
                     placeholder="Any specific instructions for the practitioner..."
-                    rows="2"
+                    :rows="2"
                     variant="outlined"
                     rounded="md"
                   />
@@ -242,6 +242,15 @@ const router = useRouter()
 const { success, error } = useToast()
 
 const step = ref(1)
+
+function prevStep() {
+  if (step.value > 1) step.value--
+}
+
+function nextStep() {
+  if (step.value < stepperItems.length) step.value++
+}
+
 const professionals = ref<{ id: string; label: string }[]>([])
 const availableSlots = ref<Slot[]>([])
 const selectedProfessional = ref<string | null>(null)

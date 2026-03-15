@@ -47,11 +47,10 @@ withDefaults(defineProps<Props>(), {
  
 <style scoped>
 .base-card {
-  transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+  transition: box-shadow 0.2s ease-in-out;
 }
  
 .base-card.clickable:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 8px 16px rgba(0,0,0,0.1) !important;
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; /* Lighter hover shadow */
 }
 </style>

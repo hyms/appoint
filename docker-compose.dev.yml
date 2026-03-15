@@ -27,6 +27,7 @@ services:
       - "3000:3000"
     environment:
       DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
+      PGDATABASE: ${POSTGRES_DB}
       JWT_SECRET: ${JWT_SECRET}
       JWT_EXPIRES_IN: ${JWT_EXPIRES_IN}
       MAGIC_LINK_EXPIRY_MINUTES: ${MAGIC_LINK_EXPIRY_MINUTES}
@@ -36,7 +37,6 @@ services:
         condition: service_healthy
     volumes:
       - ./backend:/app
-      - /app/node_modules
 
   frontend:
     build:
@@ -44,12 +44,11 @@ services:
       dockerfile: Dockerfile
     container_name: appointments_frontend
     ports:
-      - "5173:5173"
+      - "5173:80"
     environment:
       VITE_API_URL: http://localhost:3000
     volumes:
       - ./frontend:/app
-      - /app/node_modules
 
 volumes:
   postgres_data:

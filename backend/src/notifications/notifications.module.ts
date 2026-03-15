@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { ConfigModule } from '@nestjs/config';
 import { NotificationsController } from './notifications.controller';
 import { NotificationProviderService } from './services/notification-provider.service';
 import { NotificationConfigService } from './services/notification-config.service';
@@ -10,6 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { OneSignalService } from './onesignal.service';
 
 @Module({
+  imports: [ConfigModule],
   controllers: [NotificationsController],
   providers: [
     PrismaService,

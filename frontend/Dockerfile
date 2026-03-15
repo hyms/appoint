@@ -1,13 +1,15 @@
-FROM node:24-alpine
+FROM node:lts-alpine
+
+RUN apk add --no-cache pnpm git
 
 WORKDIR /app
 
 COPY package*.json ./
 
-RUN npm install
+RUN pnpm install
 
 COPY . .
 
 EXPOSE 5173
 
-CMD ["npm", "run", "dev", "--", "--host"]
+CMD ["pnpm", "run", "dev", "--", "--host"]

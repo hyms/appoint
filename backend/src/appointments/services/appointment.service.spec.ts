@@ -9,11 +9,13 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StrikeService } from '../../strikes/services/strike.service';
 import { AuthorizationService } from '../../common/services/authorization.service';
 import { AppointmentAuditService } from './appointment-audit.service';
+import { OneSignalService } from '../../notifications/onesignal.service';
 
 describe('AppointmentsService', () => {
   let appointmentsService: AppointmentsService;
   let prismaService: PrismaService;
   let strikeService: StrikeService;
+  let oneSignalService: OneSignalService;
 
   const mockPrismaService = {
     appointment: {
@@ -32,6 +34,10 @@ describe('AppointmentsService', () => {
 
   const mockStrikeService = {
     checkPatientBlocked: jest.fn().mockResolvedValue(false),
+  };
+
+  const mockOneSignalService = {
+    sendNotification: jest.fn().mockResolvedValue({}),
   };
 
   const mockAuthorizationService = {
@@ -72,12 +78,17 @@ describe('AppointmentsService', () => {
           provide: AppointmentAuditService,
           useValue: mockAuditService,
         },
+        {
+          provide: OneSignalService,
+          useValue: mockOneSignalService,
+        },
       ],
     }).compile();
 
     appointmentsService = module.get<AppointmentsService>(AppointmentsService);
     prismaService = module.get<PrismaService>(PrismaService);
     strikeService = module.get<StrikeService>(StrikeService);
+    oneSignalService = module.get<OneSignalService>(OneSignalService);
 
     jest.clearAllMocks();
   });

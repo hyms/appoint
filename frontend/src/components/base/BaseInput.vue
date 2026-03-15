@@ -25,14 +25,13 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps, defineModel } from 'vue'
 
 defineProps<{
   label?: string
   type?: string
   required?: boolean
   placeholder?: string
-  rules?: Function[]
+  rules?: any
   errorMessages?: string | string[]
   hint?: string
   persistentHint?: boolean
@@ -54,16 +53,6 @@ const modelValue = defineModel<any>()
 
 <style scoped>
 .base-input-field {
-    transition: all 0.2s ease-in-out;
-}
-
-/* Ensure BaseInput respects the industrial theme */
-.base-input-field :deep(.v-field__outline) {
-    border-radius: 4px !important; /* Match new theme */
-}
-
-.base-input-field :deep(.v-field--focused) {
-    border-color: rgb(var(--v-theme-primary)) !important;
-    box-shadow: 0 0 0 1px rgb(var(--v-theme-primary)); /* Sharp focus ring */
+  transition: all 0.2s ease-in-out;
 }
 </style>

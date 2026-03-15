@@ -119,6 +119,7 @@ import { ref, reactive } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useI18n } from 'vue-i18n'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 import MagicLinkDialog from '@/components/auth/MagicLinkDialog.vue'
@@ -127,6 +128,7 @@ const router = useRouter()
 const route = useRoute()
 const authStore = useAuthStore()
 const { success, error } = useToast()
+const { t } = useI18n()
 
 const formRef = ref()
 const form = reactive({
@@ -156,11 +158,11 @@ async function handleLogin() {
   loading.value = true
   try {
     await authStore.login(form.email, form.password)
-    success('Login successful!')
+    success(t('auth.loginSuccess'))
     const redirect = route.query.redirect as string || '/dashboard'
     router.push(redirect)
   } catch (err: any) {
-    error(err.response?.data?.message || 'Login failed. Please check your credentials.')
+    error(err.response?.data?.message || t('auth.loginFailed'))
   } finally {
     loading.value = false
   }
@@ -170,10 +172,10 @@ async function sendMagicLink(phone: string) {
   sendingMagic.value = true
   try {
     await authStore.magicLink(phone)
-    success('Magic link sent! Check your phone.')
+    success(t('auth.magicLinkSent'))
     showMagicLink.value = false
   } catch (err: any) {
-    error(err.response?.data?.message || 'Failed to send magic link')
+    error(err.response?.data?.message || t('auth.magicLinkFailed'))
   } finally {
     sendingMagic.value = false
   }

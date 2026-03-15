@@ -1,13 +1,13 @@
-FROM node:24-alpine
+FROM node:lts
 
 WORKDIR /app
 
-COPY package.json package-lock.json ./
+COPY package.json pnpm-lock.yaml ./
 
-RUN npm ci --omit=dev
+RUN npm install -g pnpm && pnpm install
 
 COPY . .
 
 EXPOSE 3000
 
-CMD ["npm", "run", "start:dev"]
+CMD ["pnpm", "run", "start:dev"]

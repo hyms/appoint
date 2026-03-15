@@ -1,6 +1,6 @@
 import { PrismaPg } from '@prisma/adapter-pg'
 import { Pool } from 'pg'
-import { PrismaClient } from '../node_modules/.prisma/client/client'
+import { PrismaClient } from '@prisma/client'
 import * as bcrypt from 'bcrypt'
 
 const connectionString = process.env.DATABASE_URL || 'postgresql://postgres:postgres@localhost:5432/appointments360?schema=public'

@@ -20,4 +20,7 @@ export default defineConfig({
       return new PrismaPg(pool)
     },
   },
+  migrations: {
+    seed: 'npx ts-node --compiler-options {"module":"CommonJS"} prisma/seed.ts',
+  },
 })

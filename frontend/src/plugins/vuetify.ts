@@ -1,7 +1,7 @@
-import { createVuetify } from 'vuetify'
+import {createVuetify} from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import { aliases, mdi } from 'vuetify/iconsets/mdi'
+import {aliases, mdi} from 'vuetify/iconsets/mdi'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 
@@ -21,29 +21,29 @@ export default createVuetify({
       light: {
         dark: false,
         colors: {
-          primary: '#673AB7', // Material Deep Purple
-          secondary: '#9C27B0', // Material Purple
-          accent: '#FF4081', // Material Pink
-          error: '#F44336', // Material Red
+          primary: '#6200EE', // Material Purple
+          secondary: '#03DAC6', // Material Teal
+          accent: '#03DAC6', // Material Teal (using secondary for accent as well for consistency)
+          error: '#B00020', // Material Red
           info: '#2196F3', // Material Blue
           success: '#4CAF50', // Material Green
-          warning: '#FFC107', // Material Amber
-          background: '#F5F5F5',
-          surface: '#FFFFFF',
+          warning: '#FB8C00', // Material Orange
+          background: '#F5F5F5', // Light Gray
+          surface: '#FFFFFF', // White
         },
       },
       dark: {
         dark: true,
         colors: {
-          primary: '#D1C4E9',
-          secondary: '#E1BEE7',
-          accent: '#FF80AB',
-          error: '#CF6679',
+          primary: '#BB86FC', // Material Light Purple
+          secondary: '#03DAC6', // Material Teal
+          accent: '#03DAC6', // Material Teal
+          error: '#CF6679', // Material Red
           info: '#2196F3',
           success: '#4CAF50',
           warning: '#FFC107',
-          background: '#121212',
-          surface: '#1E1E1E',
+          background: '#121212', // Dark background
+          surface: '#1E1E1E', // Dark surface
         },
       },
     },
@@ -60,7 +60,7 @@ export default createVuetify({
     },
     VCard: {
       variant: 'elevated',
-      rounded: 'xl',
+      rounded: 'md',
       elevation: 2,
     },
     VTextField: {

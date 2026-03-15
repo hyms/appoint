@@ -3,7 +3,7 @@ import { ThrottlerModule, ThrottlerGuard } from '@nestjs/throttler';
 import { APP_GUARD } from '@nestjs/core';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
-import { ConfigModule } from './config/config.module';
+import { ConfigModule } from '@nestjs/config';
 import { AuthModule } from './auth/auth.module';
 import { SlotsModule } from './slots/slots.module';
 import { AppointmentsModule } from './appointments/appointments.module';
@@ -19,7 +19,7 @@ import { PrismaService } from './prisma/prisma.service';
 @Module({
   imports: [
     // Global configuration
-    ConfigModule,
+    ConfigModule.forRoot({ isGlobal: true }),
     // Rate limiting - Disabled for development
     ThrottlerModule.forRoot({
       throttlers: [

@@ -15,6 +15,10 @@
     <template v-if="authStore.user?.role === 'ADMIN'">
       <AdminAppointmentsTab 
         v-model:filters="adminFilters"
+        :appointments="adminAppointments"
+        :loading="loadingAdmin"
+        :headers="adminHeaders"
+        :status-options="statusOptions"
         :loading-patients="loadingPatients"
         :loading-professionals="loadingProfessionalsForFilter"
         :patients-list="patientsList"
@@ -69,7 +73,7 @@
         <v-window-item value="upcoming">
           <AppointmentList
             :appointments="upcomingAppointments"
-            :loading="loading"
+            :loading="loadingAppointments"
             view-all-route="/appointments"
             :has-action="true"
           />
@@ -78,8 +82,8 @@
         <v-window-item value="past">
           <AppointmentList
             :appointments="pastAppointments"
-            :loading="loading"
-            :view-all-route="null"
+            :loading="loadingAppointments"
+            :view-all-route="undefined"
             :has-action="false"
           />
         </v-window-item>
@@ -202,6 +206,7 @@ const authStore = useAuthStore()
 const tab = ref('upcoming')
 const upcomingAppointments = ref<Appointment[]>([])
 const pastAppointments = ref<Appointment[]>([])
+const loadingAppointments = ref(false)
 const paymentRecords = ref<any[]>([])
 const loadingPayments = ref(false)
 
@@ -232,6 +237,7 @@ const loadingProfessionalsForFilter = ref(false)
 const patientsList = ref<{ id: string; label: string }[]>([])
 const professionalsList = ref<{ id: string; label: string }[]>([])
 const adminFilters = reactive({
+  date: '',
   startDate: '',
   endDate: '',
   status: '',
@@ -300,7 +306,7 @@ async function loadPatients() {
       id: u.id,
       label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
     }))
-  } catch (error) {
+  } catch (err) {
     console.error('Failed to load patients:', error)
     error('Failed to load patients')
   } finally {
@@ -317,7 +323,7 @@ async function loadProfessionals() {
       id: u.id,
       label: `${u.firstName || ''} ${u.lastName || ''} (${u.email})`.trim()
     }))
-  } catch (error) {
+  } catch (err) {
     console.error('Failed to load professionals:', error)
     error('Failed to load professionals')
   } finally {
@@ -338,7 +344,7 @@ async function loadAdminAppointments() {
     
     const response = await appointmentsService.getAll(params)
     adminAppointments.value = response.data || response
-  } catch (error) {
+  } catch (err) {
     console.error('Failed to load admin appointments:', error)
     error('Error loading admin appointments')
   } finally {
@@ -353,6 +359,7 @@ function viewAppointmentAdmin(item: any) {
 
 // --- Patient/Professional Logic ---
 async function loadAppointments() {
+  loadingAppointments.value = true
   try {
     let allAppointments: Appointment[] = []
     
@@ -370,9 +377,11 @@ async function loadAppointments() {
       new Date(a.date) < now || a.status === 'CANCELLED'
     )
     await loadPaymentRecords()
-  } catch (error) {
+  } catch (err) {
     console.error('Failed to load appointments:', error)
     error('Failed to load appointments')
+  } finally {
+    loadingAppointments.value = false
   }
 }
 
@@ -380,7 +389,7 @@ async function loadPaymentRecords() {
   loadingPayments.value = true
   try {
     paymentRecords.value = await paymentsService.getMyPayments()
-  } catch (error) {
+  } catch (err) {
     console.error('Failed to load payments:', error)
     error('Failed to load payment records')
   } finally {
@@ -429,6 +438,7 @@ async function cancelAppointment(apt: Appointment) {
 }
 
 async function confirmCancelAppointment() {
+  if (!selectedAppointment.value) return
   if (!cancelReason.value.trim()) {
     error('Please enter a cancellation reason')
     return

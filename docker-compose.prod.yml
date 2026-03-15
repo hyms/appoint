@@ -1,44 +1,6 @@
 version: '3.8'
 
 services:
-  # Nginx Proxy Manager for SSL/TLS
-  nginx-proxy-manager:
-    image: jc21/nginx-proxy-manager:latest
-    container_name: nginx-proxy-manager
-    restart: unless-stopped
-    ports:
-      - "80:80"
-      - "443:443"
-      - "81:81"  # Admin UI
-    volumes:
-      - ./nginx-data:/data
-      - ./letsencrypt:/etc/letsencrypt
-    networks:
-      - appoint-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
-  # Portainer for container management
-  portainer:
-    image: portainer/portainer-ce:latest
-    container_name: portainer
-    restart: unless-stopped
-    ports:
-      - "9443:9443"
-    volumes:
-      - /var/run/docker.sock:/var/run/docker.sock
-      - portainer_data:/data
-    networks:
-      - appoint-network
-    logging:
-      driver: "json-file"
-      options:
-        max-size: "10m"
-        max-file: "3"
-
   # PostgreSQL Database
   postgres:
     image: postgres:15-alpine
@@ -52,7 +14,7 @@ services:
       - postgres_data:/var/lib/postgresql/data
       - ./backups:/backups
     networks:
-      - appoint-network
+      - app-network
     logging:
       driver: "json-file"
       options:
@@ -66,9 +28,7 @@ services:
 
   # Backend API
   backend:
-    build:
-      context: ./backend
-      dockerfile: Dockerfile.prod
+    image: appoint-backend:latest
     container_name: appointments_backend_prod
     restart: unless-stopped
     environment:
@@ -88,7 +48,7 @@ services:
       postgres:
         condition: service_healthy
     networks:
-      - appoint-network
+      - app-network
     logging:
       driver: "json-file"
       options:
@@ -97,9 +57,7 @@ services:
 
   # Frontend
   frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile.prod
+    image: appoint-frontend:latest
     container_name: appointments_frontend_prod
     restart: unless-stopped
     environment:
@@ -107,7 +65,7 @@ services:
     depends_on:
       - backend
     networks:
-      - appoint-network
+      - app-network
     logging:
       driver: "json-file"
       options:
@@ -133,7 +91,7 @@ services:
         crond -f
       "
     networks:
-      - appoint-network
+      - app-network
     depends_on:
       - postgres
     logging:
@@ -145,9 +103,7 @@ services:
 volumes:
   postgres_data:
     driver: local
-  portainer_data:
-    driver: local
 
 networks:
-  appoint-network:
+  app-network:
     driver: bridge

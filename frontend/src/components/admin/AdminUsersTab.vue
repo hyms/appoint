@@ -79,10 +79,10 @@
             <BaseInput v-model="userFormData.email" label="Email" required :rules="emailRules" variant="outlined" rounded="md" />
             <BaseInput v-if="!editingUser" v-model="userFormData.password" label="Password" type="password" required :rules="passwordRules" variant="outlined" rounded="md" />
             <BaseInput v-model="userFormData.phone" label="Phone" type="tel" variant="outlined" rounded="md" />
-            <BaseInput v-model="userFormData.firstName" label="First Name" required :rules="[v => !!v || 'Name required']" variant="outlined" rounded="md" />
-            <BaseInput v-model="userFormData.lastName" label="Last Name" required :rules="[v => !!v || 'Last name required']" variant="outlined" rounded="md" />
+            <BaseInput v-model="userFormData.firstName" label="First Name" required :rules="[(v: string) => !!v || 'Name required']" variant="outlined" rounded="md" />
+            <BaseInput v-model="userFormData.lastName" label="Last Name" required :rules="[(v: string) => !!v || 'Last name required']" variant="outlined" rounded="md" />
             <BaseInput v-model="userFormData.dni" label="DNI" variant="outlined" rounded="md" />
-            <BaseSelect v-model="userFormData.role" label="Role" :items="roleOptions" item-title="text" item-value="value" required :rules="[v => !!v || 'Role required']" />
+            <BaseSelect v-model="userFormData.role" label="Role" :items="roleOptions" item-title="text" item-value="value" required :rules="[(v: string) => !!v || 'Role required']" />
             <v-switch v-if="editingUser" v-model="userFormData.isActive" label="User Active" color="success" inset />
           </v-form>
         </v-card-text>
@@ -120,6 +120,8 @@ const emit = defineEmits<{
     (e: 'openUserDialog', user?: User): void
     (e: 'deleteUser', user: User): void
 }>()
+
+import { reactive } from 'vue'
 
 const loading = ref(false)
 const savingUser = ref(false)

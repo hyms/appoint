@@ -50,7 +50,7 @@
 </template>
 
 <script setup lang="ts">
-import { defineProps } from 'vue'
+// // import { defineProps } from 'vue'
 import { type Appointment } from '@/services/appointments'
 import { formatDate, formatTime } from '@/utils/date'
 

@@ -11,7 +11,11 @@
     "logout": "Cerrar Sesión",
     "login": "Iniciar Sesión",
     "register": "Registrarse",
-    "language": "Idioma"
+    "language": "Idioma",
+    "english": "Inglés",
+    "spanish": "Español",
+    "administrativeTools": "Herramientas Administrativas",
+    "adminPanel": "Panel de Administración"
   },
   "auth": {
     "email": "Correo Electrónico",
@@ -23,7 +27,16 @@
     "magicLink": "Enviar Enlace Mágico",
     "enterWithMagic": "Entrar con Enlace Mágico",
     "forgotPassword": "¿Olvidaste tu contraseña?",
-    "dontHaveAccount": "¿No tienes cuenta?"
+    "dontHaveAccount": "¿No tienes cuenta?",
+    "loginSuccess": "¡Inicio de sesión exitoso!",
+    "loginFailed": "Inicio de sesión fallido. Por favor, verifica tus credenciales.",
+    "magicLinkSent": "¡Enlace mágico enviado! Revisa tu teléfono.",
+    "magicLinkFailed": "Fallo al enviar el enlace mágico",
+    "magicLinkLogin": "Inicio de Sesión con Enlace Mágico",
+    "enterMagicLinkToken": "Ingresa el token de tu enlace mágico:",
+    "token": "Token",
+    "validateToken": "Validar Token",
+    "invalidOrExpiredToken": "Token inválido o expirado"
   },
   "common": {
     "save": "Guardar",
