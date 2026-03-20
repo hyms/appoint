@@ -1,0 +1,17 @@
+node_modules
+dist
+.env
+.env.local
+.env.*.local
+.vscode
+*.log
+coverage
+test
+uploads
+README.md
+eslint.config.mjs
+.prettierrc
+nest-cli.json
+Dockerfile
+Dockerfile.prod
+prisma.config.ts
