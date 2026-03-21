@@ -1,0 +1,56 @@
+# Production Dockerfile for Backend
+FROM node:lts-alpine AS builder
+
+WORKDIR /app
+
+# Install pnpm
+RUN npm install -g pnpm
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install dependencies
+RUN pnpm install --no-frozen-lockfile
+
+# Copy source code
+COPY . .
+
+# Generate Prisma client
+RUN pnpm exec prisma generate
+
+# Build application
+RUN pnpm run build
+
+# Production stage
+FROM node:lts-alpine
+
+WORKDIR /app
+
+# Install pnpm and dumb-init
+RUN npm install -g pnpm prisma && apk add --no-cache dumb-init
+
+# Copy package files
+COPY package*.json ./
+COPY prisma ./prisma/
+
+# Install production dependencies only
+RUN pnpm install --only=production && pnpm store prune
+
+# Generate Prisma client for production
+RUN pnpm exec prisma generate
+
+# Copy built application from builder stage
+COPY --from=builder /app/dist ./dist
+
+# Create uploads directory
+RUN mkdir -p uploads/payments
+
+# Expose port
+EXPOSE 3000
+
+# Use dumb-init to handle signals properly
+ENTRYPOINT ["dumb-init", "--"]
+
+# Start the application
+CMD ["pnpm", "start:prod"]
