@@ -63,7 +63,7 @@
 
     <!-- PATIENT/PROFESSIONAL VIEW -->
     <template v-else>
-      <v-tabs v-model="tab" color="primary" class="mb-6">
+      <v-tabs v-model="tab" color="primary" class="mb-6 industrial-tabs" grow>
         <v-tab value="upcoming">Próximas</v-tab>
         <v-tab value="past">Pasadas</v-tab>
         <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>

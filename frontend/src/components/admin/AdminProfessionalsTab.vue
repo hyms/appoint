@@ -26,7 +26,7 @@
         </v-row>
 
         <div v-if="selectedProfessionalId && !loadingProfessionalData">
-            <v-tabs v-model="configTab" color="primary" class="mb-6">
+            <v-tabs v-model="configTab" color="primary" class="mb-6 industrial-tabs" grow>
                 <v-tab value="schedule">Schedule & Hours</v-tab>
                 <v-tab value="settings">Preferences</v-tab>
             </v-tabs>

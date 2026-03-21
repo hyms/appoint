@@ -110,3 +110,74 @@ body {
 .card-gap {
   margin-bottom: var(--card-gap);
 }
+
+/* Industrial Tabs - High visibility */
+.industrial-tabs {
+  background: rgba(0, 0, 0, 0.03);
+  border-radius: 12px;
+  padding: 4px;
+  border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+.industrial-tabs .v-tab {
+  text-transform: none;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  min-width: 100px;
+  border-radius: 8px;
+  transition: all 0.2s ease;
+  color: #666;
+  background: transparent;
+}
+
+.industrial-tabs .v-tab:hover {
+  color: #6200EE;
+  background: rgba(98, 0, 238, 0.08);
+}
+
+.industrial-tabs .v-tab--selected {
+  color: #FFFFFF !important;
+  background: #6200EE !important;
+  box-shadow: 0 2px 8px rgba(98, 0, 238, 0.3);
+}
+
+.industrial-tabs .v-tab-item {
+  font-size: 0.85rem;
+}
+
+/* Dark mode support for tabs */
+.v-theme--dark .industrial-tabs {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.1);
+}
+
+.v-theme--dark .industrial-tabs .v-tab {
+  color: #aaa;
+}
+
+.v-theme--dark .industrial-tabs .v-tab:hover {
+  color: #BB86FC;
+  background: rgba(187, 134, 252, 0.15);
+}
+
+.v-theme--dark .industrial-tabs .v-tab--selected {
+  background: #BB86FC !important;
+  box-shadow: 0 2px 8px rgba(187, 134, 252, 0.4);
+}
+
+/* Tab indicator bar */
+.v-tabs {
+  border-bottom: 2px solid rgba(0, 0, 0, 0.08);
+}
+
+.v-tabs--grow .v-tab {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 600px) {
+  .industrial-tabs .v-tab {
+    min-width: 70px;
+    font-size: 0.75rem;
+    padding: 0 12px;
+  }
+}

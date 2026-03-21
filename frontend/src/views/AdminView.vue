@@ -13,7 +13,7 @@
 
     <!-- ADMIN VIEW -->
     <template v-if="authStore.user?.role === 'ADMIN'">
-      <v-tabs v-model="adminTab" color="primary" class="mb-6">
+      <v-tabs v-model="adminTab" color="primary" class="mb-6 industrial-tabs" grow>
         <v-tab value="appointments">Citas</v-tab>
         <v-tab value="slots">Horarios</v-tab>
         <v-tab value="users">Usuarios</v-tab>

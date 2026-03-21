@@ -20,22 +20,19 @@ export class AuthPrismaRepository {
     return this.prisma.user.findUnique(args);
   }
 
-  async create(
-    data: Prisma.UserCreateInput & {
-      profile: Prisma.ProfileCreateWithoutUserInput;
-    },
-  ): Promise<User & { profile: Profile | null }> {
+  async create(args?: { data?: any; include?: any }): Promise<any> {
+    const actualData = args?.data ? args.data : args;
+    const include = args?.include;
+    
     const user = await this.prisma.user.create({
       data: {
-        email: data.email,
-        passwordHash: data.passwordHash,
-        phone: data.phone,
-        role: data.role || UserRole.PATIENT,
-        profile: {
-          create: data.profile,
-        },
+        email: actualData.email,
+        passwordHash: actualData.passwordHash,
+        phone: actualData.phone,
+        role: actualData.role || UserRole.PATIENT,
+        profile: actualData.profile as any,
       },
-      include: { profile: true },
+      include: include || { profile: true },
     });
     return user;
   }
