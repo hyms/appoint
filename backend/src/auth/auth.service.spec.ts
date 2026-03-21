@@ -1,401 +1,420 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { JwtService } from '@nestjs/jwt';
 import {
-  UnauthorizedException,
   ConflictException,
+  NotFoundException,
+  UnauthorizedException,
   BadRequestException,
   ForbiddenException,
-  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { AppConfigService } from '../config/config.service';
 import { UserRole } from '@prisma/client';
-import { AuthPrismaRepository, SanitizedUser } from './repositories/AuthPrismaRepository';
+import {
+  AuthPrismaRepository,
+  SanitizedUser,
+} from './repositories/AuthPrismaRepository';
 import { AuthorizationService } from '../common/services/authorization.service';
 import { NotificationProviderService } from '../notifications/services/notification-provider.service';
-import { NotificationType } from '@prisma/client';
-import { ProviderType } from '../notifications/dto/notification.dto';
 import { ConfigService } from '@nestjs/config';
+import { AuditService } from '../common/services/audit.service';
+import { RegisterDto } from './dto/auth.dto';
+import { JwtService } from '@nestjs/jwt';
 
-describe('AuthService', () => {
-  let authService: AuthService;
-  let authPrismaRepository: AuthPrismaRepository; // Use the new repository
-  let jwtService: JwtService;
+const mockAuthPrismaRepository = {
+  findUserById: jest.fn(),
+  updateUser: jest.fn(),
+  deleteUser: jest.fn(),
+  findUnique: jest.fn(),
+  findUsers: jest.fn(),
+  create: jest.fn(),
+  validateMagicLinkToken: jest.fn(),
+};
+jest.mock('./repositories/AuthPrismaRepository', () => ({
+  AuthPrismaRepository: jest
+    .fn()
+    .mockImplementation(() => mockAuthPrismaRepository),
+}));
 
-  // Mock the AuthPrismaRepository
-  const mockAuthPrismaRepository = {
+const mockPrismaClient = {
+  user: {
     findUnique: jest.fn(),
+    findFirst: jest.fn(),
+    findMany: jest.fn(),
     create: jest.fn(),
-    findUserForLogin: jest.fn(),
-    validateMagicLinkToken: jest.fn(),
-    updateUser: jest.fn(), // Needed for magic link updates
-  };
+    update: jest.fn(),
+    delete: jest.fn(),
+  },
+  appointmentAudit: {
+    create: jest.fn(),
+  },
+};
+jest.mock('../prisma/prisma.service', () => ({
+  PrismaService: jest.fn().mockImplementation(() => mockPrismaClient),
+}));
 
+describe('AuthService - User Management & Auditing', () => {
+  let authService: AuthService;
+  let authPrismaRepository: AuthPrismaRepository;
+
+  const mockAuthorizationService = {
+    canManageUsers: jest.fn(),
+    canViewAllUsers: jest.fn(),
+  };
+  const mockAuditService = {
+    logUserChange: jest.fn().mockResolvedValue(undefined),
+  };
   const mockJwtService = {
     sign: jest.fn(),
+    verify: jest.fn(),
   };
-
+  const mockAppConfigService = {
+    frontendUrl: 'http://localhost:5173',
+    magicLinkExpiryMinutes: 15,
+  };
   const mockBruteForceProtectionService = {
-    recordFailedAttempt: jest.fn(),
-    clearAttempts: jest.fn(), // Needed for successful login
     isBlocked: jest.fn().mockReturnValue(false),
+    recordFailedAttempt: jest.fn(),
     getBlockTimeRemaining: jest.fn().mockReturnValue(0),
-    getRemainingAttempts: jest.fn().mockReturnValue(3), // For invalid credentials
+    getRemainingAttempts: jest.fn().mockReturnValue(5),
   };
-
-    const mockConfigService = {
-      frontendUrl: 'http://localhost:5173',
-      magicLinkExpiryMinutes: 15,
-      get: jest.fn((key: string) => {
-        if (key === 'JWT_SECRET') return 'test-secret';
-        if (key === 'JWT_REFRESH_SECRET') return 'test-refresh-secret';
-        if (key === 'JWT_EXPIRES_IN') return '1d';
-        if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
-        return null; // Default
-      }),
-    };
-
-    const mockAuthorizationService = {
-      canViewOwnData: jest.fn().mockReturnValue(true),
-      canViewAllUsers: jest.fn().mockReturnValue(true),
-      canManageUsers: jest.fn().mockReturnValue(true),
-      canManageUser: jest.fn().mockReturnValue(true),
-    };
-
-    const mockNotificationProviderService = {
-      sendNotification: jest.fn().mockResolvedValue({ success: true }),
-    };
+  const mockNotificationService = {
+    sendNotification: jest.fn().mockResolvedValue({}),
+  };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
+        { provide: AuthPrismaRepository, useValue: mockAuthPrismaRepository },
+        { provide: AuthorizationService, useValue: mockAuthorizationService },
+        { provide: AuditService, useValue: mockAuditService },
         {
-          provide: AuthPrismaRepository,
-          useValue: mockAuthPrismaRepository,
+          provide: NotificationProviderService,
+          useValue: mockNotificationService,
         },
-        {
-          provide: JwtService,
-          useValue: mockJwtService,
-        },
-        {
-          provide: ConfigService,
-          useValue: mockConfigService,
-        },
+        { provide: JwtService, useValue: mockJwtService },
+        { provide: ConfigService, useValue: { get: jest.fn() } },
         {
           provide: BruteForceProtectionService,
           useValue: mockBruteForceProtectionService,
         },
-        {
-          provide: AppConfigService,
-          useValue: mockConfigService,
-        },
-        {
-          provide: AuthorizationService,
-          useValue: mockAuthorizationService,
-        },
-        {
-          provide: NotificationProviderService,
-          useValue: mockNotificationProviderService,
-        },
+        { provide: AppConfigService, useValue: mockAppConfigService },
       ],
     }).compile();
 
     authService = module.get<AuthService>(AuthService);
-    authPrismaRepository = module.get<AuthPrismaRepository>(AuthPrismaRepository); // Get the repository
-    jwtService = module.get<JwtService>(JwtService);
+    authPrismaRepository =
+      module.get<AuthPrismaRepository>(AuthPrismaRepository);
 
     jest.clearAllMocks();
   });
 
-  describe('register', () => {
-    it('should register a new user successfully', async () => {
-      const registerDto = {
-        email: 'test@example.com',
-        password: 'password123',
-        firstName: 'John',
-        lastName: 'Doe',
-        phone: '+1234567890',
-      };
+  describe('createUser (Admin)', () => {
+    const createDto: RegisterDto = {
+      email: 'newadmin@example.com',
+      password: 'password123',
+      firstName: 'New',
+      lastName: 'Admin',
+      role: UserRole.ADMIN,
+      phone: '+1234567890',
+    };
 
-      const createdUser: SanitizedUser = {
-        id: 'user-id',
-        email: registerDto.email,
-        phone: registerDto.phone,
-        role: UserRole.PATIENT,
-        isActive: true,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
+    const createdUser: SanitizedUser = {
+      id: 'new-user-id',
+      email: createDto.email,
+      phone: createDto.phone,
+      role: UserRole.ADMIN,
+      isActive: true,
+      oneSignalPlayerId: null,
+      telegramChatId: null,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      profile: {
+        id: 'new-profile-id',
+        firstName: createDto.firstName,
+        lastName: createDto.lastName,
+        dni: null,
+        dateOfBirth: null,
+        address: null,
+        emergencyContact: null,
+        medicalNotes: null,
         createdAt: new Date(),
         updatedAt: new Date(),
-        profile: {
-          id: 'profile-id',
-          firstName: registerDto.firstName,
-          lastName: registerDto.lastName,
-          dni: null,
-          dateOfBirth: null,
-          address: null,
-          emergencyContact: null,
-          medicalNotes: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-      };
+      },
+    };
 
+    beforeEach(() => {
       mockAuthPrismaRepository.findUnique.mockResolvedValue(null);
       mockAuthPrismaRepository.create.mockResolvedValue({
         ...createdUser,
-        passwordHash: 'hashed-password', // Add passwordHash as the repository expects it for internal use
-        magicToken: null,
-        magicExpiresAt: null,
+        passwordHash: 'hashedpassword',
       });
-      mockJwtService.sign.mockReturnValue('mock-jwt-token');
+      jest
+        .spyOn(authService as any, 'sendWelcomeEmail')
+        .mockResolvedValue(undefined);
+    });
 
-      const result = await authService.register(registerDto);
+    it('should create a new user with specified role and send welcome email', async () => {
+      const result = await authService.createUser(createDto);
 
-      expect(result).toHaveProperty('token');
-      expect(result.token).toBe('mock-jwt-token');
-      expect(result.user.email).toBe(registerDto.email);
+      expect(mockAuthPrismaRepository.findUnique).toHaveBeenCalledWith({
+        where: { email: createDto.email },
+      });
       expect(mockAuthPrismaRepository.create).toHaveBeenCalled();
+      expect(result.email).toBe(createDto.email);
+      expect(result.role).toBe(UserRole.ADMIN);
     });
 
     it('should throw ConflictException if email already exists', async () => {
-      const registerDto = {
-        email: 'existing@example.com',
-        password: 'password123',
-        firstName: 'John',
-        lastName: 'Doe',
-      };
+      mockAuthPrismaRepository.findUnique.mockResolvedValue(createdUser);
 
-      mockAuthPrismaRepository.findUnique.mockResolvedValue({
-        id: 'existing-user',
-      });
-
-      await expect(authService.register(registerDto)).rejects.toThrow(
+      await expect(authService.createUser(createDto)).rejects.toThrow(
         ConflictException,
       );
+      expect(mockAuthPrismaRepository.create).not.toHaveBeenCalled();
     });
   });
 
-  describe('login', () => {
-    it('should login successfully with valid credentials', async () => {
-      const loginDto = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
-      const user = {
-        id: 'user-id',
-        email: loginDto.email,
-        phone: null,
-        passwordHash: '$2b$10$hashedpassword',
+  describe('getUsers', () => {
+    const mockUsers: SanitizedUser[] = [
+      {
+        id: 'u1',
+        email: 'u1@ex.com',
         role: UserRole.PATIENT,
         isActive: true,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
         profile: {
-          id: 'profile-id',
-          firstName: 'John',
-          lastName: 'Doe',
+          firstName: '1',
+          lastName: 'U',
           dni: null,
           dateOfBirth: null,
           address: null,
           emergencyContact: null,
           medicalNotes: null,
+          id: 'p1',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockAuthPrismaRepository.findUserForLogin.mockResolvedValue(user);
-      mockJwtService.sign.mockReturnValue('mock-jwt-token');
-
-      const bcrypt = require('bcrypt');
-      jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
-
-      const result = await authService.login(loginDto, '127.0.0.1');
-
-      expect(result).toHaveProperty('access_token');
-      expect(result.access_token).toBe('mock-jwt-token');
-      expect(mockBruteForceProtectionService.clearAttempts).toHaveBeenCalledWith('127.0.0.1');
-      expect(mockNotificationProviderService.sendNotification).not.toHaveBeenCalled(); // No login notification yet
-    });
-
-    it('should throw UnauthorizedException for non-existent user', async () => {
-      const loginDto = {
-        email: 'nonexistent@example.com',
-        password: 'password123',
-      };
-
-      mockAuthPrismaRepository.findUserForLogin.mockResolvedValue(null);
-
-      await expect(authService.login(loginDto, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
-      expect(mockBruteForceProtectionService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
-    });
-
-    it('should throw UnauthorizedException for deactivated user', async () => {
-      const loginDto = {
-        email: 'test@example.com',
-        password: 'password123',
-      };
-
-      mockAuthPrismaRepository.findUserForLogin.mockResolvedValue({
-        id: 'user-id',
-        email: loginDto.email,
-        isActive: false,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
-        profile: {
-          id: 'profile-id',
-          firstName: 'John',
-          lastName: 'Doe',
-          dni: null,
-          dateOfBirth: null,
-          address: null,
-          emergencyContact: null,
-          medicalNotes: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        passwordHash: 'hashed',
-        role: UserRole.PATIENT,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      await expect(authService.login(loginDto, '127.0.0.1')).rejects.toThrow(
-        UnauthorizedException,
-      );
-    });
-
-    it('should throw UnauthorizedException for invalid credentials', async () => {
-        const loginDto = {
-            email: 'test@example.com',
-            password: 'password123',
-        };
-
-        mockAuthPrismaRepository.findUserForLogin.mockResolvedValue({
-            id: 'user-id',
-            email: loginDto.email,
-            passwordHash: '$2b$10$hashedpassword',
-            role: UserRole.PATIENT,
+      } as SanitizedUser,
+      {
+        id: 'u2',
+        email: 'u2@ex.com',
+        role: UserRole.PROFESSIONAL,
         isActive: true,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
         profile: {
-          id: 'profile-id',
-          firstName: 'John',
-          lastName: 'Doe',
+          firstName: '2',
+          lastName: 'U',
           dni: null,
           dateOfBirth: null,
           address: null,
           emergencyContact: null,
           medicalNotes: null,
+          id: 'p2',
           createdAt: new Date(),
           updatedAt: new Date(),
         },
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
+      } as SanitizedUser,
+    ];
 
-        const bcrypt = require('bcrypt');
-        jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
+    beforeEach(() => {
+      mockAuthPrismaRepository.findUsers.mockResolvedValue(mockUsers);
+    });
 
-        await expect(authService.login(loginDto, '127.0.0.1')).rejects.toThrow(
-            UnauthorizedException,
-        );
-        expect(mockBruteForceProtectionService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
+    it('should return all users if no role filter is provided', async () => {
+      const result = await authService.getUsers();
+
+      expect(mockAuthPrismaRepository.findUsers).toHaveBeenCalledWith(
+        undefined,
+      );
+      expect(result).toEqual(mockUsers);
+    });
+
+    it('should return users filtered by role if provided', async () => {
+      const filteredUsers = [mockUsers[0]];
+      mockAuthPrismaRepository.findUsers.mockResolvedValue(filteredUsers);
+
+      const result = await authService.getUsers(UserRole.PATIENT);
+
+      expect(mockAuthPrismaRepository.findUsers).toHaveBeenCalledWith(
+        UserRole.PATIENT,
+      );
+      expect(result).toEqual(filteredUsers);
     });
   });
 
-  describe('sendMagicLink', () => {
-    it('should send magic link for existing phone', async () => {
-      const magicLinkDto = { phone: '+1234567890' };
-
-      mockAuthPrismaRepository.findUnique.mockResolvedValue({
-        id: 'user-id',
-        phone: magicLinkDto.phone,
-        email: 'test@example.com',
-        role: UserRole.PATIENT,
-        isActive: true,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
-        passwordHash: null,
+  describe('getUserById', () => {
+    const userId = 'user-test-id';
+    const mockUser: SanitizedUser = {
+      id: userId,
+      email: 'test@example.com',
+      role: UserRole.PATIENT,
+      isActive: true,
+      profile: {
+        firstName: 'Test',
+        lastName: 'User',
+        dni: null,
+        dateOfBirth: null,
+        address: null,
+        emergencyContact: null,
+        medicalNotes: null,
+        id: 'p1',
         createdAt: new Date(),
         updatedAt: new Date(),
+      },
+    } as SanitizedUser;
+
+    beforeEach(() => {
+      mockAuthPrismaRepository.findUserById.mockResolvedValue(mockUser);
+    });
+
+    it('should return a user by ID', async () => {
+      const result = await authService.getUserById(userId);
+
+      expect(mockAuthPrismaRepository.findUserById).toHaveBeenCalledWith(
+        userId,
+      );
+      expect(result).toEqual(mockUser);
+    });
+
+    it('should throw NotFoundException if user not found', async () => {
+      mockAuthPrismaRepository.findUserById.mockResolvedValue(null);
+
+      await expect(authService.getUserById('non-existent-id')).rejects.toThrow(
+        NotFoundException,
+      );
+    });
+  });
+
+  describe('requestTelegramAuth', () => {
+    const magicLinkDto = { phone: '+1234567890' };
+    const ipAddress = '127.0.0.1';
+    const mockUser = {
+      id: 'user-id-tg',
+      phone: magicLinkDto.phone,
+      email: 'test@example.com',
+      role: UserRole.PATIENT,
+      isActive: true,
+      passwordHash: null,
+      telegramChatId: 'some-chat-id',
+    };
+
+    beforeEach(() => {
+      mockAuthPrismaRepository.findUnique.mockResolvedValue(mockUser);
+      mockAuthPrismaRepository.updateUser.mockResolvedValue({});
+      jest
+        .spyOn(authService as any, 'generateRandomToken')
+        .mockReturnValue('mock-telegram-token');
+      jest
+        .spyOn(authService as any, 'sendTelegramAuthNotification')
+        .mockResolvedValue(undefined);
+    });
+
+    it('should request Telegram authentication for an existing patient without password', async () => {
+      const result = await authService.requestTelegramAuth(
+        magicLinkDto,
+        ipAddress,
+      );
+
+      expect(mockAuthPrismaRepository.findUnique).toHaveBeenCalledWith({
+        where: { phone: magicLinkDto.phone },
+        include: { profile: true },
       });
-      mockAuthPrismaRepository.updateUser.mockResolvedValue({}); // Magic link updates user
-
-      const result = await authService.sendMagicLink(magicLinkDto, '127.0.0.1');
-
-      expect(result).toHaveProperty('message', 'Magic link sent successfully.');
       expect(mockAuthPrismaRepository.updateUser).toHaveBeenCalled();
+      expect(result).toEqual({
+        message: 'Authentication request processed. Check Telegram.',
+      });
     });
 
-    it('should throw BadRequestException for non-existent phone', async () => {
-      const magicLinkDto = { phone: '+9999999999' };
-
+    it('should throw BadRequestException if user not found or not a patient', async () => {
       mockAuthPrismaRepository.findUnique.mockResolvedValue(null);
-      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
+      await expect(
+        authService.requestTelegramAuth(magicLinkDto, ipAddress),
+      ).rejects.toThrow(BadRequestException);
+    });
 
-      await expect(authService.sendMagicLink(magicLinkDto, '127.0.0.1')).rejects.toThrow(
-        BadRequestException,
-      );
-      expect(mockBruteForceProtectionService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
+    it('should throw UnauthorizedException if account is deactivated', async () => {
+      mockAuthPrismaRepository.findUnique.mockResolvedValue({
+        ...mockUser,
+        isActive: false,
+      });
+      await expect(
+        authService.requestTelegramAuth(magicLinkDto, ipAddress),
+      ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw BadRequestException if account has a password', async () => {
+      mockAuthPrismaRepository.findUnique.mockResolvedValue({
+        ...mockUser,
+        passwordHash: 'somehash',
+      });
+      await expect(
+        authService.requestTelegramAuth(magicLinkDto, ipAddress),
+      ).rejects.toThrow(BadRequestException);
     });
   });
 
-  describe('validateMagicLink', () => {
-    it('should validate magic link and return tokens', async () => {
-      const userWithMagicLink = {
-        id: 'user-id',
-        email: 'test@example.com',
-        role: UserRole.PATIENT,
-        isActive: true,
-        oneSignalPlayerId: null,
-        telegramChatId: null,
-        profile: {
-          firstName: 'John',
-          lastName: 'Doe',
-          id: 'profile-id',
-          dni: null,
-          dateOfBirth: null,
-          address: null,
-          emergencyContact: null,
-          medicalNotes: null,
-          createdAt: new Date(),
-          updatedAt: new Date(),
-        },
-        magicToken: 'valid-magic-token',
-        magicExpiresAt: new Date(Date.now() + 1000 * 60 * 60),
-        passwordHash: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+  describe('validateTelegramToken', () => {
+    const token = 'valid-telegram-token';
+    const mockUser = {
+      id: 'user-id-tg-valid',
+      email: 'tg@example.com',
+      role: UserRole.PATIENT,
+      isActive: true,
+      telegramChatId: 'some-chat-id',
+      profile: { firstName: 'Test' },
+    };
 
-      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue(userWithMagicLink);
-      mockJwtService.sign.mockReturnValueOnce('mock-jwt-token').mockReturnValueOnce('mock-refresh-token'); // For access and refresh tokens
-
-      const result = await authService.validateMagicLink('valid-magic-token');
-
-      expect(result).toHaveProperty('access_token');
-      expect(result).toHaveProperty('refreshToken');
-      expect(result.access_token).toBe('mock-jwt-token');
-      expect(result.refreshToken).toBe('mock-refresh-token');
-      expect(mockAuthPrismaRepository.validateMagicLinkToken).toHaveBeenCalledWith('valid-magic-token');
+    beforeEach(() => {
+      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue(
+        mockUser,
+      );
+      mockJwtService.sign
+        .mockReturnValueOnce('mock-jwt-token')
+        .mockReturnValueOnce('mock-refresh-token');
     });
 
-    it('should throw BadRequestException for invalid token', async () => {
-      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue(null);
+    it('should validate Telegram token and return authentication details', async () => {
+      const result = await authService.validateTelegramToken(token);
 
+      expect(
+        mockAuthPrismaRepository.validateMagicLinkToken,
+      ).toHaveBeenCalledWith(token);
+      expect(result).toHaveProperty('access_token', 'mock-jwt-token');
+      expect(result).toHaveProperty('refreshToken', 'mock-refresh-token');
+      expect(mockAuditService.logUserChange).toHaveBeenCalledWith(
+        mockUser.id,
+        'USER_AUTHENTICATED_TELEGRAM',
+        { ip: 'unknown' },
+        mockUser.id,
+        mockUser.role,
+      );
+    });
+
+    it('should throw UnauthorizedException for invalid or expired token', async () => {
+      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue(null);
       await expect(
-        authService.validateMagicLink('invalid-token'),
+        authService.validateTelegramToken('invalid-token'),
       ).rejects.toThrow(UnauthorizedException);
+    });
+
+    it('should throw UnauthorizedException if account is deactivated', async () => {
+      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue({
+        ...mockUser,
+        isActive: false,
+      });
+      await expect(authService.validateTelegramToken(token)).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+
+    it('should throw ForbiddenException if Telegram Chat ID not linked', async () => {
+      mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue({
+        ...mockUser,
+        telegramChatId: null,
+      });
+      await expect(authService.validateTelegramToken(token)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 });

@@ -6,11 +6,8 @@ import { WhatsAppProvider } from '../providers/whatsapp.provider';
 import { TelegramProvider } from '../providers/telegram.provider';
 import { EmailProvider } from '../providers/email.provider';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  SendNotificationDto,
-  NotificationType,
-  ProviderType,
-} from '../dto/notification.dto';
+import { NotificationType } from '@prisma/client';
+import { ProviderType, SendNotificationDto } from '../dto/notification.dto';
 
 describe('NotificationProviderService', () => {
   let service: NotificationProviderService;

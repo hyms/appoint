@@ -1,5 +1,3 @@
-// TODO: Fix OneSignal SDK import - currently failing with Vite
-// import OneSignal from 'onesignal-web-sdk'
 import api from '@/services/api'
 
 const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'PLACEHOLDER_APP_ID'
@@ -7,11 +5,15 @@ const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'PLACEHOLDER_A
 export function useOneSignal() {
   const initOneSignal = async () => {
     try {
-      console.warn('OneSignal disabled - SDK import failed')
-      // await OneSignal.init({
-      //   appId: ONESIGNAL_APP_ID,
-      //   allowLocalhostAsSecureOrigin: true,
-      // })
+      if (typeof window.OneSignal !== 'undefined') {
+        await window.OneSignal.init({
+          appId: ONESIGNAL_APP_ID,
+          allowLocalhostAsSecureOrigin: true,
+        })
+        console.log('OneSignal Initialized via CDN.')
+      } else {
+        console.warn('OneSignal SDK not loaded from CDN.')
+      }
     } catch (err) {
       console.error('OneSignal initialization error:', err)
     }
@@ -19,12 +21,16 @@ export function useOneSignal() {
 
   const loginToOneSignal = async (userId: string) => {
     try {
-      console.warn('OneSignal login disabled')
-      // await OneSignal.login(userId)
-      // const playerId = await OneSignal.User.PushSubscription.id
-      // if (playerId) {
-      //   await api.post('/auth/one-signal-id', { playerId })
-      // }
+      if (typeof window.OneSignal !== 'undefined') {
+        await window.OneSignal.login(userId)
+        const playerId = await window.OneSignal.User.PushSubscription.id
+        if (playerId) {
+          await api.post('/auth/one-signal-id', { playerId })
+          console.log('OneSignal Player ID linked to user:', userId)
+        }
+      } else {
+        console.warn('OneSignal not available for login.')
+      }
     } catch (err) {
       console.error('OneSignal login error:', err)
     }
@@ -32,7 +38,9 @@ export function useOneSignal() {
 
   const logoutFromOneSignal = async () => {
     try {
-      // await OneSignal.logout()
+      if (typeof window.OneSignal !== 'undefined') {
+        await window.OneSignal.logout()
+      }
     } catch (err) {
       console.error('OneSignal logout error:', err)
     }

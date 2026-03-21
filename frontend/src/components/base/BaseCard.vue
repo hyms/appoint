@@ -19,7 +19,7 @@
       <slot></slot>
     </v-card-text>
     
-    <v-card-actions v-if="$slots.actions">
+    <v-card-actions v-if="$slots.actions" class="card-gap">
       <slot name="actions"></slot>
     </v-card-actions>
   </v-card>
@@ -48,9 +48,23 @@ withDefaults(defineProps<Props>(), {
 <style scoped>
 .base-card {
   transition: box-shadow 0.2s ease-in-out;
+  padding: var(--space-md);
 }
- 
+
+.base-card :deep(.v-card-item) {
+  padding-inline-start: var(--space-md);
+  padding-inline-end: var(--space-md);
+}
+
+.base-card :deep(.v-card-text) {
+  padding: var(--space-md);
+}
+
+.base-card :deep(.v-card-actions) {
+  padding: var(--space-sm) var(--space-md);
+}
+
 .base-card.clickable:hover {
-  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important; /* Lighter hover shadow */
+  box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
 }
 </style>

@@ -1,5 +1,5 @@
 <template>
-  <v-card variant="outlined" :class="['appointment-list-card', { 'mt-4': !isFirstComponent }]">
+  <v-card variant="outlined" class="appointment-list-card">
     <v-card-title class="d-flex align-center py-3 px-4 border-bottom">
       <v-icon icon="mdi-calendar-clock" class="mr-2" color="primary" />
       <span class="text-overline font-weight-black letter-spacing-1">Appointments</span>

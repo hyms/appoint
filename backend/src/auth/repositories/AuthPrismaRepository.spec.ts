@@ -61,7 +61,9 @@ describe('AuthPrismaRepository', () => {
     it('should return null when user not found', async () => {
       prismaService.user.findUnique.mockResolvedValue(null);
 
-      const result = await repository.findUnique({ where: { id: 'nonexistent' } });
+      const result = await repository.findUnique({
+        where: { id: 'nonexistent' },
+      });
 
       expect(result).toBeNull();
     });
@@ -85,8 +87,12 @@ describe('AuthPrismaRepository', () => {
     it('should validate token and clear it', async () => {
       const token = 'valid-token';
       const futureDate = new Date(Date.now() + 3600000);
-      
-      prismaService.user.findFirst.mockResolvedValue({ ...mockUser, magicToken: token, magicExpiresAt: futureDate });
+
+      prismaService.user.findFirst.mockResolvedValue({
+        ...mockUser,
+        magicToken: token,
+        magicExpiresAt: futureDate,
+      });
       prismaService.user.update.mockResolvedValue(mockUser);
 
       const result = await repository.validateMagicLinkToken(token);
@@ -142,7 +148,6 @@ describe('AuthPrismaRepository', () => {
       const result = await repository.findUsers();
 
       expect(result).toHaveLength(1);
-
     });
 
     it('should filter users by role', async () => {
@@ -181,7 +186,11 @@ describe('AuthPrismaRepository', () => {
       prismaService.user.findUnique.mockResolvedValue(mockUser);
       prismaService.user.update.mockResolvedValue(updatedUser);
 
-      const result = await repository.updateUser('user-1', { email: 'new@test.com' }, {});
+      const result = await repository.updateUser(
+        'user-1',
+        { email: 'new@test.com' },
+        {},
+      );
 
       expect(result).toBeDefined();
     });

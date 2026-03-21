@@ -1,16 +1,14 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  UserRole,
-  User,
-  Profile,
-  Prisma,
-} from '@prisma/client';
+import { UserRole, User, Profile, Prisma } from '@prisma/client';
 import { RegisterDto } from '../dto/auth.dto';
 
 // Define the structure for the sanitized response based on AuthService.sanitizeUser
-export type SanitizedUser = Omit<User, 'passwordHash' | 'magicToken' | 'magicExpiresAt'> & {
-    profile?: Omit<Profile, 'userId'> | null;
+export type SanitizedUser = Omit<
+  User,
+  'passwordHash' | 'magicToken' | 'magicExpiresAt'
+> & {
+  profile?: Omit<Profile, 'userId'> | null;
 };
 
 @Injectable()
@@ -18,13 +16,15 @@ export class AuthPrismaRepository {
   constructor(private prisma: PrismaService) {}
 
   // --- User Creation & Registration ---
-  async findUnique(
-    args: Prisma.UserFindUniqueArgs,
-  ): Promise<User | null> {
+  async findUnique(args: Prisma.UserFindUniqueArgs): Promise<User | null> {
     return this.prisma.user.findUnique(args);
   }
 
-  async create(data: Prisma.UserCreateInput & { profile: Prisma.ProfileCreateWithoutUserInput }): Promise<User & { profile: Profile | null }> {
+  async create(
+    data: Prisma.UserCreateInput & {
+      profile: Prisma.ProfileCreateWithoutUserInput;
+    },
+  ): Promise<User & { profile: Profile | null }> {
     const user = await this.prisma.user.create({
       data: {
         email: data.email,
@@ -41,7 +41,9 @@ export class AuthPrismaRepository {
   }
 
   // --- Login & Magic Link Validation ---
-  async findUserForLogin(email: string): Promise<(User & { profile: Profile | null }) | null> {
+  async findUserForLogin(
+    email: string,
+  ): Promise<(User & { profile: Profile | null }) | null> {
     return this.prisma.user.findUnique({
       where: { email },
       include: { profile: true },
@@ -93,7 +95,9 @@ export class AuthPrismaRepository {
     return users.map(this.sanitizeUser);
   }
 
-  async findProfessionals(): Promise<Array<{ id: string; email: string; firstName?: string; lastName?: string }>> {
+  async findProfessionals(): Promise<
+    Array<{ id: string; email: string; firstName?: string; lastName?: string }>
+  > {
     const users = await this.prisma.user.findMany({
       where: { role: 'PROFESSIONAL' },
       include: { profile: true },
@@ -109,26 +113,30 @@ export class AuthPrismaRepository {
   }
 
   // --- Update & Delete ---
-  async updateUser(id: string, updateData: Prisma.UserUpdateInput, profileData: Prisma.ProfileUpdateInput): Promise<SanitizedUser | null> {
+  async updateUser(
+    id: string,
+    updateData: Prisma.UserUpdateInput,
+    profileData: Prisma.ProfileUpdateInput,
+  ): Promise<SanitizedUser | null> {
     const existingUser = await this.prisma.user.findUnique({
-        where: { id },
-        include: { profile: true },
+      where: { id },
+      include: { profile: true },
     });
 
     if (!existingUser) {
-        return null;
+      return null;
     }
-    
+
     const update: Prisma.UserUpdateArgs['data'] = { ...updateData };
-    
+
     if (Object.keys(profileData).length > 0) {
-        update.profile = { update: profileData };
+      update.profile = { update: profileData };
     }
 
     const user = await this.prisma.user.update({
-        where: { id },
-        data: update,
-        include: { profile: true },
+      where: { id },
+      data: update,
+      include: { profile: true },
     });
 
     return this.sanitizeUser(user);
@@ -137,7 +145,7 @@ export class AuthPrismaRepository {
   async deleteUser(id: string): Promise<User | null> {
     const existingUser = await this.prisma.user.findUnique({ where: { id } });
     if (!existingUser) {
-        return null;
+      return null;
     }
     return this.prisma.user.delete({ where: { id } });
   }

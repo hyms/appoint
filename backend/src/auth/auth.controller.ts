@@ -69,16 +69,43 @@ export class AuthController {
     return this.authService.sendMagicLink(magicLinkDto, clientIp);
   }
 
-   @Post('magic-link/validate')
+  @Post('magic-link/validate')
   @HttpCode(HttpStatus.OK)
   async validateMagicLink(@Body() dto: ValidateMagicLinkDto) {
     return this.authService.validateMagicLink(dto.token);
   }
 
+  @Post('request-telegram-auth')
+  @HttpCode(HttpStatus.OK)
+  @Throttle({ 'telegram-link': { limit: 3, ttl: 60000 } })
+  async requestTelegramAuth(
+    @Body() magicLinkDto: MagicLinkDto,
+    @Ip() ip: string,
+    @Req() req: Request,
+  ) {
+    const clientIp =
+      (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
+    return this.authService.requestTelegramAuth(magicLinkDto, clientIp);
+  }
+
+  @Get('telegram/validate')
+  @HttpCode(HttpStatus.OK)
+  async validateTelegramAuth(@Query('token') token: string) {
+    return this.authService.validateTelegramToken(token);
+  }
+
   @Get('me')
   @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
   async getCurrentUser(@CurrentUser() user: any) {
     return user;
+  }
+
+  @Get('one-signal-player-id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async getOneSignalPlayerId(@CurrentUser() user: any) {
+    return this.authService.getOneSignalPlayerId(user.id);
   }
 
   @Post('one-signal-id')

@@ -69,7 +69,7 @@ const itemTo = computed(() => props.hasAction ? `/appointments/${props.appointme
 <style scoped>
 .appointment-list-item {
   transition: background-color 0.2s ease;
-  border-bottom: 1px solid rgba(var(--v-border-color), 0.08);
+  border-bottom: none !important; /* Handled by parent V-List or container spacing */
 }
 
 .appointment-list-item:hover {

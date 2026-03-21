@@ -11,14 +11,23 @@ import { ConfigService } from '@nestjs/config';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
 
-import { AuthPrismaRepository, SanitizedUser } from './repositories/AuthPrismaRepository';
+import {
+  AuthPrismaRepository,
+  SanitizedUser,
+} from './repositories/AuthPrismaRepository';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { AuthorizationService } from '../common/services/authorization.service';
 import { AppConfigService } from '../config/config.service';
 import { NotificationProviderService } from '../notifications/services/notification-provider.service';
 import { ProviderType } from '../notifications/dto/notification.dto';
-import { RegisterDto, LoginDto, MagicLinkDto, UpdateUserDto } from './dto/auth.dto';
+import {
+  RegisterDto,
+  LoginDto,
+  MagicLinkDto,
+  UpdateUserDto,
+} from './dto/auth.dto';
 import { UserRole, NotificationType } from '@prisma/client';
+import { AuditService } from '../common/services/audit.service';
 
 type CreateUserData = {
   email: string;
@@ -44,10 +53,13 @@ export class AuthService {
     private readonly authorizationService: AuthorizationService,
     private readonly appConfigService: AppConfigService,
     private readonly notificationService: NotificationProviderService,
+    private readonly auditService: AuditService,
   ) {}
 
   // --- 1. Registration ---
-  async register(registerDto: RegisterDto): Promise<{ user: SanitizedUser; token: string; refreshToken: string }> {
+  async register(
+    registerDto: RegisterDto,
+  ): Promise<{ user: SanitizedUser; token: string; refreshToken: string }> {
     const existingUser = await this.authPrismaRepository.findUnique({
       where: { email: registerDto.email },
     });
@@ -61,7 +73,7 @@ export class AuthService {
       email: registerDto.email,
       phone: registerDto.phone,
       passwordHash: hashedPassword,
-      role: registerDto.role as UserRole || UserRole.PATIENT,
+      role: (registerDto.role as UserRole) || UserRole.PATIENT,
       isActive: true,
       profile: {
         create: {
@@ -71,7 +83,10 @@ export class AuthService {
       },
     };
 
-    const newUser = await this.authPrismaRepository.create({ data, include: { profile: true } } as any);
+    const newUser = await this.authPrismaRepository.create({
+      data,
+      include: { profile: true },
+    } as any);
     const token = this.generateToken(newUser.id, newUser.email, newUser.role);
     const refreshToken = this.generateRefreshToken(newUser.id);
 
@@ -93,15 +108,21 @@ export class AuthService {
   }
 
   // --- 2. Login ---
-  async login(loginDto: LoginDto, ipAddress: string): Promise<{ user: SanitizedUser; access_token: string }> {
+  async login(
+    loginDto: LoginDto,
+    ipAddress: string,
+  ): Promise<{ user: SanitizedUser; access_token: string }> {
     if (this.bruteForceProtection.isBlocked(ipAddress)) {
-      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      const remainingSeconds =
+        this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
       throw new ForbiddenException(
         `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`,
       );
     }
 
-    const user = await this.authPrismaRepository.findUserForLogin(loginDto.email);
+    const user = await this.authPrismaRepository.findUserForLogin(
+      loginDto.email,
+    );
 
     if (!user) {
       this.bruteForceProtection.recordFailedAttempt(ipAddress);
@@ -116,12 +137,18 @@ export class AuthService {
       throw new UnauthorizedException('Use magic link authentication');
     }
 
-    const isPasswordValid = await bcrypt.compare(loginDto.password, user.passwordHash);
+    const isPasswordValid = await bcrypt.compare(
+      loginDto.password,
+      user.passwordHash,
+    );
 
     if (!isPasswordValid) {
       this.bruteForceProtection.recordFailedAttempt(ipAddress);
-      const remainingAttempts = this.bruteForceProtection.getRemainingAttempts(ipAddress);
-      throw new UnauthorizedException(`Invalid credentials. ${remainingAttempts} attempts remaining.`);
+      const remainingAttempts =
+        this.bruteForceProtection.getRemainingAttempts(ipAddress);
+      throw new UnauthorizedException(
+        `Invalid credentials. ${remainingAttempts} attempts remaining.`,
+      );
     }
 
     this.bruteForceProtection.clearAttempts(ipAddress);
@@ -143,10 +170,14 @@ export class AuthService {
     return { user: this.sanitizeUser(user), access_token: token };
   }
 
-  // --- 3. Magic Link Flow ---
-  async sendMagicLink(magicLinkDto: MagicLinkDto, ipAddress: string): Promise<{ message: string }> {
+  // --- 3. Magic Link Flow (Email) ---
+  async sendMagicLink(
+    magicLinkDto: MagicLinkDto,
+    ipAddress: string,
+  ): Promise<{ message: string }> {
     if (this.bruteForceProtection.isBlocked(ipAddress)) {
-      const remainingSeconds = this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
+      const remainingSeconds =
+        this.bruteForceProtection.getBlockTimeRemaining(ipAddress);
       throw new ForbiddenException(
         `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`,
       );
@@ -171,9 +202,15 @@ export class AuthService {
     }
 
     const token = this.generateRandomToken();
-    const expiry = new Date(Date.now() + this.appConfigService.magicLinkExpiryMinutes * 60 * 1000);
+    const expiry = new Date(
+      Date.now() + this.appConfigService.magicLinkExpiryMinutes * 60 * 1000,
+    );
 
-    await this.authPrismaRepository.updateUser(user.id, { magicToken: token, magicExpiresAt: expiry }, {});
+    await this.authPrismaRepository.updateUser(
+      user.id,
+      { magicToken: token, magicExpiresAt: expiry },
+      {},
+    );
 
     const magicLink = `${this.appConfigService.frontendUrl}/auth/magic?token=${token}`;
     await this.sendMagicLinkNotification(user, magicLink);
@@ -181,7 +218,11 @@ export class AuthService {
     return { message: 'Magic link sent successfully.' };
   }
 
-  async validateMagicLink(token: string): Promise<{ user: SanitizedUser; access_token: string; refreshToken: string }> {
+  async validateMagicLink(token: string): Promise<{
+    user: SanitizedUser;
+    access_token: string;
+    refreshToken: string;
+  }> {
     const user = await this.authPrismaRepository.validateMagicLinkToken(token);
 
     if (!user) {
@@ -195,11 +236,107 @@ export class AuthService {
     const jwtToken = this.generateToken(user.id, user.email, user.role);
     const refreshToken = this.generateRefreshToken(user.id);
 
-    return { user: this.sanitizeUser(user), access_token: jwtToken, refreshToken };
+    return {
+      user: this.sanitizeUser(user),
+      access_token: jwtToken,
+      refreshToken,
+    };
+  }
+
+  // --- Telegram Auth Flow ---
+  async requestTelegramAuth(
+    magicLinkDto: MagicLinkDto,
+    ipAddress: string,
+  ): Promise<{ message: string }> {
+    const clientIp = ipAddress; // From @Ip() decorator
+
+    if (this.bruteForceProtection.isBlocked(clientIp)) {
+      const remainingSeconds =
+        this.bruteForceProtection.getBlockTimeRemaining(clientIp);
+      throw new ForbiddenException(
+        `Too many failed attempts. Please try again in ${Math.ceil(remainingSeconds / 60)} minutes.`,
+      );
+    }
+
+    const user = await this.authPrismaRepository.findUnique({
+      where: { phone: magicLinkDto.phone },
+      include: { profile: true },
+    });
+
+    if (!user || user.role !== UserRole.PATIENT) {
+      this.bruteForceProtection.recordFailedAttempt(clientIp);
+      throw new BadRequestException('User not found or not a patient.');
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (user.passwordHash) {
+      throw new BadRequestException('Account has a password. Use login.');
+    }
+
+    const token = this.generateRandomToken();
+    const expiry = new Date(
+      Date.now() + this.appConfigService.magicLinkExpiryMinutes * 60 * 1000,
+    );
+
+    await this.authPrismaRepository.updateUser(
+      user.id,
+      { magicToken: token, magicExpiresAt: expiry },
+      {},
+    );
+
+    await this.sendTelegramAuthNotification(user, token);
+
+    return { message: 'Authentication request processed. Check Telegram.' };
+  }
+
+  async validateTelegramToken(token: string): Promise<{
+    user: SanitizedUser;
+    access_token: string;
+    refreshToken: string;
+  }> {
+    const user = await this.authPrismaRepository.validateMagicLinkToken(token);
+
+    if (!user) {
+      throw new UnauthorizedException(
+        'Invalid or expired authentication token.',
+      );
+    }
+
+    if (!user.isActive) {
+      throw new UnauthorizedException('Account is deactivated');
+    }
+
+    if (!user.telegramChatId) {
+      throw new ForbiddenException(
+        'Telegram Chat ID not linked to user account.',
+      );
+    }
+
+    const jwtToken = this.generateToken(user.id, user.email, user.role);
+    const refreshToken = this.generateRefreshToken(user.id);
+
+    await this.auditService.logUserChange(
+      user.id,
+      'USER_AUTHENTICATED_TELEGRAM',
+      { ip: 'unknown' },
+      user.id,
+      user.role,
+    );
+
+    return {
+      user: this.sanitizeUser(user),
+      access_token: jwtToken,
+      refreshToken,
+    };
   }
 
   // --- 4. Refresh Token ---
-  async refreshToken(token: string): Promise<{ user: SanitizedUser; token: string; refreshToken: string }> {
+  async refreshToken(
+    token: string,
+  ): Promise<{ user: SanitizedUser; token: string; refreshToken: string }> {
     try {
       const { sub } = this.jwtService.verify(token);
       const user = await this.authPrismaRepository.findUserById(sub);
@@ -211,7 +348,11 @@ export class AuthService {
       const newToken = this.generateToken(user.id, user.email, user.role);
       const newRefreshToken = this.generateRefreshToken(user.id);
 
-      return { user: this.sanitizeUser(user), token: newToken, refreshToken: newRefreshToken };
+      return {
+        user: this.sanitizeUser(user),
+        token: newToken,
+        refreshToken: newRefreshToken,
+      };
     } catch {
       throw new UnauthorizedException('Invalid or expired refresh token.');
     }
@@ -222,7 +363,10 @@ export class AuthService {
     const user = await this.authPrismaRepository.findUserById(userId);
     if (!user) throw new NotFoundException('User not found');
 
-    if (userId !== user.id && !this.authorizationService.canViewAllUsers(user.role)) {
+    if (
+      userId !== user.id &&
+      !this.authorizationService.canViewAllUsers(user.role)
+    ) {
       throw new ForbiddenException('Access denied to user data.');
     }
 
@@ -234,7 +378,9 @@ export class AuthService {
     if (!requester) throw new NotFoundException('Requester not found');
 
     if (!this.authorizationService.canViewAllUsers(requester.role)) {
-      throw new ForbiddenException('Insufficient permissions to view all users.');
+      throw new ForbiddenException(
+        'Insufficient permissions to view all users.',
+      );
     }
 
     const users = await this.authPrismaRepository.findUsers();
@@ -265,18 +411,25 @@ export class AuthService {
       },
     };
 
-    const newUser = await this.authPrismaRepository.create({ data, include: { profile: true } } as any);
+    const newUser = await this.authPrismaRepository.create({
+      data,
+      include: { profile: true },
+    } as any);
     await this.sendWelcomeEmail(newUser);
 
     return this.sanitizeUser(newUser);
   }
 
-  async updateUser(id: string, updateUserDto: UpdateUserDto): Promise<SanitizedUser> {
+  async updateUser(
+    id: string,
+    updateUserDto: UpdateUserDto,
+  ): Promise<SanitizedUser> {
     const existingUser = await this.authPrismaRepository.findUserById(id);
     if (!existingUser) {
       throw new NotFoundException('User not found');
     }
 
+    const changes: Record<string, any> = {};
     if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
       const emailExists = await this.authPrismaRepository.findUnique({
         where: { email: updateUserDto.email },
@@ -284,50 +437,143 @@ export class AuthService {
       if (emailExists) {
         throw new ConflictException('Email already in use');
       }
+      changes.email = updateUserDto.email;
     }
+    if (updateUserDto.phone) changes.phone = updateUserDto.phone;
+    if (updateUserDto.role) changes.role = updateUserDto.role;
+    if (updateUserDto.isActive !== undefined)
+      changes.isActive = updateUserDto.isActive;
+    if (updateUserDto.oneSignalPlayerId)
+      changes.oneSignalPlayerId = updateUserDto.oneSignalPlayerId;
 
     const profileData: Record<string, any> = {};
-    if (updateUserDto.firstName) profileData.firstName = updateUserDto.firstName;
+    if (updateUserDto.firstName)
+      profileData.firstName = updateUserDto.firstName;
     if (updateUserDto.lastName) profileData.lastName = updateUserDto.lastName;
     if (updateUserDto.dni) profileData.dni = updateUserDto.dni;
 
-    const updateData: Record<string, any> = {};
-    if (updateUserDto.email) updateData.email = updateUserDto.email;
-    if (updateUserDto.phone) updateData.phone = updateUserDto.phone;
-    if (updateUserDto.role) updateData.role = updateUserDto.role;
-    if (updateUserDto.isActive !== undefined) updateData.isActive = updateUserDto.isActive;
-    if (updateUserDto.oneSignalPlayerId) updateData.oneSignalPlayerId = updateUserDto.oneSignalPlayerId;
+    const updatedUser = await this.authPrismaRepository.updateUser(
+      id,
+      changes,
+      profileData,
+    );
 
-    const updatedUser = await this.authPrismaRepository.updateUser(id, updateData, profileData);
+    // --- AUDIT STEP ---
+    if (
+      Object.keys(changes).length > 0 ||
+      Object.keys(profileData).length > 0
+    ) {
+      await this.auditService.logUserChange(
+        id,
+        'USER_PROFILE_UPDATED',
+        {
+          updates: changes,
+          profileUpdates: profileData,
+        },
+        id,
+        existingUser.role,
+      );
+    }
+
     return this.sanitizeUser(updatedUser);
   }
 
-  async deleteUser(id: string, requesterId: string): Promise<{ success: boolean }> {
+  async deleteUser(
+    id: string,
+    requesterId: string,
+  ): Promise<{ success: boolean }> {
     const userToDelete = await this.authPrismaRepository.findUserById(id);
     if (!userToDelete) throw new NotFoundException('User not found');
 
     const requester = await this.authPrismaRepository.findUserById(requesterId);
     if (!requester) throw new NotFoundException('Requester not found');
 
-    if (!this.authorizationService.canManageUsers(requester.role) || (userToDelete.role === UserRole.ADMIN && requester.role !== UserRole.ADMIN)) {
+    if (
+      !this.authorizationService.canManageUsers(requester.role) ||
+      (userToDelete.role === UserRole.ADMIN &&
+        requester.role !== UserRole.ADMIN)
+    ) {
       throw new ForbiddenException('Cannot delete or block this user.');
     }
+
+    await this.auditService.logUserChange(
+      id,
+      'USER_DELETED',
+      {
+        reason: `Deleted by ${requesterId}`,
+      },
+      requesterId,
+      requester.role,
+    );
 
     await this.authPrismaRepository.deleteUser(id);
     return { success: true };
   }
 
-  async updatePlayerId(userId: string, playerId: string): Promise<{ success: boolean }> {
-    await this.authPrismaRepository.updateUser(userId, { oneSignalPlayerId: playerId }, {});
+  async getOneSignalPlayerId(
+    userId: string,
+  ): Promise<{ playerId: string | null }> {
+    const user = await this.authPrismaRepository.findUserById(userId);
+    if (!user) throw new NotFoundException('User not found');
+
+    return { playerId: user.oneSignalPlayerId };
+  }
+
+  async updatePlayerId(
+    userId: string,
+    playerId: string,
+  ): Promise<{ success: boolean }> {
+    const oldUser = await this.authPrismaRepository.findUserById(userId);
+    if (!oldUser) throw new NotFoundException('User not found');
+
+    await this.authPrismaRepository.updateUser(
+      userId,
+      { oneSignalPlayerId: playerId },
+      {},
+    );
+
+    // --- AUDIT STEP ---
+    await this.auditService.logUserChange(
+      userId,
+      'ONESIGNAL_PLAYER_ID_UPDATED',
+      {
+        oldPlayerId: oldUser.oneSignalPlayerId,
+        newPlayerId: playerId,
+      },
+      userId,
+      oldUser.role,
+    );
+
     return { success: true };
   }
 
-  async updateTelegramChatId(userId: string, telegramChatId: string): Promise<{ success: boolean }> {
+  async updateTelegramChatId(
+    userId: string,
+    telegramChatId: string,
+  ): Promise<{ success: boolean }> {
+    const oldUser = await this.authPrismaRepository.findUserById(userId);
+    if (!oldUser) throw new NotFoundException('User not found');
+
     await this.authPrismaRepository.updateUser(userId, { telegramChatId }, {});
+
+    // --- AUDIT STEP ---
+    await this.auditService.logUserChange(
+      userId,
+      'TELEGRAM_CHAT_ID_UPDATED',
+      {
+        oldChatId: oldUser.telegramChatId,
+        newChatId: telegramChatId,
+      },
+      userId,
+      oldUser.role,
+    );
+
     return { success: true };
   }
 
-  async getProfessionals(): Promise<Array<{ id: string; email: string; firstName?: string; lastName?: string }>> {
+  async getProfessionals(): Promise<
+    Array<{ id: string; email: string; firstName?: string; lastName?: string }>
+  > {
     return this.authPrismaRepository.findProfessionals();
   }
 
@@ -352,8 +598,12 @@ export class AuthService {
   private generateRefreshToken(userId: string): string {
     const payload = { sub: userId };
     return this.jwtService.sign(payload, {
-      secret: this.configService.get<string>('JWT_REFRESH_SECRET') || this.configService.get<string>('JWT_SECRET'),
-      expiresIn: this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as any || '7d',
+      secret:
+        this.configService.get<string>('JWT_REFRESH_SECRET') ||
+        this.configService.get<string>('JWT_SECRET'),
+      expiresIn:
+        (this.configService.get<string>('JWT_REFRESH_EXPIRES_IN') as any) ||
+        '7d',
     });
   }
 
@@ -369,7 +619,7 @@ export class AuthService {
   // --- Notification Helpers ---
   private async sendWelcomeEmail(user: any): Promise<void> {
     const firstName = user.profile?.firstName || 'User';
-    const content = `Welcome to Appointments 360!\n\nHello ${firstName},\n\nYour account has been created successfully.\n\nBest regards,\nAppointments 360`;
+    const content = `Welcome to Appointments 360!\n\nHello ${firstName},\n\nYour account has been successfully created.\n\nBest regards,\nAppointments 360`;
 
     await this.notificationService.sendNotification({
       userId: user.id,
@@ -381,7 +631,10 @@ export class AuthService {
     });
   }
 
-  private async sendMagicLinkNotification(user: any, magicLink: string): Promise<void> {
+  private async sendMagicLinkNotification(
+    user: any,
+    magicLink: string,
+  ): Promise<void> {
     const content = `Your Magic Link\n\nClick the link below to sign in:\n${magicLink}\n\nThis link expires in ${this.appConfigService.magicLinkExpiryMinutes} minutes.\n\nIf you didn't request this, please ignore this message.`;
 
     await this.notificationService.sendNotification({
@@ -403,5 +656,21 @@ export class AuthService {
         provider: ProviderType.TELEGRAM,
       });
     }
+  }
+
+  private async sendTelegramAuthNotification(
+    user: any,
+    token: string,
+  ): Promise<void> {
+    const content = `[Appointments 360] Your authentication code is: ${token}\n\nThis code is valid for ${this.appConfigService.magicLinkExpiryMinutes} minutes.\n\nIf you did not request this, please ignore this message.`;
+
+    await this.notificationService.sendNotification({
+      userId: user.id,
+      type: NotificationType.MAGIC_LINK,
+      recipient: user.telegramChatId!,
+      subject: undefined,
+      content,
+      provider: ProviderType.TELEGRAM,
+    });
   }
 }

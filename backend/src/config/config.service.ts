@@ -38,6 +38,10 @@ export class AppConfigService {
     return process.env.TELEGRAM_BOT_TOKEN;
   }
 
+  get telegramTestChatId(): string | undefined {
+    return process.env.TELEGRAM_TEST_CHAT_ID;
+  }
+
   get smtpHost(): string | undefined {
     return process.env.SMTP_HOST;
   }
@@ -52,6 +56,22 @@ export class AppConfigService {
 
   get smtpPass(): string | undefined {
     return process.env.SMTP_PASS;
+  }
+
+  get twilioAccountSid(): string | undefined {
+    return process.env.TWILIO_ACCOUNT_SID;
+  }
+
+  get twilioAuthToken(): string | undefined {
+    return process.env.TWILIO_AUTH_TOKEN;
+  }
+
+  get twilioFromNumber(): string | undefined {
+    return process.env.TWILIO_FROM_NUMBER;
+  }
+
+  get twilioTestToNumber(): string | undefined {
+    return process.env.TWILIO_TEST_TO_NUMBER;
   }
 
   getDatabaseUrl(): string | undefined {

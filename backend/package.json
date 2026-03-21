@@ -95,6 +95,9 @@
     "transform": {
       "^.+\\.(t|j)s$": "ts-jest"
     },
+    "transformIgnorePatterns": [
+      "node_modules/(?!(@prisma|@nestjs|uuid|date-fns|class-transform|class-validator|bcrypt|passport|@onesignal))"
+    ],
     "collectCoverageFrom": [
       "**/*.(t|j)s"
     ],

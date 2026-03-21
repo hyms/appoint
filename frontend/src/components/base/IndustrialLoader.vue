@@ -1,5 +1,5 @@
 <template>
-  <div class="app-loader text-center py-12">
+  <div class="app-loader text-center card-gap" v-bind="$attrs">
     <v-progress-circular
       indeterminate
       color="primary"
@@ -20,9 +20,10 @@ defineProps<{
 
 <style scoped>
 .app-loader {
-    user-select: none;
+  user-select: none;
+  padding: var(--space-lg);
 }
 .opacity-70 {
-    opacity: 0.7;
+  opacity: 0.7;
 }
 </style>

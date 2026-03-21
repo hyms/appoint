@@ -48,6 +48,7 @@ withDefaults(defineProps<Props>(), {
   text-transform: none;
   font-weight: 500;
   letter-spacing: 0.01em;
+  margin: var(--space-xs) 0;
 }
 
 .base-button.bg-primary,

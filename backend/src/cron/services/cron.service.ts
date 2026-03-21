@@ -20,7 +20,7 @@ export class CronService {
 
   private logInfo(message: string): void {
     if (!this.isProduction()) {
-      this.logInfo(message);
+      this.logger.log(message);
     }
   }
 

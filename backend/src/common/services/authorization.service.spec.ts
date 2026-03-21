@@ -22,14 +22,17 @@ describe('AuthorizationService', () => {
 
     it('should return false when user does not have permission', () => {
       expect(
-        service.hasPermission(UserRole.PATIENT, Permission.VIEW_ALL_APPOINTMENTS),
+        service.hasPermission(
+          UserRole.PATIENT,
+          Permission.VIEW_ALL_APPOINTMENTS,
+        ),
       ).toBe(false);
     });
 
     it('should return false for unknown role', () => {
-      expect(service.hasPermission('UNKNOWN', Permission.VIEW_ALL_APPOINTMENTS)).toBe(
-        false,
-      );
+      expect(
+        service.hasPermission('UNKNOWN', Permission.VIEW_ALL_APPOINTMENTS),
+      ).toBe(false);
     });
   });
 
@@ -101,7 +104,9 @@ describe('AuthorizationService', () => {
     });
 
     it('should return false for PROFESSIONAL', () => {
-      expect(service.canManageAllAppointments(UserRole.PROFESSIONAL)).toBe(false);
+      expect(service.canManageAllAppointments(UserRole.PROFESSIONAL)).toBe(
+        false,
+      );
     });
 
     it('should return false for PATIENT', () => {
@@ -239,13 +244,15 @@ describe('AuthorizationService', () => {
     });
 
     it('isAdminOrSecretaryOrProfessional should return true for all three roles', () => {
-      expect(service.isAdminOrSecretaryOrProfessional(UserRole.ADMIN)).toBe(true);
+      expect(service.isAdminOrSecretaryOrProfessional(UserRole.ADMIN)).toBe(
+        true,
+      );
       expect(service.isAdminOrSecretaryOrProfessional(UserRole.SECRETARY)).toBe(
         true,
       );
-      expect(service.isAdminOrSecretaryOrProfessional(UserRole.PROFESSIONAL)).toBe(
-        true,
-      );
+      expect(
+        service.isAdminOrSecretaryOrProfessional(UserRole.PROFESSIONAL),
+      ).toBe(true);
       expect(service.isAdminOrSecretaryOrProfessional(UserRole.PATIENT)).toBe(
         false,
       );
@@ -348,7 +355,11 @@ describe('AuthorizationService', () => {
 
     it('should return false for patient', () => {
       expect(
-        service.canUpdateAppointmentStatus(UserRole.PATIENT, 'patient-1', 'prof-1'),
+        service.canUpdateAppointmentStatus(
+          UserRole.PATIENT,
+          'patient-1',
+          'prof-1',
+        ),
       ).toBe(false);
     });
   });

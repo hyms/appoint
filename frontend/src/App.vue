@@ -167,11 +167,16 @@ const router = useRouter()
 const route = useRoute()
 const vuetify = useVuetify()
 const { isProfessional, isAdminOrSecretary } = useAuthorization()
-const { initOneSignal } = useOneSignal()
+const { initOneSignal, loginToOneSignal } = useOneSignal()
 
 onMounted(async () => {
   await authStore.initializeSession()
   await initOneSignal()
+  
+  if (authStore.isAuthenticated && authStore.user) {
+    // If session is already active (e.g., returning user with token), link OneSignal ID
+    await loginToOneSignal(authStore.user.id)
+  }
 })
 
 const drawerOpen = ref(true)

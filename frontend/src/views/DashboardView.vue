@@ -1,7 +1,7 @@
 <template>
-  <v-container fluid class="pa-4 pa-sm-8 max-width-xl mx-auto">
+  <BaseContainer class="pb-0">
     <!-- Header -->
-    <v-row class="mb-8">
+    <v-row class="mb-4">
       <v-col cols="12">
         <div class="d-flex align-end justify-space-between mb-2">
           <div>
@@ -30,13 +30,15 @@
     </v-row>
 
     <!-- Quick Actions -->
-    <DashboardQuickActions 
-      :is-admin-or-secretary="isAdminOrSecretary"
-      :is-professional="isProfessional"
-    />
+    <div class="card-gap">
+      <DashboardQuickActions 
+        :is-admin-or-secretary="isAdminOrSecretary"
+        :is-professional="isProfessional"
+      />
+    </div>
 
     <!-- Upcoming Appointments Section -->
-    <v-row>
+    <v-row class="section-gap">
       <v-col cols="12" lg="8">
         <AppointmentList
           :appointments="upcomingAppointments"
@@ -51,7 +53,7 @@
       
       <!-- Stats Sidebar or Additional Info -->
       <v-col cols="12" lg="4">
-        <v-card class="pa-6 fill-height d-flex flex-column justify-center align-center text-center rounded-xl" elevation="2">
+        <v-card class="fill-height d-flex flex-column justify-center align-center text-center rounded-xl" elevation="2" :style="{ padding: 'var(--space-xl)' }">
           <div class="text-h1 font-weight-black text-primary opacity-10 mb-n4">360</div>
           <div class="text-overline font-weight-bold mb-4">PLATFORM MONITOR</div>
           <v-icon icon="mdi-shield-check" size="64" color="success" class="mb-4" />
@@ -79,7 +81,7 @@
         </v-card>
       </v-col>
     </v-row>
-  </v-container>
+  </BaseContainer>
 </template>
 
 <script setup lang="ts">

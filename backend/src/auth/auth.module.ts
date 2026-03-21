@@ -7,7 +7,7 @@ import { AuthController } from './auth.controller';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthPrismaRepository } from './repositories/AuthPrismaRepository';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
-import { AuthorizationService } from '../common/services/authorization.service';
+import { CommonModule } from '../common/common.module';
 import { RolesGuard } from './guards/roles.guard';
 import { AppConfigService } from '../config/config.service';
 import { NotificationsModule } from '../notifications/notifications.module';
@@ -17,11 +17,15 @@ import { PrismaService } from '../prisma/prisma.service';
   imports: [
     PassportModule,
     NotificationsModule,
+    CommonModule,
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: async (configService: ConfigService) => ({
         secret: configService.get<string>('JWT_SECRET'),
-        signOptions: { expiresIn: configService.get<string>('JWT_EXPIRES_IN') as any || '1d' },
+        signOptions: {
+          expiresIn:
+            (configService.get<string>('JWT_EXPIRES_IN') as any) || '1d',
+        },
       }),
       inject: [ConfigService],
     }),
@@ -32,12 +36,10 @@ import { PrismaService } from '../prisma/prisma.service';
     JwtStrategy,
     AuthPrismaRepository,
     BruteForceProtectionService,
-    AuthorizationService,
     RolesGuard,
     AppConfigService,
     PrismaService,
   ],
-  exports: [AuthService, AuthPrismaRepository, AuthorizationService],
+  exports: [AuthService, AuthPrismaRepository],
 })
 export class AuthModule {}
-

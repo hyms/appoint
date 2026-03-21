@@ -1,17 +1,11 @@
 import { IsString, IsOptional, IsEnum } from 'class-validator';
-
-export enum NotificationType {
-  APPOINTMENT_REMINDER = 'APPOINTMENT_REMINDER',
-  APPOINTMENT_CONFIRMATION = 'APPOINTMENT_CONFIRMATION',
-  APPOINTMENT_CANCELLATION = 'APPOINTMENT_CANCELLATION',
-  MAGIC_LINK = 'MAGIC_LINK',
-  EMERGENCY_NOTIFICATION = 'EMERGENCY_NOTIFICATION',
-}
+import { NotificationType } from '@prisma/client';
 
 export enum ProviderType {
   WHATSAPP = 'WHATSAPP',
   TELEGRAM = 'TELEGRAM',
   EMAIL = 'EMAIL',
+  ONESIGNAL = 'ONESIGNAL',
 }
 
 export class SendNotificationDto {
@@ -34,6 +28,9 @@ export class SendNotificationDto {
   @IsOptional()
   @IsEnum(ProviderType)
   provider?: ProviderType;
+
+  @IsOptional()
+  data?: Record<string, any>;
 }
 
 export class SendBulkNotificationDto {

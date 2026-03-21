@@ -64,7 +64,9 @@ describe('ProfessionalConfigService', () => {
       const updateData = { slotDurationMinutes: 45 };
       const updatedConfig = { ...existingConfig, ...updateData };
 
-      prismaService.professionalConfig.findUnique.mockResolvedValue(existingConfig);
+      prismaService.professionalConfig.findUnique.mockResolvedValue(
+        existingConfig,
+      );
       prismaService.professionalConfig.update.mockResolvedValue(updatedConfig);
 
       const result = await service.updateConfig('prof-1', updateData);
@@ -107,16 +109,25 @@ describe('ProfessionalConfigService', () => {
     it('should update working hours', async () => {
       const existingConfig = { professionalId: 'prof-1' };
       const workingHours = [
-        { dayOfWeek: 'MONDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        {
+          dayOfWeek: 'MONDAY',
+          startTime: '09:00',
+          endTime: '17:00',
+          isActive: true,
+        },
       ];
 
-      prismaService.professionalConfig.findUnique.mockResolvedValue(existingConfig);
+      prismaService.professionalConfig.findUnique.mockResolvedValue(
+        existingConfig,
+      );
       prismaService.professionalConfig.update.mockResolvedValue({
         professionalId: 'prof-1',
         workingHours,
       });
 
-      const result = await service.updateConfig('prof-1', { workingHours } as any);
+      const result = await service.updateConfig('prof-1', {
+        workingHours,
+      } as any);
 
       expect(result).toBeDefined();
     });
@@ -127,7 +138,12 @@ describe('ProfessionalConfigService', () => {
       const config = {
         professionalId: 'prof-1',
         workingHours: [
-          { dayOfWeek: 'MONDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+          {
+            dayOfWeek: 'MONDAY',
+            startTime: '09:00',
+            endTime: '17:00',
+            isActive: true,
+          },
         ],
       };
       prismaService.professionalConfig.findUnique.mockResolvedValue(config);

@@ -33,7 +33,20 @@
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
 
-  --section-gap: 160px;
+  /* Industrial spacing system */
+  --space-unit: 4px;
+  --space-xs: calc(var(--space-unit) * 1);    /* 4px */
+  --space-sm: calc(var(--space-unit) * 2);    /* 8px */
+  --space-md: calc(var(--space-unit) * 4);    /* 16px */
+  --space-lg: calc(var(--space-unit) * 6);    /* 24px */
+  --space-xl: calc(var(--space-unit) * 8);    /* 32px */
+  --space-2xl: calc(var(--space-unit) * 12); /* 48px */
+  --space-3xl: calc(var(--space-unit) * 16); /* 64px */
+
+  /* Section spacing */
+  --section-gap: var(--space-2xl);            /* 48px - between major sections */
+  --container-padding: var(--space-md);       /* 16px - default container padding */
+  --card-gap: var(--space-md);                /* 16px - gap between cards */
 }
 
 @media (prefers-color-scheme: dark) {
@@ -83,4 +96,17 @@ body {
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+/* Utility classes for spacing */
+.section-gap {
+  margin-bottom: var(--section-gap);
+}
+
+.container-padding {
+  padding: var(--container-padding);
+}
+
+.card-gap {
+  margin-bottom: var(--card-gap);
 }

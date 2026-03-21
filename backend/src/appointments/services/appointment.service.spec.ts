@@ -108,7 +108,9 @@ describe('AppointmentsService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
     strikeService = module.get<StrikeService>(StrikeService);
     oneSignalService = module.get<OneSignalService>(OneSignalService);
-    notificationProviderService = module.get<NotificationProviderService>(NotificationProviderService);
+    notificationProviderService = module.get<NotificationProviderService>(
+      NotificationProviderService,
+    );
 
     jest.clearAllMocks();
   });
@@ -121,7 +123,10 @@ describe('AppointmentsService', () => {
         professionalId: 'doc-1',
         status: 'PENDING',
         patient: { oneSignalPlayerId: null, profile: { firstName: 'John' } },
-        professional: { oneSignalPlayerId: null, profile: { firstName: 'Dr. Smith' } },
+        professional: {
+          oneSignalPlayerId: null,
+          profile: { firstName: 'Dr. Smith' },
+        },
       };
 
       mockPrismaService.appointment.findUnique.mockResolvedValue(
@@ -203,8 +208,16 @@ describe('AppointmentsService', () => {
         professionalId: 'doc-1',
         status: 'PENDING',
         slotId: 'slot-1',
-        patient: { oneSignalPlayerId: 'patient-one-signal-id', email: 'patient@example.com', profile: { firstName: 'John' } },
-        professional: { oneSignalPlayerId: 'professional-one-signal-id', email: 'professional@example.com', profile: { lastName: 'Smith' } },
+        patient: {
+          oneSignalPlayerId: 'patient-one-signal-id',
+          email: 'patient@example.com',
+          profile: { firstName: 'John' },
+        },
+        professional: {
+          oneSignalPlayerId: 'professional-one-signal-id',
+          email: 'professional@example.com',
+          profile: { lastName: 'Smith' },
+        },
       };
 
       mockPrismaService.appointment.findUnique.mockResolvedValue(

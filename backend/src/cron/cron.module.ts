@@ -7,7 +7,12 @@ import { NotificationSettingsModule } from '../notification-settings/notificatio
 import { ConfigModule } from '../config/config.module';
 
 @Module({
-  imports: [ScheduleModule.forRoot(), NotificationsModule, NotificationSettingsModule, ConfigModule],
+  imports: [
+    ScheduleModule.forRoot(),
+    NotificationsModule,
+    NotificationSettingsModule,
+    ConfigModule,
+  ],
   providers: [CronService, PrismaService],
   exports: [CronService],
 })

@@ -13,7 +13,7 @@ export class NotificationSettingsController {
 
   @Get()
   async getSettings() {
-    return this.service.getSettings();
+    return this.service.getOrCreateSettings();
   }
 
   @Patch()
@@ -22,30 +22,17 @@ export class NotificationSettingsController {
   }
 
   @Post('test/telegram')
-  async testTelegram(@Body() body: { botToken: string; chatId: string }) {
-    return this.service.testTelegram(body.botToken, body.chatId);
+  async testTelegram() {
+    return this.service.testTelegram();
   }
 
   @Post('test/whatsapp')
-  async testWhatsApp(@Body() body: { phoneId: string; token: string }) {
-    return this.service.testWhatsApp(body.phoneId, body.token);
+  async testWhatsApp() {
+    return this.service.testWhatsapp();
   }
 
   @Post('test/sms')
-  async testSms(
-    @Body()
-    body: {
-      accountSid: string;
-      authToken: string;
-      fromNumber: string;
-      toNumber: string;
-    },
-  ) {
-    return this.service.testTwilio(
-      body.accountSid,
-      body.authToken,
-      body.fromNumber,
-      body.toNumber,
-    );
+  async testSms() {
+    return this.service.testSms();
   }
 }

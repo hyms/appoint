@@ -12,6 +12,7 @@ export interface INotificationProvider {
     recipient: string,
     content: string,
     subject?: string,
+    data?: Record<string, any>,
   ): Promise<SendResult>;
   isConfigured(): boolean;
 }

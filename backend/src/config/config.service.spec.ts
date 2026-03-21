@@ -194,7 +194,9 @@ describe('AppConfigService', () => {
 
     it('should return default when not set', () => {
       delete process.env.JWT_SECRET;
-      expect(service.getJwtSecret()).toBe('default-secret-change-in-production');
+      expect(service.getJwtSecret()).toBe(
+        'default-secret-change-in-production',
+      );
     });
   });
 

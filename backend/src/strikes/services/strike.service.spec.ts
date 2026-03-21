@@ -23,7 +23,7 @@ describe('StrikeService', () => {
       create: jest.fn(),
       update: jest.fn(),
       count: jest.fn(),
-      updateMany: jest.fn(), 
+      updateMany: jest.fn(),
     },
     appointment: {
       findMany: jest.fn(),
@@ -43,7 +43,7 @@ describe('StrikeService', () => {
     createdAt: new Date(),
     updatedAt: new Date(),
   });
- 
+
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -58,7 +58,7 @@ describe('StrikeService', () => {
     strikeService = module.get<StrikeService>(StrikeService);
     prismaService = module.get<PrismaService>(PrismaService);
 
-    jest.clearAllMocks(); 
+    jest.clearAllMocks();
     // Explicitly reset individual mocks here for every test
     mockPrismaService.user.findUnique.mockReset();
     mockPrismaService.strike.findFirst.mockReset();
@@ -79,9 +79,9 @@ describe('StrikeService', () => {
       const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
 
       mockPrismaService.user.findUnique
-        .mockResolvedValueOnce(mockProfessional) 
-        .mockResolvedValueOnce(mockPatient);    
-      
+        .mockResolvedValueOnce(mockProfessional)
+        .mockResolvedValueOnce(mockPatient);
+
       mockPrismaService.strike.findFirst.mockResolvedValue(null);
       mockPrismaService.strike.create.mockResolvedValue({
         id: 'strike-1',
@@ -95,7 +95,7 @@ describe('StrikeService', () => {
         patient: mockPatient,
         professional: mockProfessional,
       });
-      mockPrismaService.strike.count.mockResolvedValue(0); 
+      mockPrismaService.strike.count.mockResolvedValue(0);
 
       const result = await strikeService.createStrike('prof-1', {
         patientId: 'patient-1',
@@ -104,15 +104,15 @@ describe('StrikeService', () => {
 
       expect(result).toHaveProperty('id');
       expect(result.isActive).toBe(true);
-      expect(result.message).toContain('Strike recorded successfully'); 
+      expect(result.message).toContain('Strike recorded successfully');
     });
 
     it('should throw NotFoundException if patient not found', async () => {
       const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
       mockPrismaService.user.findUnique
-        .mockResolvedValueOnce(mockProfessional) 
-        .mockResolvedValueOnce(null);           
-      
+        .mockResolvedValueOnce(mockProfessional)
+        .mockResolvedValueOnce(null);
+
       await expect(
         strikeService.createStrike('prof-1', {
           patientId: 'non-existent',
@@ -124,16 +124,16 @@ describe('StrikeService', () => {
     it('should throw BadRequestException if patient already has active strike', async () => {
       const mockPatient = mockUser(UserRole.PATIENT, 'patient-1');
       const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
-      
+
       mockPrismaService.user.findUnique
-        .mockResolvedValueOnce(mockProfessional) 
-        .mockResolvedValueOnce(mockPatient);    
-        
+        .mockResolvedValueOnce(mockProfessional)
+        .mockResolvedValueOnce(mockPatient);
+
       mockPrismaService.strike.findFirst.mockResolvedValue({
         id: 'existing-strike',
         isActive: true,
       });
-      mockPrismaService.strike.count.mockResolvedValue(0); 
+      mockPrismaService.strike.count.mockResolvedValue(0);
 
       await expect(
         strikeService.createStrike('prof-1', {
@@ -144,76 +144,77 @@ describe('StrikeService', () => {
     });
 
     it('should throw BadRequestException if a recent strike exists', async () => {
-        const mockPatient = mockUser(UserRole.PATIENT, 'patient-1');
-        const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
+      const mockPatient = mockUser(UserRole.PATIENT, 'patient-1');
+      const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
 
-        mockPrismaService.user.findUnique
-            .mockResolvedValueOnce(mockProfessional) 
-            .mockResolvedValueOnce(mockPatient);    
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockProfessional)
+        .mockResolvedValueOnce(mockPatient);
 
-        mockPrismaService.strike.findFirst
-            .mockResolvedValueOnce(null) 
-            .mockResolvedValueOnce({    
-                id: 'recent-strike',
-                strikeDate: new Date(Date.now() - 30 * 60 * 1000), 
-            });
-        mockPrismaService.strike.count.mockResolvedValue(0); 
+      mockPrismaService.strike.findFirst
+        .mockResolvedValueOnce(null)
+        .mockResolvedValueOnce({
+          id: 'recent-strike',
+          strikeDate: new Date(Date.now() - 30 * 60 * 1000),
+        });
+      mockPrismaService.strike.count.mockResolvedValue(0);
 
-        await expect(
-            strikeService.createStrike('prof-1', {
-                patientId: 'patient-1',
-                reason: 'No-show',
-            }),
-        ).rejects.toThrow(BadRequestException);
+      await expect(
+        strikeService.createStrike('prof-1', {
+          patientId: 'patient-1',
+          reason: 'No-show',
+        }),
+      ).rejects.toThrow(BadRequestException);
     });
 
     it('should block the patient if they accumulate 3 or more strikes', async () => {
-        const mockPatient = mockUser(UserRole.PATIENT, 'patient-1');
-        const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
-        
-        mockPrismaService.user.findUnique
-            .mockResolvedValueOnce(mockProfessional) 
-            .mockResolvedValueOnce(mockPatient);    
-        mockPrismaService.strike.findFirst.mockResolvedValue(null);
-        mockPrismaService.strike.create.mockResolvedValue({
-            id: 'strike-3',
-            patientId: 'patient-1',
-            professionalId: 'prof-1',
-            reason: 'No-show',
-            isActive: true,
-            blockedUntil: null,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-            patient: mockPatient,
-            professional: mockProfessional,
-        });
-        // Simulate 3 active strikes (the one just created + 2 existing)
-        mockPrismaService.strike.count.mockResolvedValue(3); 
-        
-        mockPrismaService.strike.findMany.mockResolvedValueOnce([ // For blockPatientSlotsForProfessional
-            { professionalId: 'prof-1' } 
-        ]); 
-        mockPrismaService.strike.updateMany.mockResolvedValue({ count: 3 }); // For updating strikes
-        mockPrismaService.appointment.findMany.mockResolvedValue([]); 
-        mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 });
-        mockPrismaService.slot.updateMany.mockResolvedValue({ count: 0 });
+      const mockPatient = mockUser(UserRole.PATIENT, 'patient-1');
+      const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
 
-        const result = await strikeService.createStrike('prof-1', {
-            patientId: 'patient-1',
-            reason: 'No-show',
-        });
+      mockPrismaService.user.findUnique
+        .mockResolvedValueOnce(mockProfessional)
+        .mockResolvedValueOnce(mockPatient);
+      mockPrismaService.strike.findFirst.mockResolvedValue(null);
+      mockPrismaService.strike.create.mockResolvedValue({
+        id: 'strike-3',
+        patientId: 'patient-1',
+        professionalId: 'prof-1',
+        reason: 'No-show',
+        isActive: true,
+        blockedUntil: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        patient: mockPatient,
+        professional: mockProfessional,
+      });
+      // Simulate 3 active strikes (the one just created + 2 existing)
+      mockPrismaService.strike.count.mockResolvedValue(3);
 
-        expect(result).toHaveProperty('id');
-        expect(result.message).toContain('Strike recorded successfully');
-        expect(mockPrismaService.strike.updateMany).toHaveBeenCalledWith({
-            where: {
-                patientId: 'patient-1',
-                isActive: true,
-            },
-            data: {
-                blockedUntil: expect.any(Date),
-            },
-        });
+      mockPrismaService.strike.findMany.mockResolvedValueOnce([
+        // For blockPatientSlotsForProfessional
+        { professionalId: 'prof-1' },
+      ]);
+      mockPrismaService.strike.updateMany.mockResolvedValue({ count: 3 }); // For updating strikes
+      mockPrismaService.appointment.findMany.mockResolvedValue([]);
+      mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 });
+      mockPrismaService.slot.updateMany.mockResolvedValue({ count: 0 });
+
+      const result = await strikeService.createStrike('prof-1', {
+        patientId: 'patient-1',
+        reason: 'No-show',
+      });
+
+      expect(result).toHaveProperty('id');
+      expect(result.message).toContain('Strike recorded successfully');
+      expect(mockPrismaService.strike.updateMany).toHaveBeenCalledWith({
+        where: {
+          patientId: 'patient-1',
+          isActive: true,
+        },
+        data: {
+          blockedUntil: expect.any(Date),
+        },
+      });
     });
   });
 
@@ -242,7 +243,7 @@ describe('StrikeService', () => {
 
       mockPrismaService.strike.findMany.mockResolvedValue(mockStrikes);
 
-      const result = await strikeService.getMyStrikes('patient-1'); 
+      const result = await strikeService.getMyStrikes('patient-1');
 
       expect(result).toHaveLength(2);
       expect(mockPrismaService.strike.findMany).toHaveBeenCalledWith({
@@ -263,14 +264,14 @@ describe('StrikeService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
+
       mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike);
       mockPrismaService.strike.update.mockResolvedValue({
         ...mockStrike,
         isActive: false,
         blockedUntil: null,
       });
-      mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 }); 
+      mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 });
       mockPrismaService.slot.updateMany.mockResolvedValue({ count: 0 });
 
       const result = await strikeService.resolveStrike(
@@ -300,9 +301,11 @@ describe('StrikeService', () => {
         createdAt: new Date(),
         updatedAt: new Date(),
       };
-      
-      mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike); 
-      mockPrismaService.user.findUnique.mockResolvedValue(mockUser(UserRole.PROFESSIONAL, 'prof-1'));
+
+      mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike);
+      mockPrismaService.user.findUnique.mockResolvedValue(
+        mockUser(UserRole.PROFESSIONAL, 'prof-1'),
+      );
 
       await expect(
         strikeService.resolveStrike(
@@ -315,31 +318,31 @@ describe('StrikeService', () => {
     });
 
     it('should allow ADMIN to resolve any strike', async () => {
-        const mockStrike = {
-            id: 'strike-1',
-            patientId: 'patient-1',
-            professionalId: 'other-prof',
-            isActive: true,
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        };
-        mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike);
-        mockPrismaService.strike.update.mockResolvedValue({
-            ...mockStrike,
-            isActive: false,
-            blockedUntil: null,
-        });
-        mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 });
-        mockPrismaService.slot.updateMany.mockResolvedValue({ count: 0 });
+      const mockStrike = {
+        id: 'strike-1',
+        patientId: 'patient-1',
+        professionalId: 'other-prof',
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike);
+      mockPrismaService.strike.update.mockResolvedValue({
+        ...mockStrike,
+        isActive: false,
+        blockedUntil: null,
+      });
+      mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 0 });
+      mockPrismaService.slot.updateMany.mockResolvedValue({ count: 0 });
 
-        const result = await strikeService.resolveStrike(
-            'strike-1',
-            { resolution: 'Admin Override' },
-            'admin-user-id',
-            UserRole.ADMIN,
-        );
-        expect(result.isActive).toBe(false);
-        expect(result.message).toContain('resolved');
+      const result = await strikeService.resolveStrike(
+        'strike-1',
+        { resolution: 'Admin Override' },
+        'admin-user-id',
+        UserRole.ADMIN,
+      );
+      expect(result.isActive).toBe(false);
+      expect(result.message).toContain('resolved');
     });
   });
 
@@ -373,7 +376,7 @@ describe('StrikeService', () => {
     });
   });
 
-  describe('getPatientBlockStatus', () => { 
+  describe('getPatientBlockStatus', () => {
     it('should return blocked status and active strikes count', async () => {
       mockPrismaService.strike.count.mockResolvedValue(1);
       mockPrismaService.strike.findFirst.mockResolvedValue({
@@ -392,29 +395,29 @@ describe('StrikeService', () => {
     });
 
     it('should return not blocked if no active strike', async () => {
-        mockPrismaService.strike.count.mockResolvedValue(0);
-        mockPrismaService.strike.findFirst.mockResolvedValue(null);
+      mockPrismaService.strike.count.mockResolvedValue(0);
+      mockPrismaService.strike.findFirst.mockResolvedValue(null);
 
-        const result = await strikeService.getPatientBlockStatus('patient-1');
+      const result = await strikeService.getPatientBlockStatus('patient-1');
 
-        expect(result.blocked).toBe(false);
-        expect(result.activeStrikes).toBe(0);
-        expect(result.blockedUntil).toBeNull();
+      expect(result.blocked).toBe(false);
+      expect(result.activeStrikes).toBe(0);
+      expect(result.blockedUntil).toBeNull();
     });
   });
 
   describe('cancelUpcomingAppointmentsForBlockedPatient', () => {
     it('should cancel appointments for blocked patient', async () => {
-      mockPrismaService.strike.findFirst.mockResolvedValue({ 
-        id: 'strike-1', 
-        blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000), 
+      mockPrismaService.strike.findFirst.mockResolvedValue({
+        id: 'strike-1',
+        blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
         isActive: true,
         patientId: 'patient-1',
         professionalId: 'prof-1',
         createdAt: new Date(),
         updatedAt: new Date(),
       });
-      mockPrismaService.appointment.findMany.mockResolvedValue([ 
+      mockPrismaService.appointment.findMany.mockResolvedValue([
         { id: 'apt-1', slotId: 'slot-1' },
         { id: 'apt-2', slotId: 'slot-2' },
       ]);
@@ -448,8 +451,8 @@ describe('StrikeService', () => {
   describe('getStrikeStats', () => {
     it('should return statistics for a professional', async () => {
       mockPrismaService.strike.count
-        .mockResolvedValueOnce(10) 
-        .mockResolvedValueOnce(3); 
+        .mockResolvedValueOnce(10)
+        .mockResolvedValueOnce(3);
 
       const result = await strikeService.getStrikeStats('prof-1');
 

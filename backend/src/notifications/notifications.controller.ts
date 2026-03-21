@@ -1,13 +1,6 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Get,
-  Query,
-  UseGuards,
-  Inject,
-} from '@nestjs/common';
+import { Controller, Post, Body, Get, Query, UseGuards } from '@nestjs/common';
 import { NotificationProviderService } from './services/notification-provider.service';
+import { NotificationProviderRegistry } from './services/notification-provider.registry';
 import { PrismaService } from '../prisma/prisma.service';
 import {
   SendNotificationDto,
@@ -16,37 +9,33 @@ import {
 import { JwtAuthGuard } from '../auth/guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
-import { WhatsAppProvider } from './providers/whatsapp.provider';
-import { TelegramProvider } from './providers/telegram.provider';
-import { EmailProvider } from './providers/email.provider';
+import { UserRole } from '@prisma/client';
 
 @Controller('notifications')
 export class NotificationsController {
   constructor(
     private readonly notificationService: NotificationProviderService,
     private readonly prisma: PrismaService,
-    private readonly whatsappProvider: WhatsAppProvider,
-    private readonly telegramProvider: TelegramProvider,
-    private readonly emailProvider: EmailProvider,
+    private readonly registry: NotificationProviderRegistry,
   ) {}
 
   @Post('send')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY')
+  @Roles(UserRole.ADMIN, UserRole.SECRETARY)
   async sendNotification(@Body() dto: SendNotificationDto) {
     return this.notificationService.sendNotification(dto);
   }
 
   @Post('bulk')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY')
+  @Roles(UserRole.ADMIN, UserRole.SECRETARY)
   async sendBulkNotification(@Body() dto: SendBulkNotificationDto) {
     return { message: 'Bulk notifications queued' };
   }
 
   @Get('logs')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN', 'SECRETARY')
+  @Roles(UserRole.ADMIN, UserRole.SECRETARY)
   async getLogs(
     @Query('userId') userId?: string,
     @Query('status') status?: string,
@@ -64,24 +53,36 @@ export class NotificationsController {
 
   @Post('test/whatsapp')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(UserRole.ADMIN)
   async testWhatsApp(@Body() body: { phone: string; message: string }) {
-    return this.whatsappProvider.send(body.phone, body.message);
+    const provider = this.registry.get('WHATSAPP' as any);
+    if (!provider) {
+      return { success: false, error: 'WhatsApp provider not configured' };
+    }
+    return provider.send(body.phone, body.message);
   }
 
   @Post('test/telegram')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(UserRole.ADMIN)
   async testTelegram(@Body() body: { chatId: string; message: string }) {
-    return this.telegramProvider.send(body.chatId, body.message);
+    const provider = this.registry.get('TELEGRAM' as any);
+    if (!provider) {
+      return { success: false, error: 'Telegram provider not configured' };
+    }
+    return provider.send(body.chatId, body.message);
   }
 
   @Post('test/email')
   @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
+  @Roles(UserRole.ADMIN)
   async testEmail(
     @Body() body: { to: string; subject: string; message: string },
   ) {
-    return this.emailProvider.send(body.to, body.message, body.subject);
+    const provider = this.registry.get('EMAIL' as any);
+    if (!provider) {
+      return { success: false, error: 'Email provider not configured' };
+    }
+    return provider.send(body.to, body.message, body.subject);
   }
 }

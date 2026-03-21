@@ -1,12 +1,10 @@
 import { Injectable, Logger, BadRequestException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import {
-  SendNotificationDto,
-  NotificationType,
-  ProviderType,
-} from '../dto/notification.dto';
+import { NotificationType } from '@prisma/client';
+import { SendNotificationDto, ProviderType } from '../dto/notification.dto';
 import { NotificationProviderRegistry } from './notification-provider.registry';
 import { NotificationConfigService } from './notification-config.service';
+import { SendResult } from '../interfaces/notification-provider.interface';
 
 @Injectable()
 export class NotificationProviderService {
@@ -21,7 +19,7 @@ export class NotificationProviderService {
   async sendNotification(dto: SendNotificationDto) {
     const notification = await this.prisma.notificationLog.create({
       data: {
-        userId: dto.userId,
+        user: { connect: { id: dto.userId } },
         type: dto.type,
         recipient: dto.recipient,
         subject: dto.subject,
@@ -40,16 +38,17 @@ export class NotificationProviderService {
 
       if (!provider.isConfigured()) {
         this.logger.warn(
-          `Provider ${providerType} not configured, using fallback`,
+          `Provider ${providerType} not configured, using default/email fallback`,
         );
-        const fallbackProvider = this.registry.getDefault();
-        if (!fallbackProvider) {
+        const defaultProvider = this.registry.getDefault();
+        if (!defaultProvider) {
           throw new BadRequestException('No notification provider available');
         }
-        const fallbackResult = await fallbackProvider.send(
+        const fallbackResult = await defaultProvider.send(
           dto.recipient,
           dto.content,
           dto.subject,
+          dto.data,
         );
         return this.updateNotificationStatus(notification.id, fallbackResult);
       }
@@ -58,6 +57,7 @@ export class NotificationProviderService {
         dto.recipient,
         dto.content,
         dto.subject,
+        dto.data,
       );
 
       return this.updateNotificationStatus(notification.id, result);
@@ -91,20 +91,6 @@ export class NotificationProviderService {
     });
   }
 
-  async sendAppointmentReminder(appointment: any) {
-    const patient = appointment.patient;
-    const message = this.formatReminderMessage(appointment);
-
-    return this.sendNotification({
-      userId: patient.id,
-      type: NotificationType.APPOINTMENT_REMINDER,
-      recipient: patient.phone || patient.email,
-      subject: 'Appointment Reminder',
-      content: message,
-      provider: patient.phone ? ProviderType.WHATSAPP : ProviderType.EMAIL,
-    });
-  }
-
   private formatReminderMessage(appointment: any): string {
     const date = new Date(appointment.date).toLocaleDateString();
     const time = new Date(appointment.startTime).toLocaleTimeString([], {
@@ -133,16 +119,27 @@ Appointments 360
     `.trim();
   }
 
-  async sendConfirmation(appointment: any) {
-    const message = this.formatConfirmationMessage(appointment);
+  async sendAppointmentReminder(appointment: any) {
+    const message = this.formatReminderMessage(appointment);
 
     return this.sendNotification({
       userId: appointment.patientId,
-      type: NotificationType.APPOINTMENT_CONFIRMATION,
-      recipient: appointment.patient?.email,
-      subject: 'Appointment Confirmed',
+      type: NotificationType.APPOINTMENT_REMINDER,
+      recipient:
+        appointment.patient?.oneSignalPlayerId ||
+        appointment.patient?.email ||
+        appointment.patient?.phone,
+      subject: 'Appointment Reminder',
       content: message,
-      provider: ProviderType.EMAIL,
+      provider: appointment.patient?.oneSignalPlayerId
+        ? ProviderType.ONESIGNAL
+        : appointment.patient?.phone
+          ? ProviderType.WHATSAPP
+          : ProviderType.EMAIL,
+      data: {
+        appointmentId: appointment.id,
+        type: NotificationType.APPOINTMENT_REMINDER,
+      },
     });
   }
 
@@ -170,16 +167,27 @@ Appointments 360
     `.trim();
   }
 
-  async sendCancellationNotice(appointment: any, reason: string) {
-    const message = this.formatCancellationMessage(appointment, reason);
+  async sendConfirmation(appointment: any) {
+    const message = this.formatConfirmationMessage(appointment);
 
     return this.sendNotification({
       userId: appointment.patientId,
-      type: NotificationType.APPOINTMENT_CANCELLATION,
-      recipient: appointment.patient?.email,
-      subject: 'Appointment Cancelled',
+      type: NotificationType.APPOINTMENT_CONFIRMATION,
+      recipient:
+        appointment.patient?.oneSignalPlayerId ||
+        appointment.patient?.email ||
+        appointment.patient?.phone,
+      subject: 'Appointment Confirmed',
       content: message,
-      provider: ProviderType.EMAIL,
+      provider: appointment.patient?.oneSignalPlayerId
+        ? ProviderType.ONESIGNAL
+        : appointment.patient?.phone
+          ? ProviderType.WHATSAPP
+          : ProviderType.EMAIL,
+      data: {
+        appointmentId: appointment.id,
+        type: NotificationType.APPOINTMENT_CONFIRMATION,
+      },
     });
   }
 
@@ -191,29 +199,92 @@ Appointment Cancelled
 
 Dear ${appointment.patient?.profile?.firstName || 'Patient'},
 
-Your appointment scheduled for ${date} has been cancelled.
-
-Reason: ${reason}
-
-If you have any questions, please contact us.
-
-Appointments 360
+Your appointment scheduled for ${date} has been cancelled.\n\nReason: ${reason}\n\nIf you have any questions, please contact us.\n\nAppointments 360
     `.trim();
+  }
+
+  async sendCancellationNotice(appointment: any, reason: string) {
+    const message = this.formatCancellationMessage(appointment, reason);
+
+    return this.sendNotification({
+      userId: appointment.patientId,
+      type: NotificationType.APPOINTMENT_CANCELLATION,
+      recipient:
+        appointment.patient?.oneSignalPlayerId ||
+        appointment.patient?.email ||
+        appointment.patient?.phone,
+      subject: 'Appointment Cancelled',
+      content: message,
+      provider: appointment.patient?.oneSignalPlayerId
+        ? ProviderType.ONESIGNAL
+        : appointment.patient?.phone
+          ? ProviderType.WHATSAPP
+          : ProviderType.EMAIL,
+      data: {
+        appointmentId: appointment.id,
+        type: NotificationType.APPOINTMENT_CANCELLATION,
+        reason,
+      },
+    });
   }
 
   async sendEmergencyNotification(message: string, affectedPatients: any[]) {
     const results = [];
 
     for (const patient of affectedPatients) {
-      const result = await this.sendNotification({
-        userId: patient.id,
-        type: NotificationType.EMERGENCY_NOTIFICATION,
-        recipient: patient.email,
-        subject: 'Urgent Notice - Appointment Affected',
-        content: message,
-        provider: ProviderType.EMAIL,
-      });
-      results.push(result);
+      // Prioritize OneSignal if playerId is available
+      if (patient.oneSignalPlayerId) {
+        const oneSignalResult = await this.sendNotification({
+          userId: patient.id,
+          type: NotificationType.EMERGENCY_NOTIFICATION,
+          recipient: patient.oneSignalPlayerId,
+          subject: 'Urgent Notice - Appointment Affected',
+          content: message,
+          provider: ProviderType.ONESIGNAL,
+          data: { type: NotificationType.EMERGENCY_NOTIFICATION },
+        });
+        results.push(oneSignalResult);
+      }
+
+      // Fallback to other methods if OneSignal is not sent or not available, or as secondary notifications
+      if (!patient.oneSignalPlayerId) {
+        // Only send if OneSignal was not an option or not sent
+        const emailResult = await this.sendNotification({
+          userId: patient.id,
+          type: NotificationType.EMERGENCY_NOTIFICATION,
+          recipient: patient.email,
+          subject: 'Urgent Notice - Appointment Affected',
+          content: message,
+          provider: ProviderType.EMAIL,
+          data: { type: NotificationType.EMERGENCY_NOTIFICATION },
+        });
+        results.push(emailResult);
+
+        if (patient.phone) {
+          const whatsappResult = await this.sendNotification({
+            userId: patient.id,
+            type: NotificationType.EMERGENCY_NOTIFICATION,
+            recipient: patient.phone,
+            subject: 'Urgent Notice - Appointment Affected',
+            content: message,
+            provider: ProviderType.WHATSAPP,
+            data: { type: NotificationType.EMERGENCY_NOTIFICATION },
+          });
+          results.push(whatsappResult);
+        }
+        if (patient.telegramChatId) {
+          const telegramResult = await this.sendNotification({
+            userId: patient.id,
+            type: NotificationType.EMERGENCY_NOTIFICATION,
+            recipient: patient.telegramChatId,
+            subject: 'Urgent Notice - Appointment Affected',
+            content: message,
+            provider: ProviderType.TELEGRAM,
+            data: { type: NotificationType.EMERGENCY_NOTIFICATION },
+          });
+          results.push(telegramResult);
+        }
+      }
     }
 
     return results;

@@ -1,10 +1,24 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { NotificationSettingsService } from './notification-settings.service';
 import { PrismaService } from '../prisma/prisma.service';
+import { AppConfigService } from '../config/config.service';
+import { ConfigService } from '@nestjs/config';
 
 describe('NotificationSettingsService', () => {
   let service: NotificationSettingsService;
   let prismaService: any;
+  let appConfigService: AppConfigService;
+
+  const mockAppConfigService = {
+    telegramBotToken: 'test-telegram-token',
+    telegramTestChatId: 'test-chat-id',
+    whatsappToken: 'test-whatsapp-token',
+    whatsappPhoneId: 'test-whatsapp-phone-id',
+    twilioAccountSid: 'test-twilio-sid',
+    twilioAuthToken: 'test-twilio-token',
+    twilioFromNumber: 'test-from-number',
+    twilioTestToNumber: 'test-to-number',
+  };
 
   beforeEach(async () => {
     const mockPrisma = {
@@ -19,19 +33,23 @@ describe('NotificationSettingsService', () => {
       providers: [
         NotificationSettingsService,
         { provide: PrismaService, useValue: mockPrisma },
+        { provide: AppConfigService, useValue: mockAppConfigService },
       ],
     }).compile();
 
-    service = module.get<NotificationSettingsService>(NotificationSettingsService);
+    service = module.get<NotificationSettingsService>(
+      NotificationSettingsService,
+    );
     prismaService = module.get<PrismaService>(PrismaService);
+    appConfigService = module.get<AppConfigService>(AppConfigService);
   });
 
-  describe('getSettings', () => {
+  describe('getOrCreateSettings', () => {
     it('should return existing settings', async () => {
       const settings = { id: '1', emailEnabled: true };
       prismaService.notificationSettings.findFirst.mockResolvedValue(settings);
 
-      const result = await service.getSettings();
+      const result = await service.getOrCreateSettings();
 
       expect(result).toEqual(settings);
       expect(prismaService.notificationSettings.findFirst).toHaveBeenCalled();
@@ -44,7 +62,7 @@ describe('NotificationSettingsService', () => {
         emailEnabled: false,
       });
 
-      const result = await service.getSettings();
+      const result = await service.getOrCreateSettings();
 
       expect(prismaService.notificationSettings.create).toHaveBeenCalledWith({
         data: {},
@@ -62,7 +80,9 @@ describe('NotificationSettingsService', () => {
       prismaService.notificationSettings.findFirst.mockResolvedValue(
         existingSettings,
       );
-      prismaService.notificationSettings.update.mockResolvedValue(updatedSettings);
+      prismaService.notificationSettings.update.mockResolvedValue(
+        updatedSettings,
+      );
 
       const result = await service.updateSettings(updateData);
 
@@ -75,8 +95,14 @@ describe('NotificationSettingsService', () => {
 
     it('should create settings if none exist', async () => {
       prismaService.notificationSettings.findFirst.mockResolvedValue(null);
-      prismaService.notificationSettings.create.mockResolvedValue({ id: '1', emailEnabled: false });
-      prismaService.notificationSettings.update.mockResolvedValue({ id: '1', emailEnabled: true });
+      prismaService.notificationSettings.create.mockResolvedValue({
+        id: '1',
+        emailEnabled: false,
+      });
+      prismaService.notificationSettings.update.mockResolvedValue({
+        id: '1',
+        emailEnabled: true,
+      });
 
       const result = await service.updateSettings({ emailEnabled: true });
 
@@ -96,7 +122,7 @@ describe('NotificationSettingsService', () => {
         json: () => Promise.resolve({ result: { message_id: 1 } }),
       });
 
-      const result = await service.testTelegram('bot-token', 'chat-id');
+      const result = await service.testTelegram();
 
       expect(result.success).toBe(true);
     });
@@ -107,7 +133,7 @@ describe('NotificationSettingsService', () => {
         json: () => Promise.resolve({ description: 'Invalid token' }),
       });
 
-      const result = await service.testTelegram('invalid-token', 'chat-id');
+      const result = await service.testTelegram();
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Invalid token');
@@ -116,32 +142,32 @@ describe('NotificationSettingsService', () => {
 
   describe('testWhatsApp', () => {
     it('should return error about business verification', async () => {
-      const result = await service.testWhatsApp('phone-id', 'token');
+      const result = await service.testWhatsapp();
 
       expect(result.success).toBe(false);
       expect(result.error).toContain('business verification');
     });
   });
 
-  describe('testTwilio', () => {
-    it('should return success when twilio API call succeeds', async () => {
+  describe('testSms', () => {
+    it('should return success when SMS API call succeeds', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: true,
         json: () => Promise.resolve({ sid: 'SM123' }),
       });
 
-      const result = await service.testTwilio('AC123', 'auth-token', '+1234567890', '+0987654321');
+      const result = await service.testSms();
 
       expect(result.success).toBe(true);
     });
 
-    it('should return error when twilio API call fails', async () => {
+    it('should return error when SMS API call fails', async () => {
       global.fetch = jest.fn().mockResolvedValue({
         ok: false,
         json: () => Promise.resolve({ message: 'Invalid credentials' }),
       });
 
-      const result = await service.testTwilio('AC123', 'invalid', '+1234567890', '+0987654321');
+      const result = await service.testSms();
 
       expect(result.success).toBe(false);
     });
@@ -149,7 +175,7 @@ describe('NotificationSettingsService', () => {
     it('should return error on exception', async () => {
       global.fetch = jest.fn().mockRejectedValue(new Error('Network error'));
 
-      const result = await service.testTwilio('AC123', 'auth-token', '+1234567890', '+0987654321');
+      const result = await service.testSms();
 
       expect(result.success).toBe(false);
       expect(result.error).toBe('Network error');

@@ -9,6 +9,7 @@ import { TelegramProvider } from './providers/telegram.provider';
 import { EmailProvider } from './providers/email.provider';
 import { PrismaService } from '../prisma/prisma.service';
 import { OneSignalService } from './onesignal.service';
+import { OneSignalProvider } from './providers/onesignal.provider';
 
 @Module({
   imports: [ConfigModule],
@@ -22,6 +23,7 @@ import { OneSignalService } from './onesignal.service';
     EmailProvider,
     NotificationProviderService,
     OneSignalService,
+    OneSignalProvider,
   ],
   exports: [NotificationProviderService, OneSignalService],
 })
@@ -31,9 +33,11 @@ export class NotificationsModule {
     private whatsapp: WhatsAppProvider,
     private telegram: TelegramProvider,
     private email: EmailProvider,
+    private oneSignal: OneSignalProvider,
   ) {
     this.registry.register(whatsapp);
     this.registry.register(telegram);
     this.registry.register(email);
+    this.registry.register(oneSignal);
   }
 }

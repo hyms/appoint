@@ -51,6 +51,10 @@ export class NotificationConfigService {
     return { host, port: parseInt(port || '587', 10), user, pass };
   }
 
+  getEmailFrom(): string | undefined {
+    return process.env.EMAIL_FROM;
+  }
+
   isWhatsAppConfigured(): boolean {
     return this.getWhatsAppConfig() !== null;
   }

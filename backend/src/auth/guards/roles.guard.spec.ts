@@ -8,7 +8,11 @@ describe('RolesGuard', () => {
   let guard: RolesGuard;
   let reflector: Reflector;
 
-  const createMockContext = (user: any, handler: any = {}, classs: any = {}) => {
+  const createMockContext = (
+    user: any,
+    handler: any = {},
+    classs: any = {},
+  ) => {
     return {
       switchToHttp: () => ({
         getRequest: () => ({ user }),
@@ -45,7 +49,9 @@ describe('RolesGuard', () => {
   });
 
   it('should allow access when user has required role', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([UserRole.ADMIN]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([UserRole.ADMIN]);
 
     const context = createMockContext({ role: UserRole.ADMIN });
     const result = guard.canActivate(context);
@@ -65,7 +71,9 @@ describe('RolesGuard', () => {
   });
 
   it('should deny access when user is undefined', () => {
-    jest.spyOn(reflector, 'getAllAndOverride').mockReturnValue([UserRole.ADMIN]);
+    jest
+      .spyOn(reflector, 'getAllAndOverride')
+      .mockReturnValue([UserRole.ADMIN]);
 
     const context = createMockContext(undefined);
     const result = guard.canActivate(context);

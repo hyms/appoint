@@ -1,12 +1,18 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable, Logger } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNotificationSettingsDto } from './dto/notification-settings.dto';
+import { AppConfigService } from '../config/config.service';
 
 @Injectable()
 export class NotificationSettingsService {
-  constructor(private prisma: PrismaService) {}
+  private readonly logger = new Logger(NotificationSettingsService.name);
 
-  async getSettings() {
+  constructor(
+    private prisma: PrismaService,
+    private configService: AppConfigService,
+  ) {}
+
+  async getOrCreateSettings() {
     let settings = await this.prisma.notificationSettings.findFirst();
 
     if (!settings) {
@@ -19,13 +25,7 @@ export class NotificationSettingsService {
   }
 
   async updateSettings(dto: UpdateNotificationSettingsDto) {
-    let settings = await this.prisma.notificationSettings.findFirst();
-
-    if (!settings) {
-      settings = await this.prisma.notificationSettings.create({
-        data: {},
-      });
-    }
+    const settings = await this.getOrCreateSettings();
 
     return this.prisma.notificationSettings.update({
       where: { id: settings.id },
@@ -33,16 +33,23 @@ export class NotificationSettingsService {
     });
   }
 
-  async testTelegram(botToken: string, chatId: string) {
+  async testTelegram() {
+    const token = this.configService.telegramBotToken;
+    const chatId = this.configService.telegramTestChatId;
+
+    if (!token || !chatId) {
+      return { success: false, error: 'Telegram config missing in .env' };
+    }
+
     try {
       const response = await fetch(
-        `https://api.telegram.org/bot${botToken}/sendMessage`,
+        `https://api.telegram.org/bot${token}/sendMessage`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             chat_id: chatId,
-            text: '🔔 Test notification from Appointments 360',
+            text: 'Test notification from Appointments 360',
           }),
         },
       );
@@ -64,24 +71,31 @@ export class NotificationSettingsService {
     }
   }
 
-  async testWhatsApp(phoneId: string, token: string) {
-    try {
-      return {
-        success: false,
-        error:
-          'WhatsApp API requires business verification. Please configure manually.',
-      };
-    } catch (error: any) {
-      return { success: false, error: error.message };
+  async testWhatsapp() {
+    const token = this.configService.whatsappToken;
+    const phoneId = this.configService.whatsappPhoneId;
+
+    if (!token || !phoneId) {
+      return { success: false, error: 'WhatsApp config missing in .env' };
     }
+
+    return {
+      success: false,
+      error:
+        'WhatsApp API requires business verification. Please configure manually.',
+    };
   }
 
-  async testTwilio(
-    accountSid: string,
-    authToken: string,
-    fromNumber: string,
-    toNumber: string,
-  ) {
+  async testSms() {
+    const accountSid = this.configService.twilioAccountSid;
+    const authToken = this.configService.twilioAuthToken;
+    const fromNumber = this.configService.twilioFromNumber;
+    const toNumber = this.configService.twilioTestToNumber;
+
+    if (!accountSid || !authToken || !fromNumber || !toNumber) {
+      return { success: false, error: 'Twilio config missing in .env' };
+    }
+
     try {
       const credentials = Buffer.from(`${accountSid}:${authToken}`).toString(
         'base64',
@@ -97,7 +111,7 @@ export class NotificationSettingsService {
           body: new URLSearchParams({
             To: toNumber,
             From: fromNumber,
-            Body: '🔔 Test notification from Appointments 360',
+            Body: 'Test notification from Appointments 360',
           }),
         },
       );
