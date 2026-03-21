@@ -196,11 +196,13 @@ import { paymentsService, type QRPayment } from '@/services/payments'
 import api from '@/services/api'
 import { formatDate, formatTime } from '@/utils/date'
 import { useToast } from '@/composables/useToast'
+import { useAppColors } from '@/composables/useAppColors'
 import AppointmentList from '@/components/appointments/AppointmentList.vue'
 import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue' 
 import AdminAppointmentsTab from '@/components/admin/AdminAppointmentsTab.vue' 
 
 const { success, error } = useToast()
+const { getStatusColor, getPaymentStatusColor } = useAppColors()
 
 const authStore = useAuthStore()
 const tab = ref('upcoming')
@@ -265,27 +267,6 @@ const adminHeaders = [
 const cancelDialog = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
-
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'error'
-  }
-  return colors[status] || 'grey'
-}
-
-function getPaymentStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
-  }
-  return colors[status] || 'grey'
-}
 
 onMounted(async () => {
   if (authStore.user?.role === 'ADMIN') {

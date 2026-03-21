@@ -29,6 +29,7 @@ enum NotificationType {
   APPOINTMENT_CANCELLATION
   MAGIC_LINK
   EMERGENCY_NOTIFICATION
+  OTHER
 }
 
 model User {
@@ -43,6 +44,7 @@ model User {
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
   oneSignalPlayerId String?
+  telegramChatId    String?
 
   profile           Profile?
   appointments      Appointment[]     @relation("PatientAppointments")

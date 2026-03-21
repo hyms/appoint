@@ -50,34 +50,15 @@
 </template>
 
 <script setup lang="ts">
-// // import { defineProps } from 'vue'
 import { type Appointment } from '@/services/appointments'
 import { formatDate, formatTime } from '@/utils/date'
+import { useAppColors } from '@/composables/useAppColors'
 
 const props = defineProps<{
   appointment: Appointment
 }>()
 
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'error'
-  }
-  return colors[status] || 'grey'
-}
-
-function getPaymentStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
-  }
-  return colors[status] || 'grey'
-}
+const { getStatusColor, getPaymentStatusColor } = useAppColors()
 </script>
 
 <style scoped>

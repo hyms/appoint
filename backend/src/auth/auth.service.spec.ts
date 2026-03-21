@@ -4,12 +4,19 @@ import {
   UnauthorizedException,
   ConflictException,
   BadRequestException,
+  ForbiddenException,
+  NotFoundException,
 } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { BruteForceProtectionService } from './services/brute-force-protection.service';
 import { AppConfigService } from '../config/config.service';
 import { UserRole } from '@prisma/client';
-import { AuthPrismaRepository, SanitizedUser } from './repositories/AuthPrismaRepository'; // Import repository and SanitizedUser
+import { AuthPrismaRepository, SanitizedUser } from './repositories/AuthPrismaRepository';
+import { AuthorizationService } from '../common/services/authorization.service';
+import { NotificationProviderService } from '../notifications/services/notification-provider.service';
+import { NotificationType } from '@prisma/client';
+import { ProviderType } from '../notifications/dto/notification.dto';
+import { ConfigService } from '@nestjs/config';
 
 describe('AuthService', () => {
   let authService: AuthService;
@@ -37,27 +44,44 @@ describe('AuthService', () => {
     getRemainingAttempts: jest.fn().mockReturnValue(3), // For invalid credentials
   };
 
-  const mockConfigService = {
-    frontendUrl: 'http://localhost:5173',
-    magicLinkExpiryMinutes: 15,
-    get: jest.fn((key: string) => {
-      if (key === 'JWT_SECRET') return 'test-secret';
-      if (key === 'JWT_EXPIRES_IN') return '1d';
-      return null; // Default
-    }),
-  };
+    const mockConfigService = {
+      frontendUrl: 'http://localhost:5173',
+      magicLinkExpiryMinutes: 15,
+      get: jest.fn((key: string) => {
+        if (key === 'JWT_SECRET') return 'test-secret';
+        if (key === 'JWT_REFRESH_SECRET') return 'test-refresh-secret';
+        if (key === 'JWT_EXPIRES_IN') return '1d';
+        if (key === 'JWT_REFRESH_EXPIRES_IN') return '7d';
+        return null; // Default
+      }),
+    };
+
+    const mockAuthorizationService = {
+      canViewOwnData: jest.fn().mockReturnValue(true),
+      canViewAllUsers: jest.fn().mockReturnValue(true),
+      canManageUsers: jest.fn().mockReturnValue(true),
+      canManageUser: jest.fn().mockReturnValue(true),
+    };
+
+    const mockNotificationProviderService = {
+      sendNotification: jest.fn().mockResolvedValue({ success: true }),
+    };
 
   beforeEach(async () => {
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         {
-          provide: AuthPrismaRepository, // Provide the new repository
+          provide: AuthPrismaRepository,
           useValue: mockAuthPrismaRepository,
         },
         {
           provide: JwtService,
           useValue: mockJwtService,
+        },
+        {
+          provide: ConfigService,
+          useValue: mockConfigService,
         },
         {
           provide: BruteForceProtectionService,
@@ -66,6 +90,14 @@ describe('AuthService', () => {
         {
           provide: AppConfigService,
           useValue: mockConfigService,
+        },
+        {
+          provide: AuthorizationService,
+          useValue: mockAuthorizationService,
+        },
+        {
+          provide: NotificationProviderService,
+          useValue: mockNotificationProviderService,
         },
       ],
     }).compile();
@@ -90,14 +122,24 @@ describe('AuthService', () => {
       const createdUser: SanitizedUser = {
         id: 'user-id',
         email: registerDto.email,
+        phone: registerDto.phone,
         role: UserRole.PATIENT,
         isActive: true,
+        oneSignalPlayerId: null,
+        telegramChatId: null,
         createdAt: new Date(),
         updatedAt: new Date(),
         profile: {
           id: 'profile-id',
           firstName: registerDto.firstName,
           lastName: registerDto.lastName,
+          dni: null,
+          dateOfBirth: null,
+          address: null,
+          emergencyContact: null,
+          medicalNotes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
       };
 
@@ -112,8 +154,8 @@ describe('AuthService', () => {
 
       const result = await authService.register(registerDto);
 
-      expect(result).toHaveProperty('access_token');
-      expect(result.access_token).toBe('mock-jwt-token');
+      expect(result).toHaveProperty('token');
+      expect(result.token).toBe('mock-jwt-token');
       expect(result.user.email).toBe(registerDto.email);
       expect(mockAuthPrismaRepository.create).toHaveBeenCalled();
     });
@@ -146,12 +188,23 @@ describe('AuthService', () => {
       const user = {
         id: 'user-id',
         email: loginDto.email,
+        phone: null,
         passwordHash: '$2b$10$hashedpassword',
         role: UserRole.PATIENT,
         isActive: true,
+        oneSignalPlayerId: null,
+        telegramChatId: null,
         profile: {
+          id: 'profile-id',
           firstName: 'John',
           lastName: 'Doe',
+          dni: null,
+          dateOfBirth: null,
+          address: null,
+          emergencyContact: null,
+          medicalNotes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         createdAt: new Date(),
         updatedAt: new Date(),
@@ -163,11 +216,12 @@ describe('AuthService', () => {
       const bcrypt = require('bcrypt');
       jest.spyOn(bcrypt, 'compare').mockResolvedValue(true);
 
-      const result = await authService.login(loginDto, '127.0.0.1'); // Provide IP address
+      const result = await authService.login(loginDto, '127.0.0.1');
 
       expect(result).toHaveProperty('access_token');
       expect(result.access_token).toBe('mock-jwt-token');
       expect(mockBruteForceProtectionService.clearAttempts).toHaveBeenCalledWith('127.0.0.1');
+      expect(mockNotificationProviderService.sendNotification).not.toHaveBeenCalled(); // No login notification yet
     });
 
     it('should throw UnauthorizedException for non-existent user', async () => {
@@ -194,7 +248,20 @@ describe('AuthService', () => {
         id: 'user-id',
         email: loginDto.email,
         isActive: false,
-        profile: {},
+        oneSignalPlayerId: null,
+        telegramChatId: null,
+        profile: {
+          id: 'profile-id',
+          firstName: 'John',
+          lastName: 'Doe',
+          dni: null,
+          dateOfBirth: null,
+          address: null,
+          emergencyContact: null,
+          medicalNotes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
         passwordHash: 'hashed',
         role: UserRole.PATIENT,
         createdAt: new Date(),
@@ -217,11 +284,24 @@ describe('AuthService', () => {
             email: loginDto.email,
             passwordHash: '$2b$10$hashedpassword',
             role: UserRole.PATIENT,
-            isActive: true,
-            profile: {},
-            createdAt: new Date(),
-            updatedAt: new Date(),
-        });
+        isActive: true,
+        oneSignalPlayerId: null,
+        telegramChatId: null,
+        profile: {
+          id: 'profile-id',
+          firstName: 'John',
+          lastName: 'Doe',
+          dni: null,
+          dateOfBirth: null,
+          address: null,
+          emergencyContact: null,
+          medicalNotes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+        },
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
 
         const bcrypt = require('bcrypt');
         jest.spyOn(bcrypt, 'compare').mockResolvedValue(false);
@@ -233,8 +313,8 @@ describe('AuthService', () => {
     });
   });
 
-  describe('generateMagicLink', () => {
-    it('should generate magic link for existing phone', async () => {
+  describe('sendMagicLink', () => {
+    it('should send magic link for existing phone', async () => {
       const magicLinkDto = { phone: '+1234567890' };
 
       mockAuthPrismaRepository.findUnique.mockResolvedValue({
@@ -243,17 +323,17 @@ describe('AuthService', () => {
         email: 'test@example.com',
         role: UserRole.PATIENT,
         isActive: true,
+        oneSignalPlayerId: null,
+        telegramChatId: null,
         passwordHash: null,
         createdAt: new Date(),
         updatedAt: new Date(),
       });
       mockAuthPrismaRepository.updateUser.mockResolvedValue({}); // Magic link updates user
 
-      const result = await authService.generateMagicLink(magicLinkDto, '127.0.0.1');
+      const result = await authService.sendMagicLink(magicLinkDto, '127.0.0.1');
 
-      expect(result).toHaveProperty('magicToken');
-      expect(result).toHaveProperty('magicLink');
-      expect(result).toHaveProperty('expiresIn', '15 minutes');
+      expect(result).toHaveProperty('message', 'Magic link sent successfully.');
       expect(mockAuthPrismaRepository.updateUser).toHaveBeenCalled();
     });
 
@@ -263,7 +343,7 @@ describe('AuthService', () => {
       mockAuthPrismaRepository.findUnique.mockResolvedValue(null);
       mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
 
-      await expect(authService.generateMagicLink(magicLinkDto, '127.0.0.1')).rejects.toThrow(
+      await expect(authService.sendMagicLink(magicLinkDto, '127.0.0.1')).rejects.toThrow(
         BadRequestException,
       );
       expect(mockBruteForceProtectionService.recordFailedAttempt).toHaveBeenCalledWith('127.0.0.1');
@@ -277,9 +357,19 @@ describe('AuthService', () => {
         email: 'test@example.com',
         role: UserRole.PATIENT,
         isActive: true,
+        oneSignalPlayerId: null,
+        telegramChatId: null,
         profile: {
           firstName: 'John',
           lastName: 'Doe',
+          id: 'profile-id',
+          dni: null,
+          dateOfBirth: null,
+          address: null,
+          emergencyContact: null,
+          medicalNotes: null,
+          createdAt: new Date(),
+          updatedAt: new Date(),
         },
         magicToken: 'valid-magic-token',
         magicExpiresAt: new Date(Date.now() + 1000 * 60 * 60),
@@ -289,11 +379,14 @@ describe('AuthService', () => {
       };
 
       mockAuthPrismaRepository.validateMagicLinkToken.mockResolvedValue(userWithMagicLink);
-      mockJwtService.sign.mockReturnValue('mock-jwt-token');
+      mockJwtService.sign.mockReturnValueOnce('mock-jwt-token').mockReturnValueOnce('mock-refresh-token'); // For access and refresh tokens
 
       const result = await authService.validateMagicLink('valid-magic-token');
 
       expect(result).toHaveProperty('access_token');
+      expect(result).toHaveProperty('refreshToken');
+      expect(result.access_token).toBe('mock-jwt-token');
+      expect(result.refreshToken).toBe('mock-refresh-token');
       expect(mockAuthPrismaRepository.validateMagicLinkToken).toHaveBeenCalledWith('valid-magic-token');
     });
 
@@ -302,7 +395,7 @@ describe('AuthService', () => {
 
       await expect(
         authService.validateMagicLink('invalid-token'),
-      ).rejects.toThrow(BadRequestException);
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 });

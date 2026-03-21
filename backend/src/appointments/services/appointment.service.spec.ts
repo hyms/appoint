@@ -9,13 +9,16 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { StrikeService } from '../../strikes/services/strike.service';
 import { AuthorizationService } from '../../common/services/authorization.service';
 import { AppointmentAuditService } from './appointment-audit.service';
+import { NotificationProviderService } from '../../notifications/services/notification-provider.service';
 import { OneSignalService } from '../../notifications/onesignal.service';
+import { AppConfigService } from '../../config/config.service';
 
 describe('AppointmentsService', () => {
   let appointmentsService: AppointmentsService;
   let prismaService: PrismaService;
   let strikeService: StrikeService;
   let oneSignalService: OneSignalService;
+  let notificationProviderService: NotificationProviderService;
 
   const mockPrismaService = {
     appointment: {
@@ -37,7 +40,15 @@ describe('AppointmentsService', () => {
   };
 
   const mockOneSignalService = {
-    sendNotification: jest.fn().mockResolvedValue({}),
+    sendNotification: jest.fn().mockResolvedValue({ success: true }),
+  };
+
+  const mockAppConfigService = {
+    magicLinkExpiryMinutes: 15,
+  };
+
+  const mockNotificationProviderService = {
+    sendNotification: jest.fn().mockResolvedValue({ success: true }),
   };
 
   const mockAuthorizationService = {
@@ -82,6 +93,14 @@ describe('AppointmentsService', () => {
           provide: OneSignalService,
           useValue: mockOneSignalService,
         },
+        {
+          provide: NotificationProviderService,
+          useValue: mockNotificationProviderService,
+        },
+        {
+          provide: AppConfigService,
+          useValue: mockAppConfigService,
+        },
       ],
     }).compile();
 
@@ -89,6 +108,7 @@ describe('AppointmentsService', () => {
     prismaService = module.get<PrismaService>(PrismaService);
     strikeService = module.get<StrikeService>(StrikeService);
     oneSignalService = module.get<OneSignalService>(OneSignalService);
+    notificationProviderService = module.get<NotificationProviderService>(NotificationProviderService);
 
     jest.clearAllMocks();
   });
@@ -100,8 +120,8 @@ describe('AppointmentsService', () => {
         patientId: 'user-1',
         professionalId: 'doc-1',
         status: 'PENDING',
-        patient: { profile: { firstName: 'John' } },
-        professional: { profile: { firstName: 'Dr. Smith' } },
+        patient: { oneSignalPlayerId: null, profile: { firstName: 'John' } },
+        professional: { oneSignalPlayerId: null, profile: { firstName: 'Dr. Smith' } },
       };
 
       mockPrismaService.appointment.findUnique.mockResolvedValue(
@@ -134,6 +154,8 @@ describe('AppointmentsService', () => {
         id: 'apt-1',
         patientId: 'user-1',
         professionalId: 'doc-1',
+        patient: { oneSignalPlayerId: null }, // Add oneSignalPlayerId
+        professional: { oneSignalPlayerId: null }, // Add oneSignalPlayerId
       });
 
       await expect(
@@ -178,8 +200,11 @@ describe('AppointmentsService', () => {
       const mockAppointment = {
         id: 'apt-1',
         patientId: 'user-1',
+        professionalId: 'doc-1',
         status: 'PENDING',
         slotId: 'slot-1',
+        patient: { oneSignalPlayerId: 'patient-one-signal-id', email: 'patient@example.com', profile: { firstName: 'John' } },
+        professional: { oneSignalPlayerId: 'professional-one-signal-id', email: 'professional@example.com', profile: { lastName: 'Smith' } },
       };
 
       mockPrismaService.appointment.findUnique.mockResolvedValue(

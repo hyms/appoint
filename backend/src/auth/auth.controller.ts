@@ -12,6 +12,7 @@ import {
   Param,
   Put,
   Delete,
+  Patch,
 } from '@nestjs/common';
 import { Throttle, ThrottlerGuard } from '@nestjs/throttler';
 import type { Request } from 'express';
@@ -24,8 +25,9 @@ import {
   ValidateMagicLinkDto,
   GetUsersQueryDto,
   UserIdParamDto,
+  UpdateTelegramChatIdDto,
 } from './dto/auth.dto';
-import { JwtAuthGuard } from '../auth/guards/roles.guard';
+import { JwtAuthGuard } from './guards/roles.guard';
 import { RolesGuard } from '../auth/guards/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { CurrentUser } from './decorators/current-user.decorator';
@@ -64,7 +66,7 @@ export class AuthController {
   ) {
     const clientIp =
       (req.headers['x-forwarded-for'] as string) || ip || 'unknown';
-    return this.authService.generateMagicLink(magicLinkDto, clientIp);
+    return this.authService.sendMagicLink(magicLinkDto, clientIp);
   }
 
    @Post('magic-link/validate')
@@ -87,6 +89,16 @@ export class AuthController {
     @Body('playerId') playerId: string,
   ) {
     return this.authService.updatePlayerId(user.id, playerId);
+  }
+
+  @Patch('telegram-chat-id')
+  @UseGuards(JwtAuthGuard)
+  @HttpCode(HttpStatus.OK)
+  async updateTelegramChatId(
+    @CurrentUser() user: any,
+    @Body() dto: UpdateTelegramChatIdDto,
+  ) {
+    return this.authService.updateTelegramChatId(user.id, dto.telegramChatId);
   }
 
   @Get('professionals')
@@ -129,7 +141,7 @@ export class AuthController {
   @Delete('users/:id')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
-  async deleteUser(@Param() params: UserIdParamDto) {
-    return this.authService.deleteUser(params.id);
+  async deleteUser(@Param() params: UserIdParamDto, @CurrentUser() user: any) {
+    return this.authService.deleteUser(params.id, user.id);
   }
 }

@@ -1,8 +1,7 @@
-import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 
 export function useAppColors() {
-  const { t } = useI18n()
+  useI18n()
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -16,12 +15,22 @@ export function useAppColors() {
     return colors[status] || 'grey'
   }
 
+  const getPaymentStatusColor = (status: string) => {
+    const colors: Record<string, string> = {
+      PENDING: 'warning',
+      UPLOADED: 'info',
+      VERIFIED: 'success',
+      REJECTED: 'error',
+    }
+    return colors[status] || 'grey'
+  }
+
   const getRoleColor = (role: string) => {
     const colors: Record<string, string> = {
-      ADMIN: 'error',
-      SECRETARY: 'warning',
-      PROFESSIONAL: 'info',
-      PATIENT: 'success',
+      ADMIN: 'purple',
+      SECRETARY: 'blue',
+      PROFESSIONAL: 'green',
+      PATIENT: 'orange',
     }
     return colors[role] || 'grey'
   }
@@ -32,6 +41,7 @@ export function useAppColors() {
 
   return {
     getStatusColor,
+    getPaymentStatusColor,
     getRoleColor,
     formatStatus,
   }

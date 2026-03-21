@@ -107,12 +107,14 @@ import { ref, reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
+import { useValidation } from '@/composables/useValidation'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
 const { success, error: showError } = useToast()
+const { emailRules, passwordRules } = useValidation()
 
 const formRef = ref()
 const form = reactive({
@@ -124,16 +126,6 @@ const form = reactive({
 })
 
 const loading = ref(false)
-
-const emailRules = [
-  (v: string) => !!v || 'Email is required',
-  (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email must be valid',
-]
-
-const passwordRules = [
-  (v: string) => !!v || 'Password is required',
-  (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
-]
 
 async function handleRegister() {
   if (!formRef.value) return

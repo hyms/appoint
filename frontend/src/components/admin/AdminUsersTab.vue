@@ -99,8 +99,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
+import { ref, computed, watch, reactive } from 'vue'
 import { useToast } from '@/composables/useToast'
+import { useAppColors } from '@/composables/useAppColors'
 import { usersService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/users'
 import api from '@/services/api'
 import { formatDate } from '@/utils/date'
@@ -109,6 +110,7 @@ import BaseInput from '@/components/base/BaseInput.vue'
 import BaseSelect from '@/components/base/BaseSelect.vue'
 
 const { success, error } = useToast()
+const { getRoleColor } = useAppColors()
 
 const props = defineProps<{
     modelValue: { role: string, isActive: boolean | undefined }
@@ -120,8 +122,6 @@ const emit = defineEmits<{
     (e: 'openUserDialog', user?: User): void
     (e: 'deleteUser', user: User): void
 }>()
-
-import { reactive } from 'vue'
 
 const loading = ref(false)
 const savingUser = ref(false)
@@ -186,16 +186,6 @@ const passwordRules = [
   (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
 ]
 
-
-function getRoleColor(role: string) {
-  const colors: Record<string, string> = {
-    ADMIN: 'purple',
-    SECRETARY: 'blue',
-    PROFESSIONAL: 'green',
-    PATIENT: 'orange'
-  }
-  return colors[role] || 'grey'
-}
 
 async function fetchUsers() {
     loading.value = true

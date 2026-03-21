@@ -61,7 +61,7 @@
               <AppointmentStatusChip :status="item.status" size="small" />
             </template>
             <template v-slot:item.paymentStatus="{ item }">
-              <v-chip :color="getPaymentColor(item.paymentStatus)" size="x-small" variant="outlined">
+              <v-chip :color="getPaymentStatusColor(item.paymentStatus)" size="x-small" variant="outlined">
                 {{ item.paymentStatus || 'N/A' }}
               </v-chip>
             </template>
@@ -89,6 +89,7 @@ import BaseSelect from '@/components/base/BaseSelect.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import { formatDate, formatTime } from '@/utils/date'
 import { type Appointment } from '@/services/appointments'
+import { useAppColors } from '@/composables/useAppColors'
 
 const props = defineProps<{
   appointments: any[]
@@ -113,27 +114,7 @@ const filters = computed({
     set: value => emit('update:filters', value)
 })
 
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'error'
-  }
-  return colors[status] || 'grey'
-}
-
-function getPaymentColor(status: string | undefined) {
-  if (!status) return 'grey'
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
-  }
-  return colors[status] || 'grey'
-}
+const { getStatusColor, getPaymentStatusColor } = useAppColors()
 </script>
 
 <style scoped>

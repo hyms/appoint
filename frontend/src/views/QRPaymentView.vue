@@ -66,7 +66,7 @@
               <v-timeline-item
                 v-for="payment in paymentHistory"
                 :key="payment.id"
-                :dot-color="getStatusColor(payment.status)"
+                :dot-color="getPaymentStatusColor(payment.status)"
                 size="small"
               >
                 <template v-slot:opposite>
@@ -96,8 +96,10 @@ import { useRoute } from 'vue-router'
 import api from '@/services/api'
 import { paymentsService, type QRPayment } from '@/services/payments'
 import { useToast } from '@/composables/useToast'
+import { useAppColors } from '@/composables/useAppColors'
 
 const { success, error } = useToast()
+const { getPaymentStatusColor } = useAppColors()
 
 const route = useRoute()
 const appointmentId = computed(() => route.query.appointmentId as string)
@@ -159,15 +161,5 @@ async function uploadPayment() {
   } finally {
     uploading.value = false
   }
-}
-
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
-  }
-  return colors[status] || 'grey'
 }
 </script>

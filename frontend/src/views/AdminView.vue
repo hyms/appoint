@@ -13,24 +13,81 @@
 
     <!-- ADMIN VIEW -->
     <template v-if="authStore.user?.role === 'ADMIN'">
-      <AdminAppointmentsTab
-        v-model:filters="appointmentFilters"
-        :appointments="appointments"
-        :loading="appointmentsLoading"
-        :headers="appointmentHeaders"
-        :status-options="statusOptions"
-        :loading-patients="loadingPatients"
-        :loading-professionals="loadingProfessionalsForFilter"
-        :patients-list="patientsList"
-        :professionals-list="professionalsList"
-        @update-list="loadAppointments"
-        @view-details="
-          (item) => {
-            selectedAppointment = item
-            viewDialog = true
-          }
-        "
-      />
+      <v-tabs v-model="adminTab" color="primary" class="mb-6">
+        <v-tab value="appointments">Citas</v-tab>
+        <v-tab value="slots">Horarios</v-tab>
+        <v-tab value="users">Usuarios</v-tab>
+        <v-tab value="professionals">Profesionales</v-tab>
+        <v-tab value="strikes">Strikes</v-tab>
+        <v-tab value="emergency">Emergencia</v-tab>
+      </v-tabs>
+
+      <v-window v-model="adminTab">
+        <v-window-item value="appointments">
+          <AdminAppointmentsTab
+            v-model:filters="appointmentFilters"
+            :appointments="appointments"
+            :loading="appointmentsLoading"
+            :headers="appointmentHeaders"
+            :status-options="statusOptions"
+            :loading-patients="loadingPatients"
+            :loading-professionals="loadingProfessionalsForFilter"
+            :patients-list="patientsList"
+            :professionals-list="professionalsList"
+            @update-list="loadAppointments"
+            @view-details="
+              (item) => {
+                selectedAppointment = item
+                viewDialog = true
+              }
+            "
+          />
+        </v-window-item>
+
+        <v-window-item value="slots">
+          <AdminSlotsTab
+            :slots="slots"
+            :loading="slotsLoading"
+            :filters="slotFilters"
+            :slot-status-options="slotStatusOptions"
+            :headers="slotHeaders"
+            :loading-professionals="loadingProfessionals"
+            :professionals-list="professionalsList"
+            @update-list="loadSlots"
+            @open-generate-dialog="generateDialog = true"
+            @block-slot="blockSlot"
+            @unblock-slot="unblockSlot"
+            @delete-slot="deleteSlot"
+          />
+        </v-window-item>
+
+        <v-window-item value="users">
+          <AdminUsersTab
+            v-model="userFilters"
+            @update-list="loadUsers"
+            @delete-user="deleteUser"
+          />
+        </v-window-item>
+
+        <v-window-item value="professionals">
+          <AdminProfessionalsTab
+            :professionals-list="professionalsList"
+            :loading-professionals="loadingProfessionals"
+          />
+        </v-window-item>
+
+        <v-window-item value="strikes">
+          <AdminStrikesTab
+            :strikes="strikes"
+            :loading="strikesLoading"
+            @update-list="loadStrikes"
+          />
+        </v-window-item>
+
+        <v-window-item value="emergency">
+          <AdminEmergencyTab />
+        </v-window-item>
+      </v-window>
 
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
@@ -44,7 +101,6 @@
         </v-card>
       </v-dialog>
 
-      <!-- Cancel Appointment Dialog (Kept here for dependency reasons until componentized) -->
       <v-dialog v-model="cancelDialog" max-width="400">
         <v-card>
           <v-card-title>Cancel Appointment</v-card-title>
@@ -198,6 +254,7 @@ import { usersService, type User, type UpdateUserDto, type CreateUserDto } from 
 import api from '@/services/api'
 import { formatDate, formatTime } from '@/utils/date'
 import { useToast } from '@/composables/useToast'
+import { useAppColors } from '@/composables/useAppColors'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 import BaseSelect from '@/components/base/BaseSelect.vue'
@@ -211,9 +268,11 @@ import AdminEmergencyTab from '../components/admin/AdminEmergencyTab.vue'
 import AdminStrikesTab from '../components/admin/AdminStrikesTab.vue'
 
 const { success, error } = useToast()
+const { getStatusColor, getPaymentStatusColor } = useAppColors()
 
 const authStore = useAuthStore()
 const tab = ref('appointments')
+const adminTab = ref('appointments')
 const loading = ref(false)
 
 // --- Appointments State ---
@@ -333,7 +392,43 @@ const selectedAppointment = ref<Appointment | null>(null)
 
 // --- Emergency/Strikes State ---
 const strikes = ref<any[]>([])
+const strikesLoading = ref(false)
+const emergencyMode = computed(() => emergencyStatus.isActive)
+const affectedPatients = ref<any[]>([])
+const emergencyLoading = ref(false)
 const emergencyStatus = reactive({ isActive: false, message: '' })
+
+async function resolveStrike(strikeId: string, resolution: string) {
+  try {
+    await strikesService.resolveStrike(strikeId, resolution)
+    success('Strike resolved')
+    await loadStrikes()
+  } catch (e) {
+    error('Failed to resolve strike')
+  }
+}
+
+async function toggleEmergency() {
+  emergencyLoading.value = true
+  try {
+    if (emergencyStatus.isActive) {
+      await emergencyService.deactivate(emergencyStatus.message || 'Deactivated by admin')
+      success('Emergency mode deactivated')
+    } else {
+      await emergencyService.activate(emergencyStatus.message || 'Emergency mode activated')
+      success('Emergency mode activated')
+    }
+    await loadEmergencyStatus()
+  } catch (e) {
+    error('Failed to toggle emergency mode')
+  } finally {
+    emergencyLoading.value = false
+  }
+}
+
+async function loadEmergency() {
+  await loadEmergencyStatus()
+}
 
 // --- Patient Logic ---
 async function loadPatients() {
@@ -512,7 +607,15 @@ async function saveUser() {
 }
 
 async function deleteUser(user: User) {
-  // Logic implemented in AdminUsersTab component
+  if (confirm(`Are you sure you want to delete user ${user.email}?`)) {
+    try {
+      await usersService.delete(user.id)
+      success('User deleted')
+      await loadUsers()
+    } catch (e) {
+      error('Failed to delete user')
+    }
+  }
 }
 
 // --- Professional Logic ---
@@ -563,13 +666,13 @@ async function loadEmergencyStatus() {
 }
 
 async function loadStrikes() {
-  loading.value = true
+  strikesLoading.value = true
   try {
     strikes.value = await strikesService.getAllStrikes()
   } catch (e) {
     error('Failed to load strikes.')
   } finally {
-    loading.value = false
+    strikesLoading.value = false
   }
 }
 
@@ -649,33 +752,6 @@ async function cancelAppointment(apt: Appointment) {
       error('Failed to cancel appointment')
     }
   }
-}
-
-// --- Utility Functions ---
-function getStatusColor(status: string) {
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    CONFIRMED: 'success',
-    COMPLETED: 'info',
-    CANCELLED: 'error',
-    NO_SHOW: 'error',
-  }
-  return colors[status] || 'grey'
-}
-
-function getPaymentColor(status: string | undefined) {
-  if (!status) return 'grey'
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error',
-  }
-  return colors[status] || 'grey'
-}
-
-function getPaymentStatusColor(status: string | undefined) {
-  return getPaymentColor(status)
 }
 </script>
 

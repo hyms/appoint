@@ -1,16 +1,7 @@
 import api from './api'
+import type { Slot } from '@/types/appointment.types'
 
-export interface Slot {
-  id: string
-  professionalId: string
-  locationId?: string
-  date: string
-  startTime: string
-  endTime: string
-  isBooked: boolean
-  isBlocked: boolean
-  blockReason?: string
-}
+export type { Slot }
 
 export interface Appointment {
   id: string

@@ -120,6 +120,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useToast } from '@/composables/useToast'
 import { useI18n } from 'vue-i18n'
+import { useValidation } from '@/composables/useValidation'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 import MagicLinkDialog from '@/components/auth/MagicLinkDialog.vue'
@@ -129,6 +130,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const { success, error } = useToast()
 const { t } = useI18n()
+const { emailRules, passwordRules } = useValidation()
 
 const formRef = ref()
 const form = reactive({
@@ -139,16 +141,6 @@ const form = reactive({
 const loading = ref(false)
 const showMagicLink = ref(false)
 const sendingMagic = ref(false)
-
-const emailRules = [
-  (v: string) => !!v || 'Email is required',
-  (v: string) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v) || 'Email must be valid',
-]
-
-const passwordRules = [
-  (v: string) => !!v || 'Password is required',
-  (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
-]
 
 async function handleLogin() {
   if (!formRef.value) return

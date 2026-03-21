@@ -85,6 +85,11 @@ export class UpdateUserDto {
   oneSignalPlayerId?: string;
 }
 
+export class UpdateTelegramChatIdDto {
+  @IsString()
+  telegramChatId: string;
+}
+
 export class ValidateMagicLinkDto {
   @IsString()
   token: string;

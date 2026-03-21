@@ -49,4 +49,9 @@ withDefaults(defineProps<Props>(), {
   font-weight: 500;
   letter-spacing: 0.01em;
 }
+
+.base-button.bg-primary,
+.base-button[class*="bg-primary"] {
+  color: white !important;
+}
 </style>

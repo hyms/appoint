@@ -17,7 +17,9 @@ import {
   AppointmentAuditService,
   AuditAction,
 } from './appointment-audit.service';
-import { OneSignalService } from '../../notifications/onesignal.service';
+import { NotificationProviderService } from '../../notifications/services/notification-provider.service';
+import { ProviderType } from '../../notifications/dto/notification.dto';
+import { NotificationType } from '@prisma/client';
 import { Permission } from '../../common/enums/permissions.enum';
 
 @Injectable()
@@ -27,7 +29,7 @@ export class AppointmentsService {
     private strikeService: StrikeService,
     private authService: AuthorizationService,
     private auditService: AppointmentAuditService,
-    private oneSignalService: OneSignalService,
+    private notificationService: NotificationProviderService,
   ) {}
 
   // ============ ADMIN CRUD ============
@@ -259,11 +261,17 @@ export class AppointmentsService {
     });
 
     // Notify Professional
-    await this.oneSignalService.sendNotification(
-      [dto.professionalId],
-      `New appointment request from ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName}`,
-      { appointmentId: appointment.id },
-    );
+    if (appointment.professional.oneSignalPlayerId) {
+      await this.notificationService.sendNotification({
+        userId: appointment.professionalId,
+        type: NotificationType.OTHER, // Or a specific type for professional notifications
+        recipient: appointment.professional.oneSignalPlayerId,
+        subject: 'New Appointment Request',
+        content: `New appointment request from ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName}`,
+        provider: ProviderType.ONESIGNAL,
+        data: { appointmentId: appointment.id, type: 'new-appointment' },
+      });
+    }
 
     return appointment;
   }
@@ -384,12 +392,28 @@ export class AppointmentsService {
           reason: dto.notes,
         });
 
-        // Notify Patient
-        await this.oneSignalService.sendNotification(
-          [updated.patientId],
-          `Your appointment status has been updated to ${dto.status}`,
-          { appointmentId: updated.id, status: dto.status },
-        );
+        // Notify Patient (if OneSignalPlayerId exists)
+        if (updated.patient.oneSignalPlayerId) {
+          await this.notificationService.sendNotification({
+            userId: updated.patientId,
+            type: NotificationType.APPOINTMENT_REMINDER, // Reusing reminder type, or a new specific type for status updates
+            recipient: updated.patient.oneSignalPlayerId,
+            subject: 'Appointment Status Update',
+            content: `Your appointment status has been updated to ${dto.status}`,
+            provider: ProviderType.ONESIGNAL,
+            data: { appointmentId: updated.id, status: dto.status },
+          });
+        }
+
+        // Also send generic notification via NotificationProviderService
+        await this.notificationService.sendNotification({
+          userId: updated.patientId,
+          type: NotificationType.APPOINTMENT_REMINDER, // Or a new specific type for status updates
+          recipient: updated.patient.email, // Default to email
+          subject: 'Appointment Status Update',
+          content: `Your appointment with Dr. ${updated.professional.profile?.lastName} on ${new Date(updated.date).toLocaleDateString()} at ${new Date(updated.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been updated to ${dto.status}.`,
+          // provider: ProviderType.EMAIL, // Let the service decide the best provider
+        });
 
         return updated;
       });
@@ -445,15 +469,51 @@ export class AppointmentsService {
       reason: dto.reason,
     });
 
-    // Notify both participants
-    const recipients = [appointment.patientId, appointment.professionalId].filter(
-      (id) => id !== userId,
-    );
-    await this.oneSignalService.sendNotification(
-      recipients,
-      `Appointment cancelled: ${dto.reason}`,
-      { appointmentId: appointment.id, action: 'CANCELLED' },
-    );
+    // Notify both participants (if OneSignalPlayerId exists)
+    const patientPlayerId = appointment.patient.oneSignalPlayerId;
+    const professionalPlayerId = appointment.professional.oneSignalPlayerId;
+
+    if (patientPlayerId) {
+      await this.notificationService.sendNotification({
+        userId: appointment.patientId,
+        type: NotificationType.APPOINTMENT_CANCELLATION,
+        recipient: patientPlayerId,
+        subject: 'Appointment Cancelled',
+        content: `Your appointment with Dr. ${appointment.professional.profile?.lastName} on ${new Date(appointment.date).toLocaleDateString()} at ${new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been cancelled. Reason: ${dto.reason}`,
+        provider: ProviderType.ONESIGNAL,
+        data: { appointmentId: appointment.id, action: 'CANCELLED' },
+      });
+    }
+
+    if (professionalPlayerId) {
+      await this.notificationService.sendNotification({
+        userId: appointment.professionalId,
+        type: NotificationType.APPOINTMENT_CANCELLATION,
+        recipient: professionalPlayerId,
+        subject: 'Appointment Cancelled',
+        content: `An appointment for ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName} on ${new Date(appointment.date).toLocaleDateString()} at ${new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been cancelled. Reason: ${dto.reason}`,
+        provider: ProviderType.ONESIGNAL,
+        data: { appointmentId: appointment.id, action: 'CANCELLED' },
+      });
+    }
+
+    // Also send generic notification via NotificationProviderService to patient
+    await this.notificationService.sendNotification({
+      userId: appointment.patientId,
+      type: NotificationType.APPOINTMENT_CANCELLATION,
+      recipient: appointment.patient.email,
+      subject: 'Appointment Cancelled',
+      content: `Your appointment with Dr. ${appointment.professional.profile?.lastName} on ${new Date(appointment.date).toLocaleDateString()} at ${new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been cancelled. Reason: ${dto.reason}`,
+    });
+
+    // Also send generic notification via NotificationProviderService to professional
+    await this.notificationService.sendNotification({
+      userId: appointment.professionalId,
+      type: NotificationType.APPOINTMENT_CANCELLATION,
+      recipient: appointment.professional.email,
+      subject: 'Appointment Cancelled',
+      content: `An appointment for ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName} on ${new Date(appointment.date).toLocaleDateString()} at ${new Date(appointment.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been cancelled. Reason: ${dto.reason}`,
+    });
 
     return updatedAppointment;
   }

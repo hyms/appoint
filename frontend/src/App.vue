@@ -170,6 +170,7 @@ const { isProfessional, isAdminOrSecretary } = useAuthorization()
 const { initOneSignal } = useOneSignal()
 
 onMounted(async () => {
+  await authStore.initializeSession()
   await initOneSignal()
 })
 
