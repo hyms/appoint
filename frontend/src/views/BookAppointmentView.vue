@@ -166,7 +166,7 @@
                     All information confirmed. Final review before booking.
                   </v-alert>
 
-                  <v-list density="comfortable" class="bg-grey-lighten-5 rounded-lg mb-6 border-thin">
+                  <v-list density="comfortable" class="rounded-lg mb-6 border-thin" color="surface">
                     <v-list-item>
                       <template v-slot:prepend>
                         <v-icon icon="mdi-doctor" color="primary" class="mr-2" />

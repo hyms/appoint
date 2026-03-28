@@ -1,12 +1,15 @@
 <template>
-  <v-container>
-    <v-row>
+  <v-container fluid class="pa-4 pa-sm-8 max-width-xl mx-auto">
+    <v-row class="mb-6">
       <v-col cols="12">
-        <h1 class="text-h4 mb-4">QR Payment Upload</h1>
+        <h1 class="text-h3 font-weight-black text-uppercase letter-spacing-1 mb-2">QR Payment Upload</h1>
+        <p class="text-body-1 text-medium-emphasis">
+          Generate and upload your payment proof.
+        </p>
       </v-col>
     </v-row>
 
-    <v-row>
+    <v-row class="mb-6">
       <v-col cols="12" md="6">
         <v-card class="pa-4">
           <v-card-title>1. Scan or View QR</v-card-title>
@@ -57,7 +60,7 @@
       </v-col>
     </v-row>
 
-    <v-row class="mt-4">
+    <v-row>
       <v-col cols="12">
         <v-card class="pa-4">
           <v-card-title>Payment History</v-card-title>

@@ -20,7 +20,7 @@
                 />
             </v-col>
             <v-col cols="9" md="10">
-                <div v-if="!day.enabled" class="text-error font-weight-bold bg-grey-lighten-3 pa-2 rounded-lg">
+                <div v-if="!day.enabled" class="text-error font-weight-bold pa-2 rounded-lg" color="surface">
                     Day is disabled. No slots available for booking.
                 </div>
                 <v-chip-group v-else v-model="day.selectedSlots" column multiple mandatory>

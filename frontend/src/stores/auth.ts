@@ -81,7 +81,12 @@ export const useAuthStore = defineStore('auth', () => {
 
   async function initializeSession() {
     if (token.value) {
-      await fetchCurrentUser()
+      try {
+        await fetchCurrentUser()
+      } catch (error) {
+        // fetchCurrentUser already calls logout() on error
+        // We swallow the error here so the app doesn't crash on startup
+      }
     }
   }
   

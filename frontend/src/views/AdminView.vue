@@ -3,97 +3,101 @@
     <v-row>
       <v-col cols="12">
         <h1 class="text-h3 font-weight-black text-uppercase letter-spacing-1 mb-1">
-          {{ $t('appointments.title') }}
+          {{ pageTitle }}
         </h1>
         <p class="text-body-1 text-medium-emphasis mb-6">
-          Manage all your scheduled appointments here.
+          {{ pageDescription }}
         </p>
       </v-col>
     </v-row>
 
     <!-- ADMIN VIEW -->
     <template v-if="authStore.user?.role === 'ADMIN'">
-      <v-tabs v-model="adminTab" color="primary" class="mb-6 industrial-tabs" grow>
-        <v-tab value="appointments">Citas</v-tab>
-        <v-tab value="slots">Horarios</v-tab>
-        <v-tab value="users">Usuarios</v-tab>
-        <v-tab value="professionals">Profesionales</v-tab>
-        <v-tab value="strikes">Strikes</v-tab>
-        <v-tab value="emergency">Emergencia</v-tab>
-      </v-tabs>
+      <v-card variant="flat">
+        <v-tabs v-model="adminTab" color="primary" grow>
+          <v-tab value="appointments">{{ $t('appointments.title') }}</v-tab>
+          <v-tab value="slots">Horarios</v-tab>
+          <v-tab value="users">Usuarios</v-tab>
+          <v-tab value="professionals">Profesionales</v-tab>
+          <v-tab value="strikes">Strikes</v-tab>
+          <v-tab value="emergency">Emergencia</v-tab>
+        </v-tabs>
 
-      <v-window v-model="adminTab">
-        <v-window-item value="appointments">
-          <AdminAppointmentsTab
-            v-model:filters="appointmentFilters"
-            :appointments="appointments"
-            :loading="appointmentsLoading"
-            :headers="appointmentHeaders"
-            :status-options="statusOptions"
-            :loading-patients="loadingPatients"
-            :loading-professionals="loadingProfessionalsForFilter"
-            :patients-list="patientsList"
-            :professionals-list="professionalsList"
-            @update-list="loadAppointments"
-            @view-details="
-              (item) => {
-                selectedAppointment = item
-                viewDialog = true
-              }
-            "
-          />
-        </v-window-item>
+        <v-divider />
 
-        <v-window-item value="slots">
-          <AdminSlotsTab
-            :slots="slots"
-            :loading="slotsLoading"
-            :filters="slotFilters"
-            :slot-status-options="slotStatusOptions"
-            :headers="slotHeaders"
-            :loading-professionals="loadingProfessionals"
-            :professionals-list="professionalsList"
-            @update-list="loadSlots"
-            @open-generate-dialog="generateDialog = true"
-            @block-slot="blockSlot"
-            @unblock-slot="unblockSlot"
-            @delete-slot="deleteSlot"
-          />
-        </v-window-item>
+        <v-window v-model="adminTab">
+          <v-window-item value="appointments" class="pa-4">
+            <AdminAppointmentsTab
+              v-model:filters="appointmentFilters"
+              :appointments="appointments"
+              :loading="appointmentsLoading"
+              :headers="appointmentHeaders"
+              :status-options="statusOptions"
+              :loading-patients="loadingPatients"
+              :loading-professionals="loadingProfessionalsForFilter"
+              :patients-list="patientsList"
+              :professionals-list="professionalsList"
+              @update-list="loadAppointments"
+              @view-details="
+                (item) => {
+                  selectedAppointment = item
+                  viewDialog = true
+                }
+              "
+            />
+          </v-window-item>
 
-        <v-window-item value="users">
-          <AdminUsersTab
-            v-model="userFilters"
-            @update-list="loadUsers"
-            @delete-user="deleteUser"
-          />
-        </v-window-item>
+          <v-window-item value="slots" class="pa-4">
+            <AdminSlotsTab
+              :slots="slots"
+              :loading="slotsLoading"
+              :filters="slotFilters"
+              :slot-status-options="slotStatusOptions"
+              :headers="slotHeaders"
+              :loading-professionals="loadingProfessionals"
+              :professionals-list="professionalsList"
+              @update-list="loadSlots"
+              @open-generate-dialog="generateDialog = true"
+              @block-slot="blockSlot"
+              @unblock-slot="unblockSlot"
+              @delete-slot="deleteSlot"
+            />
+          </v-window-item>
 
-        <v-window-item value="professionals">
-          <AdminProfessionalsTab
-            :professionals-list="professionalsList"
-            :loading-professionals="loadingProfessionals"
-          />
-        </v-window-item>
+          <v-window-item value="users" class="pa-4">
+            <AdminUsersTab
+              v-model="userFilters"
+              @update-list="loadUsers"
+              @delete-user="deleteUser"
+            />
+          </v-window-item>
 
-        <v-window-item value="strikes">
-          <AdminStrikesTab
-            :strikes="strikes"
-            :loading="strikesLoading"
-            @update-list="loadStrikes"
-          />
-        </v-window-item>
+          <v-window-item value="professionals" class="pa-4">
+            <AdminProfessionalsTab
+              :professionals-list="professionalsList"
+              :loading-professionals="loadingProfessionals"
+            />
+          </v-window-item>
 
-        <v-window-item value="emergency">
-          <AdminEmergencyTab />
-        </v-window-item>
-      </v-window>
+          <v-window-item value="strikes" class="pa-4">
+            <AdminStrikesTab
+              :strikes="strikes"
+              :loading="strikesLoading"
+              @update-list="loadStrikes"
+            />
+          </v-window-item>
+
+          <v-window-item value="emergency" class="pa-4">
+            <AdminEmergencyTab />
+          </v-window-item>
+        </v-window>
+      </v-card>
 
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
             <span>Appointment Details</span>
-            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
+            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" :aria-label="$t('common.close')" />
           </v-card-title>
           <v-card-text>
             <AppointmentDetailCard :appointment="selectedAppointment" />
@@ -273,6 +277,30 @@ const { getStatusColor, getPaymentStatusColor } = useAppColors()
 const authStore = useAuthStore()
 const tab = ref('appointments')
 const adminTab = ref('appointments')
+
+const pageTitle = computed(() => {
+  const titles: Record<string, string> = {
+    appointments: 'Administración',
+    slots: 'Horarios',
+    users: 'Usuarios',
+    professionals: 'Profesionales',
+    strikes: 'Strikes',
+    emergency: 'Emergencia',
+  }
+  return titles[adminTab.value] || 'Administración'
+})
+
+const pageDescription = computed(() => {
+  const descriptions: Record<string, string> = {
+    appointments: 'Gestiona todas las citas programadas.',
+    slots: 'Administra los horarios disponibles.',
+    users: 'Gestiona los usuarios del sistema.',
+    professionals: 'Gestiona los profesionales.',
+    strikes: 'Control de inasistencias.',
+    emergency: 'Control de emergencia del sistema.',
+  }
+  return descriptions[adminTab.value] || ''
+})
 const loading = ref(false)
 
 // --- Appointments State ---
@@ -758,18 +786,5 @@ async function cancelAppointment(apt: Appointment) {
 <style scoped>
 .letter-spacing-1 {
   letter-spacing: 1px !important;
-}
-.gap-2 {
-  gap: 8px;
-}
-.admin-tab-card {
-  border-radius: 8px !important;
-  border: 1px solid rgba(var(--v-border-color), 0.4) !important;
-}
-.border-bottom-thick {
-  border-bottom: 2px solid rgba(var(--v-border-color), 0.15) !important;
-}
-.data-table-industrial {
-  border-radius: 6px !important;
 }
 </style>

@@ -1,9 +1,9 @@
 <template>
   <BaseContainer class="pb-0">
     <!-- Header -->
-    <v-row class="mb-4">
+    <v-row class="mb-lg">
       <v-col cols="12">
-        <div class="d-flex align-end justify-space-between mb-2">
+        <div class="d-flex align-end justify-space-between mb-sm">
           <div>
             <span class="text-overline text-primary font-weight-medium">SYSTEM STATUS</span>
             <h1 class="text-h4 font-weight-bold mt-n1">
@@ -55,13 +55,13 @@
       <v-col cols="12" lg="4">
         <v-card class="fill-height d-flex flex-column justify-center align-center text-center rounded-xl" elevation="2" :style="{ padding: 'var(--space-xl)' }">
           <div class="text-h1 font-weight-black text-primary opacity-10 mb-n4">360</div>
-          <div class="text-overline font-weight-bold mb-4">PLATFORM MONITOR</div>
+          <div class="text-overline font-weight-bold mb-md">PLATFORM MONITOR</div>
           <v-icon icon="mdi-shield-check" size="64" color="success" class="mb-4" />
           <div class="text-h6 font-weight-bold">ALL SYSTEMS NOMINAL</div>
           <p class="text-body-2 text-medium-emphasis px-4 mt-2">
             Secure connection established. All appointment data is encrypted and backed up.
           </p>
-          <v-divider class="w-100 my-6" />
+          <v-divider class="w-100 my-lg" />
           <div class="d-flex w-100 justify-space-around">
             <div class="text-center">
               <div class="text-h5 font-weight-bold">{{ upcomingAppointments.length }}</div>
@@ -124,20 +124,20 @@ onMounted(async () => {
 }
 
 .pulse-success {
-  background-color: #4CAF50;
-  box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+  background-color: rgb(var(--v-theme-success));
+  box-shadow: 0 0 0 0 rgba(var(--v-theme-success), 0.7);
   animation: pulse 2s infinite;
 }
 
 @keyframes pulse {
   0% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.4);
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-success), 0.4);
   }
   70% {
-    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 10px rgba(var(--v-theme-success), 0);
   }
   100% {
-    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+    box-shadow: 0 0 0 0 rgba(var(--v-theme-success), 0);
   }
 }
 

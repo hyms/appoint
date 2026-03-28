@@ -33,7 +33,7 @@
   --color-heading: var(--vt-c-text-light-1);
   --color-text: var(--vt-c-text-light-1);
 
-  /* Industrial spacing system */
+  /* Industrial spacing system - 8px rhythm */
   --space-unit: 4px;
   --space-xs: calc(var(--space-unit) * 1);    /* 4px */
   --space-sm: calc(var(--space-unit) * 2);    /* 8px */
@@ -98,7 +98,7 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
-/* Utility classes for spacing */
+/* Utility classes for spacing - 8px rhythm */
 .section-gap {
   margin-bottom: var(--section-gap);
 }
@@ -111,73 +111,56 @@ body {
   margin-bottom: var(--card-gap);
 }
 
-/* Industrial Tabs - High visibility */
-.industrial-tabs {
-  background: rgba(0, 0, 0, 0.03);
-  border-radius: 12px;
-  padding: 4px;
-  border: 1px solid rgba(0, 0, 0, 0.08);
-}
+/* Gap utilities for flex/grid containers */
+.gap-1 { gap: 4px; }
+.gap-2 { gap: 8px; }
+.gap-3 { gap: 12px; }
+.gap-4 { gap: 16px; }
+.gap-6 { gap: 24px; }
+.gap-8 { gap: 32px; }
 
-.industrial-tabs .v-tab {
-  text-transform: none;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  min-width: 100px;
-  border-radius: 8px;
-  transition: all 0.2s ease;
-  color: #666;
-  background: transparent;
-}
-
-.industrial-tabs .v-tab:hover {
-  color: #6200EE;
-  background: rgba(98, 0, 238, 0.08);
-}
-
-.industrial-tabs .v-tab--selected {
-  color: #FFFFFF !important;
-  background: #6200EE !important;
-  box-shadow: 0 2px 8px rgba(98, 0, 238, 0.3);
-}
-
-.industrial-tabs .v-tab-item {
-  font-size: 0.85rem;
-}
-
-/* Dark mode support for tabs */
-.v-theme--dark .industrial-tabs {
-  background: rgba(255, 255, 255, 0.05);
-  border-color: rgba(255, 255, 255, 0.1);
-}
-
-.v-theme--dark .industrial-tabs .v-tab {
-  color: #aaa;
-}
-
-.v-theme--dark .industrial-tabs .v-tab:hover {
-  color: #BB86FC;
-  background: rgba(187, 134, 252, 0.15);
-}
-
-.v-theme--dark .industrial-tabs .v-tab--selected {
-  background: #BB86FC !important;
-  box-shadow: 0 2px 8px rgba(187, 134, 252, 0.4);
-}
-
-/* Tab indicator bar */
+/* Tabs styling */
 .v-tabs {
   border-bottom: 2px solid rgba(0, 0, 0, 0.08);
 }
 
-.v-tabs--grow .v-tab {
-  flex: 0 0 auto;
+.v-tab {
+  text-transform: none;
+  letter-spacing: 0;
 }
 
-@media (max-width: 600px) {
-  .industrial-tabs .v-tab {
-    min-width: 70px;
-    font-size: 0.75rem;
-    padding: 0 12px;
-  }
+.v-tab--selected {
+  color: rgb(var(--v-theme-primary)) !important;
+}
+
+.v-tab:not(.v-tab--selected) {
+  color: rgba(var(--v-theme-on-surface), 0.6);
+}
+
+/* Button error text color - ensure white text on error buttons */
+.v-btn--color-error {
+  color: rgb(var(--v-theme-on-error)) !important;
+}
+
+/* Focus states for accessibility - UI/UX Pro Max */
+*:focus-visible {
+  outline: 2px solid rgb(var(--v-theme-primary));
+  outline-offset: 2px;
+}
+
+/* Disabled states - UI/ux-pro-max contrast */
+.v-btn--disabled {
+  opacity: 0.5 !important;
+}
+
+/* Text contrast for accessibility */
+.text-primary { color: rgb(var(--v-theme-primary)); }
+.text-secondary { color: rgb(var(--v-theme-secondary)); }
+.text-error { color: rgb(var(--v-theme-error)); }
+.text-success { color: rgb(var(--v-theme-success)); }
+.text-warning { color: rgb(var(--v-theme-warning)); }
+
+/* Ensure sufficient contrast on surfaces */
+.v-card, .v-sheet {
+  border: 1px solid rgba(var(--v-border-color), 0.12);
 }

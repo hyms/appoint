@@ -31,7 +31,7 @@
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
             <span>Appointment Details</span>
-            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" />
+            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" :aria-label="$t('common.close')" />
           </v-card-title>
           <v-card-text>
             <AppointmentDetailCard :appointment="selectedAppointment" />
@@ -63,7 +63,7 @@
 
     <!-- PATIENT/PROFESSIONAL VIEW -->
     <template v-else>
-      <v-tabs v-model="tab" color="primary" class="mb-6 industrial-tabs" grow>
+      <v-tabs v-model="tab" color="primary" class="mb-6" grow>
         <v-tab value="upcoming">Próximas</v-tab>
         <v-tab value="past">Pasadas</v-tab>
         <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>

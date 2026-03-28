@@ -75,12 +75,14 @@
       <v-card>
         <v-card-title>{{ editingUser ? 'Edit User' : 'Create New User' }}</v-card-title>
         <v-card-text>
-          <v-form ref="userFormRef" @submit.prevent="saveUser">
+          <v-form ref="userFormRef" @submit.prevent="saveUser" class="d-flex flex-column gap-4">
             <BaseInput v-model="userFormData.email" label="Email" required :rules="emailRules" variant="outlined" rounded="md" />
             <BaseInput v-if="!editingUser" v-model="userFormData.password" label="Password" type="password" required :rules="passwordRules" variant="outlined" rounded="md" />
             <BaseInput v-model="userFormData.phone" label="Phone" type="tel" variant="outlined" rounded="md" />
-            <BaseInput v-model="userFormData.firstName" label="First Name" required :rules="[(v: string) => !!v || 'Name required']" variant="outlined" rounded="md" />
-            <BaseInput v-model="userFormData.lastName" label="Last Name" required :rules="[(v: string) => !!v || 'Last name required']" variant="outlined" rounded="md" />
+            <div class="d-flex gap-4">
+              <BaseInput v-model="userFormData.firstName" label="First Name" required :rules="[(v: string) => !!v || 'Name required']" variant="outlined" rounded="md" class="flex-grow-1" />
+              <BaseInput v-model="userFormData.lastName" label="Last Name" required :rules="[(v: string) => !!v || 'Last name required']" variant="outlined" rounded="md" class="flex-grow-1" />
+            </div>
             <BaseInput v-model="userFormData.dni" label="DNI" variant="outlined" rounded="md" />
             <BaseSelect v-model="userFormData.role" label="Role" :items="roleOptions" item-title="text" item-value="value" required :rules="[(v: string) => !!v || 'Role required']" />
             <v-switch v-if="editingUser" v-model="userFormData.isActive" label="User Active" color="success" inset />

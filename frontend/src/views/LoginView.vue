@@ -1,5 +1,5 @@
 <template>
-  <v-container fluid class="fill-height bg-grey-lighten-4 pa-0">
+  <v-container fluid class="fill-height bg-surface pa-0">
     <v-row align="center" justify="center" class="ma-0">
       <v-col cols="12" sm="10" md="8" lg="5" xl="4">
         <v-card class="pa-6 pa-sm-10" elevation="4">
@@ -16,10 +16,11 @@
 
           <!-- Login Form -->
           <v-form @submit.prevent="handleLogin" ref="formRef">
-            <div class="mb-4">
+            <div class="mb-md">
               <BaseInput
                 v-model="form.email"
                 type="email"
+                autocomplete="username" 
                 required
                 :label="$t('auth.email')"
                 prepend-inner-icon="mdi-email-outline"
@@ -28,10 +29,11 @@
               />
             </div>
             
-            <div class="mb-2">
+            <div class="mb-md">
               <BaseInput
                 v-model="form.password"
                 type="password"
+                autocomplete="current-password" 
                 required
                 :label="$t('auth.password')"
                 prepend-inner-icon="mdi-lock-outline"
@@ -40,7 +42,7 @@
               />
             </div>
 
-            <div class="d-flex justify-end mb-8">
+            <div class="d-flex justify-end mb-lg">
               <v-btn
                 variant="text"
                 size="small"
@@ -65,14 +67,14 @@
           </v-form>
 
           <!-- Divider -->
-          <div class="d-flex align-center my-8">
+          <div class="d-flex align-center my-lg">
             <v-divider />
             <span class="mx-4 text-caption text-medium-emphasis text-uppercase font-weight-bold">{{ $t('common.or') }}</span>
             <v-divider />
           </div>
 
           <!-- Alternative Auth -->
-          <div class="d-flex flex-column gap-3">
+          <div class="d-flex flex-column gap-md">
             <v-btn
               variant="outlined"
               color="primary"
@@ -84,7 +86,7 @@
               {{ $t('auth.enterWithMagic') }}
             </v-btn>
 
-            <div class="text-center mt-6">
+            <div class="text-center mt-lg">
               <span class="text-body-2 text-medium-emphasis">{{ $t('auth.dontHaveAccount') }}</span>
               <v-btn
                 variant="text"
@@ -99,7 +101,7 @@
         </v-card>
         
         <!-- Footer Info -->
-        <div class="text-center mt-8 text-caption text-disabled">
+        <div class="text-center mt-lg text-caption text-disabled">
           v1.0.5 // SECURE SYSTEM NODE
         </div>
       </v-col>

@@ -1,7 +1,7 @@
-import {createVuetify} from 'vuetify'
+import { createVuetify } from 'vuetify'
 import * as components from 'vuetify/components'
 import * as directives from 'vuetify/directives'
-import {aliases, mdi} from 'vuetify/iconsets/mdi'
+import { aliases, mdi } from 'vuetify/iconsets/mdi'
 import '@mdi/font/css/materialdesignicons.css'
 import 'vuetify/styles'
 
@@ -19,31 +19,39 @@ export default createVuetify({
     defaultTheme: 'light',
     themes: {
       light: {
-        dark: false,
         colors: {
-          primary: '#6200EE', // Material Purple
-          secondary: '#03DAC6', // Material Teal
-          accent: '#03DAC6', // Material Teal (using secondary for accent as well for consistency)
-          error: '#B00020', // Material Red
-          info: '#2196F3', // Material Blue
-          success: '#4CAF50', // Material Green
-          warning: '#FB8C00', // Material Orange
-          background: '#F5F5F5', // Light Gray
-          surface: '#FFFFFF', // White
+          primary: '#6C4EE7',
+          'on-primary': '#FFFFFF',
+          secondary: '#FF8AC8',
+          'on-secondary': '#000000',
+          accent: '#AB96FF',
+          error: '#D32F2F',
+          'on-error': '#FFFFFF',
+          info: '#1E88E5',
+          success: '#43A047',
+          warning: '#FB8C00',
+          background: '#FFFFFF',
+          surface: '#F5F5F5',
+          'on-surface': '#212121',
+          'on-background': '#212121',
         },
       },
       dark: {
-        dark: true,
         colors: {
-          primary: '#BB86FC', // Material Light Purple
-          secondary: '#03DAC6', // Material Teal
-          accent: '#03DAC6', // Material Teal
-          error: '#CF6679', // Material Red
-          info: '#2196F3',
-          success: '#4CAF50',
-          warning: '#FFC107',
-          background: '#121212', // Dark background
-          surface: '#1E1E1E', // Dark surface
+          primary: '#AB96FF',
+          'on-primary': '#000000',
+          secondary: '#FF8AC8',
+          'on-secondary': '#000000',
+          accent: '#6C4EE7',
+          error: '#EF5350',
+          'on-error': '#FFFFFF',
+          info: '#42A5F5',
+          success: '#66BB6A',
+          warning: '#FFCA28',
+          background: '#121212',
+          surface: '#1E1E1E',
+          'on-surface': '#FFFFFF',
+          'on-background': '#FFFFFF',
         },
       },
     },
@@ -51,32 +59,31 @@ export default createVuetify({
   defaults: {
     global: {
       ripple: true,
+      font: {
+        family: 'Inter',
+      },
     },
-    VBtn: {
-      variant: 'elevated',
-      rounded: 'lg',
-      elevation: 1,
-      class: 'text-none',
+    VTab: {
+      color: 'primary',
     },
-    VCard: {
-      variant: 'elevated',
-      rounded: 'md',
-      elevation: 2,
+    VTabs: {
+      color: 'primary',
+      sliderColor: 'primary',
     },
     VTextField: {
-      variant: 'outlined',
       density: 'comfortable',
-      rounded: 'lg',
       hideDetails: 'auto',
     },
     VSelect: {
-      variant: 'outlined',
       density: 'comfortable',
-      rounded: 'lg',
       hideDetails: 'auto',
     },
-    VListItem: {
-      rounded: 'lg',
+    VCard: {
+      variant: 'elevated',
+    },
+    VBtn: {
+      variant: 'elevated',
+      class: 'text-none',
     },
     VChip: {
       rounded: 'pill',

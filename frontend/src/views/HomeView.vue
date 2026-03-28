@@ -6,14 +6,16 @@
           <v-card-title class="text-h5 text-center">
             {{ $t('app.welcome') }}
           </v-card-title>
-          <v-card-text class="text-center card-gap">
+          <v-card-text class="text-center">
             <p class="mb-4">{{ $t('app.title') }}</p>
-            <v-btn color="primary" to="/book" size="large" class="mr-2">
-              {{ $t('appointments.book') }}
-            </v-btn>
-            <v-btn variant="outlined" to="/login" size="large">
-              {{ $t('nav.login') }}
-            </v-btn>
+            <div class="d-flex justify-center gap-4 flex-wrap">
+              <v-btn color="primary" to="/book" size="large">
+                {{ $t('appointments.book') }}
+              </v-btn>
+              <v-btn variant="outlined" to="/login" size="large">
+                {{ $t('nav.login') }}
+              </v-btn>
+            </div>
           </v-card-text>
         </v-card>
       </v-col>

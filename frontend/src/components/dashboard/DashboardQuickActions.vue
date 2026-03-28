@@ -1,6 +1,6 @@
 <template>
-  <v-row>
-    <v-col cols="12" sm="6" md="4">
+  <v-row class="mb-6">
+    <v-col cols="12" sm="6" md="4" class="mb-4 mb-md-0">
       <BaseCard
         to="/book"
         icon="mdi-calendar-plus"
@@ -10,7 +10,7 @@
         class="h-100 action-card"
       />
     </v-col>
-    <v-col cols="12" sm="6" md="4">
+    <v-col cols="12" sm="6" md="4" class="mb-4 mb-md-0">
       <BaseCard
         to="/appointments"
         icon="mdi-calendar-check"
@@ -20,7 +20,7 @@
         class="h-100 action-card"
       />
     </v-col>
-    <v-col v-if="isAdminOrSecretary" cols="12" sm="6" md="4">
+    <v-col v-if="isAdminOrSecretary" cols="12" sm="6" md="4" class="mb-4 mb-md-0">
       <BaseCard
         to="/admin"
         icon="mdi-shield-account"
@@ -30,7 +30,7 @@
         class="h-100 action-card"
       />
     </v-col>
-    <v-col v-if="isProfessional" cols="12" sm="6" md="4">
+    <v-col v-if="isProfessional" cols="12" sm="6" md="4" class="mb-4 mb-md-0">
       <BaseCard
         to="/professional-config"
         icon="mdi-account-cog"

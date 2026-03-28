@@ -7,23 +7,16 @@
       :rail="rail && !$vuetify.display.mobile"
       :permanent="!$vuetify.display.mobile"
       :temporary="$vuetify.display.mobile"
+      color="primary"
       class="app-nav-drawer"
     >
       <v-list-item nav class="py-4">
         <template v-slot:prepend>
-          <v-icon size="large" color="primary">mdi-hospital-building</v-icon>
+          <v-icon size="large" color="white">mdi-hospital-building</v-icon>
         </template>
-        <v-list-item-title class="text-h6 font-weight-bold text-primary">
+        <v-list-item-title class="text-h6 font-weight-bold text-white">
           {{ $t('app.title') }}
         </v-list-item-title>
-        <template v-slot:append>
-          <v-btn
-            v-if="!$vuetify.display.mobile"
-            variant="text"
-            :icon="rail ? 'mdi-chevron-right' : 'mdi-chevron-left'"
-            @click="rail = !rail"
-          />
-        </template>
       </v-list-item>
 
       <v-divider class="mb-2" />
@@ -35,8 +28,9 @@
           :to="item.to"
           :prepend-icon="item.icon"
           :title="item.label"
-          color="primary"
+          color="white"
           rounded="sm"
+          class="text-white"
         />
       </v-list>
 
@@ -47,8 +41,9 @@
             prepend-icon="mdi-translate"
             :title="rail ? '' : $t('nav.language')"
             @click="toggleLocale"
-            color="primary"
+            color="white"
             rounded="sm"
+            class="text-white"
           />
         </v-list>
       </template>
@@ -56,18 +51,7 @@
 
     <!-- App Bar -->
     <v-app-bar color="surface" density="comfortable" elevation="1">
-      <v-btn
-        v-if="authStore.isAuthenticated && !$vuetify.display.mobile"
-        icon
-        variant="text"
-        @click="rail = !rail"
-      >
-        <v-icon>{{ rail ? 'mdi-chevron-right' : 'mdi-chevron-left' }}</v-icon>
-      </v-btn>
-      <v-app-bar-nav-icon
-        v-if="authStore.isAuthenticated && $vuetify.display.mobile"
-        @click="drawerOpen = !drawerOpen"
-      />
+      <v-app-bar-nav-icon v-if="authStore.isAuthenticated" @click="drawerOpen = !drawerOpen" />
       <v-app-bar-title class="font-weight-bold">
         {{ $t('app.title') }}
       </v-app-bar-title>
@@ -80,7 +64,7 @@
         <!-- User Menu -->
         <v-menu>
           <template v-slot:activator="{ props }">
-            <v-btn v-bind="props" icon variant="text">
+            <v-btn v-bind="props" icon variant="text" :aria-label="$t('app.userMenu')">
               <v-icon>mdi-account-circle</v-icon>
             </v-btn>
           </template>
@@ -129,24 +113,6 @@
       </v-container>
     </v-main>
 
-    <!-- Mobile Bottom Navigation -->
-    <v-bottom-navigation
-      v-if="$vuetify.display.mobile && authStore.isAuthenticated"
-      v-model="activeTab"
-      grow
-      color="primary"
-    >
-      <v-btn
-        v-for="item in bottomNavItems"
-        :key="item.to"
-        :to="item.to"
-        :value="item.to"
-      >
-        <v-icon :icon="item.icon" />
-        <span class="text-caption">{{ item.label }}</span>
-      </v-btn>
-    </v-bottom-navigation>
-
     <ToastContainer />
   </v-app>
 </template>
@@ -172,7 +138,7 @@ const { initOneSignal, loginToOneSignal } = useOneSignal()
 onMounted(async () => {
   await authStore.initializeSession()
   await initOneSignal()
-  
+
   if (authStore.isAuthenticated && authStore.user) {
     // If session is already active (e.g., returning user with token), link OneSignal ID
     await loginToOneSignal(authStore.user.id)
@@ -189,15 +155,19 @@ const menuItems = computed(() => {
     { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
     { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
   ]
-  
+
   if (isProfessional.value) {
-    items.push({ to: '/professional-config', label: t('nav.administrativeTools'), icon: 'mdi-account-cog' })
+    items.push({
+      to: '/professional-config',
+      label: t('nav.administrativeTools'),
+      icon: 'mdi-account-cog',
+    })
   }
-  
+
   if (isAdminOrSecretary.value) {
     items.push({ to: '/admin', label: t('nav.adminPanel'), icon: 'mdi-shield-account' })
   }
-  
+
   return items
 })
 
@@ -207,15 +177,15 @@ const bottomNavItems = computed(() => {
     { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
     { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
   ]
-  
+
   if (isProfessional.value) {
     items.push({ to: '/professional-config', label: t('nav.adminPanel'), icon: 'mdi-account-cog' })
   }
-  
+
   if (isAdminOrSecretary.value) {
     items.push({ to: '/admin', label: t('nav.adminPanel'), icon: 'mdi-shield-account' })
   }
-  
+
   return items
 })
 
@@ -234,40 +204,3 @@ function logout() {
   router.push('/login')
 }
 </script>
-
-<style scoped>
-.app-nav-drawer {
-    background-color: #0A0A0A !important;
-    border-right: 1px solid rgba(var(--v-border-color), 0.2) !important;
-}
-
-.max-width-xl {
-  max-width: 1600px;
-}
-
-.app-nav-drawer .v-list-item {
-    margin-bottom: 4px;
-    color: rgba(255, 255, 255, 0.7);
-}
-
-.app-nav-drawer .v-list-item--active {
-  color: rgb(var(--v-theme-primary));
-  background-color: rgba(var(--v-theme-primary), 0.2);
-}
-
-.app-nav-drawer .v-list-item .v-icon {
-    color: rgba(255, 255, 255, 0.7) !important;
-}
-
-.app-nav-drawer .v-list-item--active .v-icon {
-    color: rgb(var(--v-theme-primary)) !important;
-}
-
-.v-app-bar {
-    border-bottom: 1px solid rgba(var(--v-border-color), 0.1);
-}
-
-.v-list-item-title {
-  letter-spacing: 0.5px;
-}
-</style>

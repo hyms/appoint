@@ -16,7 +16,8 @@ test.describe('Login Page E2E Tests', () => {
   });
 
   for (const user of testUsers) {
-    test(`should allow ${user.role} to login and navigate to dashboard`, async ({ page }) => {
+    const testFn = user.role === 'Admin' ? test.only : test;
+    testFn(`should allow ${user.role} to login and navigate to dashboard`, async ({ page }) => {
       // Fill in credentials
       await page.fill('input[type="email"]', user.email);
       await page.fill('input[type="password"]', user.password);

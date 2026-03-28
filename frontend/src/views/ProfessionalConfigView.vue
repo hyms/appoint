@@ -12,17 +12,17 @@
     </v-row>
 
     <v-row v-if="loading">
-      <v-col cols="12" class="text-center py-8">
+      <v-col cols="12" class="text-center py-12">
         <v-progress-circular indeterminate color="primary" />
-        <p class="mt-2">Cargando configuración...</p>
+        <p class="mt-4">Cargando configuración...</p>
       </v-col>
     </v-row>
 
     <template v-else>
       <!-- Slot Duration Settings -->
-      <v-row>
+      <v-row class="mb-6">
         <v-col cols="12" md="6">
-          <v-card class="mb-4">
+          <v-card>
             <v-card-title>Duración de Citas</v-card-title>
             <v-card-text>
               <v-slider
@@ -41,7 +41,7 @@
         </v-col>
 
         <v-col cols="12" md="6">
-          <v-card class="mb-4">
+          <v-card>
             <v-card-title>Descanso entre Citas</v-card-title>
             <v-card-text>
               <v-slider
@@ -61,7 +61,7 @@
       </v-row>
 
       <!-- Working Hours -->
-      <v-row>
+      <v-row class="mb-6">
         <v-col cols="12">
           <v-card>
             <v-card-title class="d-flex justify-space-between align-center">

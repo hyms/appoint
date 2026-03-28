@@ -1,7 +1,7 @@
 <template>
-  <v-row align="center" justify="center" class="fill-height ma-0 bg-neutral-light">
+  <v-row align="center" justify="center" class="fill-height ma-0 bg-background">
     <v-col cols="12" sm="10" md="8" lg="6" xl="5">
-      <div class="login-decoration mb-n8 ml-4 opacity-20 text-h1 font-weight-black text-primary">REG</div>
+      <div class="login-decoration ml-4 opacity-20 text-h1 font-weight-black text-primary">REG</div>
       
       <v-card class="pa-8 pa-sm-12 border-thick elevation-0 position-relative overflow-visible" color="surface">
         <div class="mb-10">
@@ -19,54 +19,54 @@
 
         <v-form @submit.prevent="handleRegister" ref="formRef" class="mt-6">
           <v-row>
-            <v-col cols="12" sm="6" class="py-1">
-              <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.firstName') }}</label>
+            <v-col cols="12" sm="6">
               <BaseInput
                 v-model="form.firstName"
                 required
+                :label="$t('auth.firstName')"
                 prepend-inner-icon="mdi-account-outline"
                 placeholder="Jane"
               />
             </v-col>
-            <v-col cols="12" sm="6" class="py-1">
-              <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.lastName') }}</label>
+            <v-col cols="12" sm="6">
               <BaseInput
                 v-model="form.lastName"
                 required
+                :label="$t('auth.lastName')"
                 prepend-inner-icon="mdi-account-outline"
                 placeholder="Doe"
               />
             </v-col>
           </v-row>
 
-          <div class="mb-4 mt-2">
-            <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.email') }}</label>
+          <div class="mb-md mt-md">
             <BaseInput
               v-model="form.email"
               type="email"
               required
+              :label="$t('auth.email')"
               prepend-inner-icon="mdi-email-outline"
               :rules="emailRules"
               placeholder="jane.doe@system360.com"
             />
           </div>
 
-          <div class="mb-4">
-            <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.phone') }}</label>
+          <div class="mb-md">
             <BaseInput
               v-model="form.phone"
               type="tel"
+              :label="$t('auth.phone')"
               prepend-inner-icon="mdi-phone-outline"
               placeholder="+1 (555) 000-0000"
             />
           </div>
 
-          <div class="mb-8">
-            <label class="text-overline font-weight-black mb-1 d-block">{{ $t('auth.password') }}</label>
+          <div class="mb-lg">
             <BaseInput
               v-model="form.password"
               type="password"
               required
+              :label="$t('auth.password')"
               prepend-inner-icon="mdi-lock-outline"
               :rules="passwordRules"
               placeholder="••••••••"
@@ -87,7 +87,7 @@
           </BaseButton>
         </v-form>
 
-        <div class="text-center mt-8">
+        <div class="text-center mt-lg">
           <v-btn
             variant="text"
             color="medium-emphasis"
@@ -146,12 +146,8 @@ async function handleRegister() {
 </script>
 
 <style scoped>
-.bg-neutral-light {
-  background-color: #f0f2f5;
-}
-
 .border-thick {
-  border: 4px solid #1A1A1A !important;
+  border: 4px solid rgb(var(--v-theme-on-surface));
 }
 
 .login-decoration {
