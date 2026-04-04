@@ -60,8 +60,17 @@ export default createVuetify({
     global: {
       ripple: true,
       font: {
-        family: 'Inter',
+        family: 'Roboto, sans-serif',
       },
+    },
+    VCard: {
+      variant: 'elevated',
+      rounded: 'lg',
+    },
+    VBtn: {
+      variant: 'elevated',
+      class: 'text-none',
+      rounded: 'lg',
     },
     VTab: {
       color: 'primary',
@@ -78,13 +87,6 @@ export default createVuetify({
       density: 'comfortable',
       hideDetails: 'auto',
     },
-    VCard: {
-      variant: 'elevated',
-    },
-    VBtn: {
-      variant: 'elevated',
-      class: 'text-none',
-    },
     VChip: {
       rounded: 'pill',
     },
@@ -100,3 +102,4 @@ export default createVuetify({
     },
   },
 })
+

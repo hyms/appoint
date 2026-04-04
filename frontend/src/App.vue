@@ -121,8 +121,7 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useAuthStore } from '@/stores/auth'
-import { useRouter, useRoute } from 'vue-router'
-import { useVuetify } from '@/composables/useVuetify'
+import { useRouter } from 'vue-router'
 import { useAuthorization } from '@/composables/useAuthorization'
 import { useOneSignal } from '@/composables/useOneSignal'
 import ToastContainer from '@/components/ToastContainer.vue'
@@ -130,8 +129,6 @@ import ToastContainer from '@/components/ToastContainer.vue'
 const { locale, t } = useI18n()
 const authStore = useAuthStore()
 const router = useRouter()
-const route = useRoute()
-const vuetify = useVuetify()
 const { isProfessional, isAdminOrSecretary } = useAuthorization()
 const { initOneSignal, loginToOneSignal } = useOneSignal()
 
@@ -147,7 +144,6 @@ onMounted(async () => {
 
 const drawerOpen = ref(true)
 const rail = ref(false)
-const activeTab = computed(() => route.path)
 
 const menuItems = computed(() => {
   const items = [
@@ -162,24 +158,6 @@ const menuItems = computed(() => {
       label: t('nav.administrativeTools'),
       icon: 'mdi-account-cog',
     })
-  }
-
-  if (isAdminOrSecretary.value) {
-    items.push({ to: '/admin', label: t('nav.adminPanel'), icon: 'mdi-shield-account' })
-  }
-
-  return items
-})
-
-const bottomNavItems = computed(() => {
-  const items = [
-    { to: '/dashboard', label: t('nav.dashboard'), icon: 'mdi-view-dashboard' },
-    { to: '/appointments', label: t('appointments.title'), icon: 'mdi-calendar' },
-    { to: '/book', label: t('appointments.book'), icon: 'mdi-calendar-plus' },
-  ]
-
-  if (isProfessional.value) {
-    items.push({ to: '/professional-config', label: t('nav.adminPanel'), icon: 'mdi-account-cog' })
   }
 
   if (isAdminOrSecretary.value) {

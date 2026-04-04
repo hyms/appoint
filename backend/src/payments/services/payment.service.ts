@@ -1,14 +1,9 @@
-import {
-  Injectable,
-  NotFoundException,
-  BadRequestException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
-import { VerifyPaymentDto, UploadPaymentDto } from '../dto/payment.dto';
+import { VerifyPaymentDto } from '../dto/payment.dto';
 import { AppConfigService } from '../../config/config.service';
 import * as QRCode from 'qrcode';
 import * as path from 'path';
-import * as fs from 'fs';
 
 @Injectable()
 export class PaymentsService {

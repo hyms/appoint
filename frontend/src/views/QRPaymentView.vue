@@ -97,7 +97,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import api from '@/services/api'
-import { paymentsService, type QRPayment } from '@/services/payments'
+import { paymentsService } from '@/services/payments'
 import { useToast } from '@/composables/useToast'
 import { useAppColors } from '@/composables/useAppColors'
 

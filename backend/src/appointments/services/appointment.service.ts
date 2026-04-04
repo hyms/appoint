@@ -20,7 +20,6 @@ import {
 import { NotificationProviderService } from '../../notifications/services/notification-provider.service';
 import { ProviderType } from '../../notifications/dto/notification.dto';
 import { NotificationType } from '@prisma/client';
-import { Permission } from '../../common/enums/permissions.enum';
 
 @Injectable()
 export class AppointmentsService {
@@ -120,9 +119,33 @@ export class AppointmentsService {
       throw new NotFoundException('Appointment not found');
     }
 
+    if (
+      appointment.status === 'CANCELLED' ||
+      appointment.status === 'COMPLETED'
+    ) {
+      throw new BadRequestException(
+        'Cannot update a cancelled or completed appointment',
+      );
+    }
+
+    // Window of Change: 2 hours before
+    const appointmentDateTime = new Date(
+      `${appointment.date.toISOString().split('T')[0]}T${appointment.startTime.toISOString().split('T')[1]}`,
+    );
+    const now = new Date();
+    const diffInHours = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 2) {
+      throw new BadRequestException(
+        'Modifications are only allowed up to 2 hours before the appointment',
+      );
+    }
+
     const updateData: any = {};
     if (dto.patientId) updateData.patientId = dto.patientId;
-    if (dto.professionalId) updateData.professionalId = dto.professionalId;
+    // Doctor Lock: Prohibited to change professional
+    // if (dto.professionalId) updateData.professionalId = dto.professionalId; 
+    
     if (dto.slotId) {
       const slot = await this.prisma.slot.findUnique({
         where: { id: dto.slotId },
@@ -431,8 +454,21 @@ export class AppointmentsService {
       userRole,
     );
 
-    if (appointment.status === 'CANCELLED') {
-      throw new BadRequestException('Appointment is already cancelled');
+    if (appointment.status === 'CANCELLED' || appointment.status === 'COMPLETED') {
+      throw new BadRequestException('Appointment is already finished or cancelled');
+    }
+
+    // Window of Change: 2 hours before
+    const appointmentDateTime = new Date(
+      `${appointment.date.toISOString().split('T')[0]}T${appointment.startTime.toISOString().split('T')[1]}`,
+    );
+    const now = new Date();
+    const diffInHours = (appointmentDateTime.getTime() - now.getTime()) / (1000 * 60 * 60);
+
+    if (diffInHours < 2) {
+      throw new BadRequestException(
+        'Modifications are only allowed up to 2 hours before the appointment',
+      );
     }
 
     if (

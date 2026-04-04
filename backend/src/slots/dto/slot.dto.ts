@@ -11,32 +11,32 @@ import { Type } from 'class-transformer';
 
 export class WorkingHoursDto {
   @IsString()
-  dayOfWeek: string;
+  dayOfWeek!: string;
 
   @IsString()
-  startTime: string;
+  startTime!: string;
 
   @IsString()
-  endTime: string;
+  endTime!: string;
 
   @IsBoolean()
-  isActive: boolean;
+  isActive!: boolean;
 }
 
 export class ProfessionalConfigDto {
   @IsString()
-  professionalId: string;
+  professionalId!: string;
 
   @IsNumber()
-  slotDurationMinutes: number;
+  slotDurationMinutes!: number;
 
   @IsNumber()
-  breakBetweenSlotsMinutes: number;
+  breakBetweenSlotsMinutes!: number;
 
   @IsArray()
   @ValidateNested({ each: true })
   @Type(() => WorkingHoursDto)
-  workingHours: WorkingHoursDto[];
+  workingHours!: WorkingHoursDto[];
 
   @IsOptional()
   @IsString()
@@ -45,13 +45,13 @@ export class ProfessionalConfigDto {
 
 export class GenerateSlotsDto {
   @IsString()
-  professionalId: string;
+  professionalId!: string;
 
   @IsDateString()
-  startDate: string;
+  startDate!: string;
 
   @IsDateString()
-  endDate: string;
+  endDate!: string;
 
   @IsOptional()
   @IsString()
@@ -60,7 +60,7 @@ export class GenerateSlotsDto {
 
 export class BlockSlotDto {
   @IsString()
-  slotId: string;
+  slotId!: string;
 
   @IsOptional()
   @IsString()

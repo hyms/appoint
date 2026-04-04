@@ -1,4 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
+import { BadRequestException } from '@nestjs/common';
 import { NotificationProviderService } from './notification-provider.service';
 import { NotificationConfigService } from './notification-config.service';
 import { NotificationProviderRegistry } from './notification-provider.registry';
@@ -73,26 +74,23 @@ describe('NotificationProviderService', () => {
   });
 
   describe('sendNotification', () => {
-    it('should send notification successfully using default provider', async () => {
+    it('should send notification successfully using configured provider', async () => {
       const dto: SendNotificationDto = {
         userId: 'user-1',
         type: NotificationType.APPOINTMENT_REMINDER,
         recipient: 'test@example.com',
         content: 'Test message',
+        provider: ProviderType.EMAIL,
       };
 
       mockPrismaService.notificationLog.create.mockResolvedValue({
         id: 'notif-1',
-        ...dto,
-        status: 'PENDING',
       });
 
       const mockEmailProvider = {
         type: ProviderType.EMAIL,
         isConfigured: jest.fn().mockReturnValue(true),
-        send: jest
-          .fn()
-          .mockResolvedValue({ success: true, messageId: 'msg-1' }),
+        send: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-1' }),
       };
 
       mockRegistry.get.mockReturnValue(mockEmailProvider);
@@ -104,39 +102,105 @@ describe('NotificationProviderService', () => {
       const result = await service.sendNotification(dto);
 
       expect(result.status).toBe('SENT');
+      expect(mockEmailProvider.send).toHaveBeenCalled();
     });
 
-    it('should handle failed notification', async () => {
+    it('should fallback to default provider if provider is not configured', async () => {
       const dto: SendNotificationDto = {
         userId: 'user-1',
-        type: NotificationType.MAGIC_LINK,
+        type: NotificationType.APPOINTMENT_REMINDER,
         recipient: 'test@example.com',
-        content: 'Magic link',
+        content: 'Test message',
+        provider: ProviderType.WHATSAPP,
       };
 
       mockPrismaService.notificationLog.create.mockResolvedValue({
         id: 'notif-1',
-        status: 'PENDING',
       });
 
-      const mockEmailProvider = {
-        type: ProviderType.EMAIL,
-        isConfigured: jest.fn().mockReturnValue(true),
-        send: jest
-          .fn()
-          .mockResolvedValue({ success: false, error: 'Send failed' }),
+      const mockWhatsAppProvider = {
+        type: ProviderType.WHATSAPP,
+        isConfigured: jest.fn().mockReturnValue(false),
       };
 
-      mockRegistry.get.mockReturnValue(mockEmailProvider);
+      const mockDefaultProvider = {
+        type: ProviderType.EMAIL,
+        isConfigured: jest.fn().mockReturnValue(true),
+        send: jest.fn().mockResolvedValue({ success: true, messageId: 'msg-2' }),
+      };
+
+      mockRegistry.get.mockReturnValue(mockWhatsAppProvider);
+      mockRegistry.getDefault.mockReturnValue(mockDefaultProvider);
+
+      mockPrismaService.notificationLog.update.mockResolvedValue({
+        id: 'notif-1',
+        status: 'SENT',
+      });
+
+      const result = await service.sendNotification(dto);
+
+      expect(result.status).toBe('SENT');
+      expect(mockDefaultProvider.send).toHaveBeenCalled();
+    });
+
+    it('should throw BadRequestException if no provider available', async () => {
+      const dto: SendNotificationDto = {
+        userId: 'user-1',
+        type: NotificationType.APPOINTMENT_REMINDER,
+        recipient: 'test@example.com',
+        content: 'Test message',
+        provider: ProviderType.WHATSAPP,
+      };
+
+      mockPrismaService.notificationLog.create.mockResolvedValue({
+        id: 'notif-1',
+      });
+
+      const mockWhatsAppProvider = {
+        type: ProviderType.WHATSAPP,
+        isConfigured: jest.fn().mockReturnValue(false),
+      };
+
+      mockRegistry.get.mockReturnValue(mockWhatsAppProvider);
+      mockRegistry.getDefault.mockReturnValue(null);
+
       mockPrismaService.notificationLog.update.mockResolvedValue({
         id: 'notif-1',
         status: 'FAILED',
-        errorMessage: 'Send failed',
+        errorMessage: 'No notification provider available',
+      });
+      
+      const result = await service.sendNotification(dto);
+      expect(result.status).toBe('FAILED');
+      expect(result.errorMessage).toBe('No notification provider available');
+    });
+
+    it('should catch errors and update status to FAILED', async () => {
+      const dto: SendNotificationDto = {
+        userId: 'user-1',
+        type: NotificationType.APPOINTMENT_REMINDER,
+        recipient: 'test@example.com',
+        content: 'Test message',
+      };
+
+      mockPrismaService.notificationLog.create.mockResolvedValue({
+        id: 'notif-1',
+      });
+
+      mockRegistry.get.mockImplementation(() => {
+        throw new Error('Registry error');
+      });
+
+      mockPrismaService.notificationLog.update.mockResolvedValue({
+        id: 'notif-1',
+        status: 'FAILED',
+        errorMessage: 'Registry error',
       });
 
       const result = await service.sendNotification(dto);
 
       expect(result.status).toBe('FAILED');
+      expect(result.errorMessage).toBe('Registry error');
     });
   });
 

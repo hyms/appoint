@@ -83,7 +83,7 @@ async function main() {
   })
   console.log('✅ Location created:', location.name)
 
-  const emergencyButton = await prisma.emergencyButton.upsert({
+  await prisma.emergencyButton.upsert({
     where: { id: 'default-emergency' },
     update: {},
     create: {

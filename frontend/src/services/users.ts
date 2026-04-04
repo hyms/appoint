@@ -37,6 +37,7 @@ export interface UpdateUserDto {
   dni?: string
   role?: string
   isActive?: boolean
+  password?: string
 }
 
 export const usersService = {

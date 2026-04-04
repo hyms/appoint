@@ -8,12 +8,12 @@ import {
 
 export class CreateStrikeDto {
   @IsUUID()
-  patientId: string;
+  patientId!: string;
 
   @IsString()
   @MinLength(10, { message: 'Reason must be at least 10 characters' })
   @MaxLength(500, { message: 'Reason must be at most 500 characters' })
-  reason: string;
+  reason!: string;
 
   @IsOptional()
   @IsUUID()
@@ -24,5 +24,5 @@ export class ResolveStrikeDto {
   @IsString()
   @MinLength(10, { message: 'Resolution must be at least 10 characters' })
   @MaxLength(500, { message: 'Resolution must be at most 500 characters' })
-  resolution: string;
+  resolution!: string;
 }

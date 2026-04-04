@@ -1,5 +1,4 @@
 import { IsString, IsDateString, IsOptional, IsEnum } from 'class-validator';
-import { UserRole } from '@prisma/client';
 
 export class CreateAppointmentDto {
   @IsOptional()
@@ -7,10 +6,10 @@ export class CreateAppointmentDto {
   patientId?: string;
 
   @IsString()
-  professionalId: string;
+  professionalId!: string;
 
   @IsString()
-  slotId: string;
+  slotId!: string;
 
   @IsOptional()
   @IsString()
@@ -23,7 +22,7 @@ export class CreateAppointmentDto {
 
 export class UpdateAppointmentStatusDto {
   @IsEnum(['PENDING', 'CONFIRMED', 'COMPLETED', 'CANCELLED', 'NO_SHOW'])
-  status: string;
+  status!: string;
 
   @IsOptional()
   @IsString()
@@ -32,7 +31,7 @@ export class UpdateAppointmentStatusDto {
 
 export class CancelAppointmentDto {
   @IsString()
-  reason: string;
+  reason!: string;
 }
 
 export class UpdateAppointmentDto {

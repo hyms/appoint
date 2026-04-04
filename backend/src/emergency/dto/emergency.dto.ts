@@ -1,8 +1,8 @@
-import { IsString, IsNumber, IsOptional, IsBoolean } from 'class-validator';
+import { IsString, IsNumber, IsOptional } from 'class-validator';
 
 export class ActivateEmergencyDto {
   @IsString()
-  message: string;
+  message!: string;
 
   @IsOptional()
   @IsNumber()
@@ -11,5 +11,5 @@ export class ActivateEmergencyDto {
 
 export class DeactivateEmergencyDto {
   @IsString()
-  reason: string;
+  reason!: string;
 }

@@ -59,14 +59,10 @@ const router = createRouter({
   routes
 })
 
-router.beforeEach(async (to, from, next) => {
+router.beforeEach(async (to, _from, next) => {
   const authStore = useAuthStore()
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated) {
-    // Before redirecting, if the token exists, we should wait for session initialization
-    // Although beforeEach is synchronous, we rely on the fact that if isAuthenticated is false,
-    // the user needs to log in OR the initialization hasn't completed.
-    // Since we moved initialization to an action, the simplest approach is to rely on isAuthenticated.
     next({ name: 'login', query: { redirect: to.fullPath } })
     return
   }

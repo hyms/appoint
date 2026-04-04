@@ -32,7 +32,7 @@ export class AuditService {
         },
       });
     } catch (error) {
-      this.logger.warn(`Failed to create audit log for user ${userId}: ${error.message}`);
+      this.logger.warn(`Failed to create audit log for user ${userId}: ${(error as Error).message}`);
     }
   }
 }

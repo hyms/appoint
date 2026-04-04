@@ -47,7 +47,7 @@ export class TelegramProvider implements INotificationProvider {
       return { success: true, messageId: data.result?.message_id?.toString() };
     } catch (error) {
       this.logger.error('Telegram send failed:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 

@@ -1,12 +1,10 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateNotificationSettingsDto } from './dto/notification-settings.dto';
 import { AppConfigService } from '../config/config.service';
 
 @Injectable()
 export class NotificationSettingsService {
-  private readonly logger = new Logger(NotificationSettingsService.name);
-
   constructor(
     private prisma: PrismaService,
     private configService: AppConfigService,

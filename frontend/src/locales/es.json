@@ -81,7 +81,16 @@
     },
     "selectSlot": "Selecciona un horario",
     "noSlots": "No hay horarios disponibles",
-    "bookingSuccess": "Cita reservada correctamente"
+    "bookingSuccess": "Cita reservada correctamente",
+    "appointmentDetails": {
+      "id": "ID",
+      "dateAndTime": "Fecha y Hora",
+      "patient": "Paciente",
+      "professional": "Profesional",
+      "status": "Estado",
+      "paymentStatus": "Estado de Pago",
+      "notes": "Notas"
+    }
   },
   "dashboard": {
     "admin": "Panel de Administrador",

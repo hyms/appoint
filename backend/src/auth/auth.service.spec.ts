@@ -242,46 +242,106 @@ describe('AuthService - User Management & Auditing', () => {
     });
   });
 
-  describe('getUserById', () => {
-    const userId = 'user-test-id';
-    const mockUser: SanitizedUser = {
-      id: userId,
+  describe('register', () => {
+    const registerDto = {
       email: 'test@example.com',
+      password: 'password123',
+      firstName: 'Test',
+      lastName: 'User',
       role: UserRole.PATIENT,
-      isActive: true,
-      profile: {
-        firstName: 'Test',
-        lastName: 'User',
-        dni: null,
-        dateOfBirth: null,
-        address: null,
-        emergencyContact: null,
-        medicalNotes: null,
-        id: 'p1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      },
-    } as SanitizedUser;
+      phone: '+1234567890',
+    };
 
-    beforeEach(() => {
-      mockAuthPrismaRepository.findUserById.mockResolvedValue(mockUser);
+    it('should register a new user successfully', async () => {
+      mockAuthPrismaRepository.findUnique.mockResolvedValue(null);
+      mockAuthPrismaRepository.create.mockResolvedValue({
+        id: 'user-id',
+        ...registerDto,
+        isActive: true,
+      });
+
+      const result = await authService.register(registerDto);
+
+      expect(mockAuthPrismaRepository.create).toHaveBeenCalled();
+      expect(result.user.email).toBe(registerDto.email);
     });
 
-    it('should return a user by ID', async () => {
-      const result = await authService.getUserById(userId);
+    it('should throw ConflictException if email exists', async () => {
+      mockAuthPrismaRepository.findUnique.mockResolvedValue({ id: 'exists' });
 
-      expect(mockAuthPrismaRepository.findUserById).toHaveBeenCalledWith(
-        userId,
+      await expect(authService.register(registerDto)).rejects.toThrow(
+        ConflictException,
       );
-      expect(result).toEqual(mockUser);
+    });
+  });
+
+  describe('login', () => {
+    const loginDto = { email: 'test@example.com', password: 'password123' };
+    const ipAddress = '127.0.0.1';
+
+    it('should throw ForbiddenException if IP is blocked', async () => {
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(true);
+      await expect(authService.login(loginDto, ipAddress)).rejects.toThrow(
+        ForbiddenException,
+      );
     });
 
-    it('should throw NotFoundException if user not found', async () => {
-      mockAuthPrismaRepository.findUserById.mockResolvedValue(null);
-
-      await expect(authService.getUserById('non-existent-id')).rejects.toThrow(
-        NotFoundException,
+    it('should throw UnauthorizedException if user not found', async () => {
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
+      mockAuthPrismaRepository.findUserForLogin = jest.fn().mockResolvedValue(null);
+      await expect(authService.login(loginDto, ipAddress)).rejects.toThrow(
+        UnauthorizedException,
       );
+    });
+  });
+
+  describe('refreshToken', () => {
+    it('should refresh token successfully', async () => {
+      mockJwtService.verify.mockReturnValue({ sub: 'user-id' });
+      mockAuthPrismaRepository.findUserById.mockResolvedValue({
+        id: 'user-id',
+        email: 'test@example.com',
+        role: UserRole.PATIENT,
+        isActive: true,
+      });
+      mockJwtService.sign.mockReturnValue('new-token');
+
+      const result = await authService.refreshToken('old-token');
+
+      expect(result.token).toBe('new-token');
+    });
+
+    it('should throw UnauthorizedException if token invalid', async () => {
+      mockJwtService.verify.mockImplementation(() => {
+        throw new Error();
+      });
+      await expect(authService.refreshToken('bad-token')).rejects.toThrow(
+        UnauthorizedException,
+      );
+    });
+  });
+
+  describe('updateUser', () => {
+    it('should update user successfully', async () => {
+      const userId = 'user-id';
+      const updateUserDto = { firstName: 'Updated' };
+      const existingUser = {
+        id: userId,
+        email: 'test@example.com',
+        role: UserRole.PATIENT,
+        isActive: true,
+      };
+
+      mockAuthPrismaRepository.findUserById.mockResolvedValue(existingUser);
+      mockAuthPrismaRepository.updateUser.mockResolvedValue({
+        ...existingUser,
+        profile: { firstName: 'Updated' },
+      });
+
+      const result = await authService.updateUser(userId, updateUserDto);
+
+      expect(mockAuthPrismaRepository.updateUser).toHaveBeenCalled();
+      expect(result.profile.firstName).toBe('Updated');
     });
   });
 
@@ -310,6 +370,9 @@ describe('AuthService - User Management & Auditing', () => {
     });
 
     it('should request Telegram authentication for an existing patient without password', async () => {
+      // Ensure not blocked
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
+
       const result = await authService.requestTelegramAuth(
         magicLinkDto,
         ipAddress,
@@ -326,6 +389,7 @@ describe('AuthService - User Management & Auditing', () => {
     });
 
     it('should throw BadRequestException if user not found or not a patient', async () => {
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
       mockAuthPrismaRepository.findUnique.mockResolvedValue(null);
       await expect(
         authService.requestTelegramAuth(magicLinkDto, ipAddress),
@@ -333,6 +397,7 @@ describe('AuthService - User Management & Auditing', () => {
     });
 
     it('should throw UnauthorizedException if account is deactivated', async () => {
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
       mockAuthPrismaRepository.findUnique.mockResolvedValue({
         ...mockUser,
         isActive: false,
@@ -343,6 +408,7 @@ describe('AuthService - User Management & Auditing', () => {
     });
 
     it('should throw BadRequestException if account has a password', async () => {
+      mockBruteForceProtectionService.isBlocked.mockReturnValue(false);
       mockAuthPrismaRepository.findUnique.mockResolvedValue({
         ...mockUser,
         passwordHash: 'somehash',

@@ -51,7 +51,7 @@ export class WhatsAppProvider implements INotificationProvider {
       return { success: true, messageId: data.messages?.[0]?.id };
     } catch (error) {
       this.logger.error('WhatsApp send failed:', error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 

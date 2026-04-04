@@ -101,11 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch, reactive } from 'vue'
+import { ref, computed, reactive } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { useAppColors } from '@/composables/useAppColors'
 import { usersService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/users'
-import api from '@/services/api'
 import { formatDate } from '@/utils/date'
 import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
@@ -189,46 +188,6 @@ const passwordRules = [
 ]
 
 
-async function fetchUsers() {
-    loading.value = true
-    try {
-        const params: any = {}
-        if (filters.value.role) params.role = filters.value.role
-        if (filters.value.isActive !== undefined) params.isActive = filters.value.isActive
-        users.value = await usersService.getAll(params)
-    } catch (e) {
-        error('Failed to load users')
-        console.error(e)
-    } finally {
-        loading.value = false
-    }
-}
-
-function openUserDialog(user?: User) {
-  if (user) {
-    editingUser.value = user
-    userFormData.email = user.email
-    userFormData.password = ''
-    userFormData.phone = user.phone || ''
-    userFormData.firstName = user.profile?.firstName || ''
-    userFormData.lastName = user.profile?.lastName || ''
-    userFormData.dni = user.profile?.dni || ''
-    userFormData.role = user.role
-    userFormData.isActive = user.isActive
-  } else {
-    editingUser.value = null
-    userFormData.email = ''
-    userFormData.password = ''
-    userFormData.phone = ''
-    userFormData.firstName = ''
-    userFormData.lastName = ''
-    userFormData.dni = ''
-    userFormData.role = 'PATIENT'
-    userFormData.isActive = true
-  }
-  userDialog.value = true
-}
-
 async function saveUser() {
   if (!userFormRef.value?.validate()) return
   
@@ -242,11 +201,14 @@ async function saveUser() {
         lastName: userFormData.lastName,
         dni: userFormData.dni,
         role: userFormData.role,
-        isActive: userFormData.isActive
+        isActive: userFormData.isActive,
+        password: userFormData.password
       }
+      console.log('Updating user:', updateData);
       await usersService.update(editingUser.value.id, updateData)
       success('User updated successfully')
     } else {
+      console.log('Creating user:', userFormData);
       if (!userFormData.password) {
         error('Password is required for new user creation.')
         savingUser.value = false
@@ -273,25 +235,6 @@ async function saveUser() {
     savingUser.value = false
   }
 }
-
-async function deleteUser(user: User) {
-  if (!confirm(`Are you sure you want to delete user ${user.profile?.firstName} ${user.profile?.lastName}?`)) {
-    return
-  }
-  try {
-    await usersService.delete(user.id)
-    success('User deleted')
-    emit('updateList')
-  } catch (err) {
-    error('Failed to delete user')
-  }
-}
-
-// Expose functions for parent component to call
-defineExpose({
-    fetchUsers,
-    openUserDialog
-})
 </script>
 
 <style scoped>

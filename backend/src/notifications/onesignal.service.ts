@@ -69,7 +69,7 @@ export class OneSignalService {
       return { success: true, messageId: result.id };
     } catch (error) {
       this.logger.error(`OneSignal send failed for ${playerId}:`, error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 
@@ -113,7 +113,7 @@ export class OneSignalService {
       return { success: true, messageId: result.id };
     } catch (error) {
       this.logger.error(`OneSignal bulk send failed:`, error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 

@@ -1,7 +1,14 @@
-import { Test, TestingModule } from '@nestjs/testing';
+import {
+  Test,
+  TestingModule,
+} from '@nestjs/testing';
 import { SlotService } from './slot.service';
 import { PrismaService } from '../../prisma/prisma.service';
 import { ProfessionalConfigService } from '../../professional-config/professional-config.service';
+import {
+  BadRequestException,
+  NotFoundException,
+} from '@nestjs/common';
 
 describe('SlotService', () => {
   let slotService: SlotService;
@@ -195,8 +202,82 @@ describe('SlotService', () => {
       mockPrismaService.slot.findUnique.mockResolvedValue(mockSlot);
 
       await expect(
-        slotService.blockSlot({ slotId: 'slot-1' }),
-      ).rejects.toThrow();
+        slotService.blockSlot({ slotId: 'slot-1', reason: 'Test' }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    it('should throw NotFoundException if slot not found for blocking', async () => {
+      mockPrismaService.slot.findUnique.mockResolvedValue(null);
+
+      await expect(
+        slotService.blockSlot({ slotId: 'non-existent' } as any),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException if slot not found for updating', async () => {
+      mockPrismaService.slot.findUnique.mockResolvedValue(null);
+
+      await expect(
+        slotService.updateSlot('non-existent', { isBlocked: true }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+
+    it('should throw NotFoundException if slot not found for blocking', async () => {
+      mockPrismaService.slot.findUnique.mockResolvedValue(null);
+
+      await expect(
+        slotService.blockSlot({ slotId: 'non-existent' }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it('should throw NotFoundException if slot not found for updating', async () => {
+      mockPrismaService.slot.findUnique.mockResolvedValue(null);
+
+      await expect(
+        slotService.updateSlot('non-existent', { isBlocked: true }),
+      ).rejects.toThrow(NotFoundException);
     });
   });
 

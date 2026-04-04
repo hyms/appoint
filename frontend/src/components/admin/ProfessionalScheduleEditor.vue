@@ -9,7 +9,7 @@
         </p>
         <p class="text-caption mb-6">Define the practitioner's standard weekly working hours. Days not listed are considered unavailable.</p>
         
-        <v-row v-for="(day, index) in currentSchedule" :key="day.dayOfWeek" class="mb-2 align-center">
+        <v-row v-for="day in currentSchedule" :key="day.dayOfWeek" class="mb-2 align-center">
             <v-col cols="3" md="2">
                 <v-switch
                     v-model="day.enabled"
@@ -49,9 +49,6 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue'
 import { formatTime } from '@/utils/date'
-import BaseButton from '@/components/base/BaseButton.vue'
-import BaseInput from '@/components/base/BaseInput.vue'
-import BaseSelect from '@/components/base/BaseSelect.vue'
 
 interface TimeSlot {
     id: string

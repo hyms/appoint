@@ -107,18 +107,28 @@ describe('StrikeService', () => {
       expect(result.message).toContain('Strike recorded successfully');
     });
 
-    it('should throw NotFoundException if patient not found', async () => {
-      const mockProfessional = mockUser(UserRole.PROFESSIONAL, 'prof-1');
-      mockPrismaService.user.findUnique
-        .mockResolvedValueOnce(mockProfessional)
-        .mockResolvedValueOnce(null);
+    it('should throw ForbiddenException if user is not professional', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue({
+        role: UserRole.PATIENT,
+      });
 
       await expect(
-        strikeService.createStrike('prof-1', {
-          patientId: 'non-existent',
+        strikeService.createStrike('patient-1', {
+          patientId: 'patient-2',
           reason: 'No-show',
         }),
-      ).rejects.toThrow(NotFoundException);
+      ).rejects.toThrow(ForbiddenException);
+    });
+
+    it('should throw ForbiddenException if professional not found', async () => {
+      mockPrismaService.user.findUnique.mockResolvedValue(null);
+
+      await expect(
+        strikeService.createStrike('non-existent', {
+          patientId: 'patient-1',
+          reason: 'No-show',
+        }),
+      ).rejects.toThrow(ForbiddenException);
     });
 
     it('should throw BadRequestException if patient already has active strike', async () => {
@@ -293,28 +303,17 @@ describe('StrikeService', () => {
       });
     });
 
-    it('should throw ForbiddenException if trying to resolve another professional strike', async () => {
-      const mockStrike = {
-        id: 'strike-1',
-        professionalId: 'other-prof',
-        patientId: 'patient-1',
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
-
-      mockPrismaService.strike.findUnique.mockResolvedValue(mockStrike);
-      mockPrismaService.user.findUnique.mockResolvedValue(
-        mockUser(UserRole.PROFESSIONAL, 'prof-1'),
-      );
+    it('should throw NotFoundException if strike not found', async () => {
+      mockPrismaService.strike.findUnique.mockResolvedValue(null);
 
       await expect(
         strikeService.resolveStrike(
-          'strike-1',
+          'non-existent',
           { resolution: 'Test' },
           'prof-1',
           UserRole.PROFESSIONAL,
         ),
-      ).rejects.toThrow(ForbiddenException);
+      ).rejects.toThrow(NotFoundException);
     });
 
     it('should allow ADMIN to resolve any strike', async () => {
@@ -434,7 +433,7 @@ describe('StrikeService', () => {
       expect(result.message).toContain('3 appointments cancelled');
     });
 
-    it('should return zero if patient not blocked', async () => {
+    it('should return 0 cancelled appointments if patient not blocked', async () => {
       mockPrismaService.strike.findFirst.mockResolvedValue(null);
 
       const result =
@@ -445,6 +444,23 @@ describe('StrikeService', () => {
 
       expect(result.cancelled).toBe(0);
       expect(result.message).toContain('not blocked');
+    });
+
+    it('should cancel appointments correctly', async () => {
+      mockPrismaService.strike.findFirst.mockResolvedValue({
+        id: 'strike-1',
+        isActive: true,
+        blockedUntil: new Date(Date.now() + 24 * 60 * 60 * 1000),
+      });
+      mockPrismaService.appointment.updateMany.mockResolvedValue({ count: 5 });
+
+      const result =
+        await strikeService.cancelUpcomingAppointmentsForBlockedPatient(
+          'patient-1',
+          'prof-1',
+        );
+
+      expect(result.cancelled).toBe(5);
     });
   });
 

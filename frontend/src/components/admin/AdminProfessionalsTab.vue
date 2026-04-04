@@ -101,14 +101,14 @@ const professionalConfigEndpoint = computed(() => selectedProfessionalId.value ?
 
 watch(selectedProfessionalId, (newId) => {
     if (newId) {
-        loadProfessionalConfiguration(newId)
+        loadProfessionalConfiguration()
     } else {
         scheduleData.value = null
         settingsData.value = null
     }
 })
 
-async function loadProfessionalConfiguration(id: string) {
+async function loadProfessionalConfiguration() {
     loadingProfessionalData.value = true
     try {
         const response = await api.get(professionalConfigEndpoint.value!)

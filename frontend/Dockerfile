@@ -1,15 +1,13 @@
-FROM node:lts-alpine
-
-RUN apk add --no-cache pnpm git
-
+# Build stage
+FROM node:20-alpine AS builder
 WORKDIR /app
-
-COPY package*.json ./
-
-RUN pnpm install
-
+COPY package*.json pnpm-lock.yaml ./
+RUN npm install -g pnpm && pnpm install
 COPY . .
+RUN pnpm run build
 
-EXPOSE 5173
-
-CMD ["pnpm", "run", "dev", "--", "--host"]
+# Runtime stage
+FROM nginx:alpine AS runtime
+COPY --from=builder /app/dist /usr/share/nginx/html
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]

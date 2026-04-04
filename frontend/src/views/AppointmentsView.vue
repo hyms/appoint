@@ -194,15 +194,16 @@ import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, type Appointment } from '@/services/appointments'
 import { paymentsService, type QRPayment } from '@/services/payments'
 import api from '@/services/api'
-import { formatDate, formatTime } from '@/utils/date'
+import { formatDate } from '@/utils/date'
 import { useToast } from '@/composables/useToast'
 import { useAppColors } from '@/composables/useAppColors'
 import AppointmentList from '@/components/appointments/AppointmentList.vue'
-import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue' 
-import AdminAppointmentsTab from '@/components/admin/AdminAppointmentsTab.vue' 
+import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue'
+import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab.vue'
 
 const { success, error } = useToast()
-const { getStatusColor, getPaymentStatusColor } = useAppColors()
+const { getPaymentStatusColor } = useAppColors()
+
 
 const authStore = useAuthStore()
 const tab = ref('upcoming')
@@ -267,6 +268,25 @@ const adminHeaders = [
 const cancelDialog = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
+
+async function confirmCancelAppointment() {
+  if (!selectedAppointment.value) return
+  if (!cancelReason.value.trim()) {
+    error('Please enter a cancellation reason')
+    return
+  }
+  cancelling.value = true
+  try {
+    await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
+    cancelDialog.value = false
+    await loadAppointments()
+    success('Appointment cancelled')
+  } catch (err) {
+    error('Failed to cancel appointment')
+  } finally {
+    cancelling.value = false
+  }
+}
 
 onMounted(async () => {
   if (authStore.user?.role === 'ADMIN') {
@@ -392,7 +412,6 @@ function viewPayment(payment: any) {
 
 async function uploadPayment() {
   if (!selectedAppointment.value || !paymentFile.value) return
-
   uploading.value = true
   try {
     await paymentsService.uploadPayment(selectedAppointment.value.id, paymentFile.value)
@@ -405,61 +424,8 @@ async function uploadPayment() {
     uploading.value = false
   }
 }
-
-async function cancelAppointment(apt: Appointment) {
-  if (confirm('Are you sure you want to cancel this appointment?')) {
-    try {
-      await appointmentsService.cancel(apt.id, 'Cancelled by patient')
-      upcomingAppointments.value = upcomingAppointments.value.filter(a => a.id !== apt.id)
-      success('Appointment cancelled')
-    } catch (err) {
-      error('Failed to cancel appointment')
-    }
-  }
-}
-
-async function confirmCancelAppointment() {
-  if (!selectedAppointment.value) return
-  if (!cancelReason.value.trim()) {
-    error('Please enter a cancellation reason')
-    return
-  }
-  cancelling.value = true
-  try {
-    await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
-    cancelDialog.value = false
-    await loadAppointments()
-    success('Appointment cancelled')
-  } catch (err) {
-    error('Failed to cancel appointment')
-  } finally {
-    cancelling.value = false
-  }
-}
-
-async function deleteAppointment(item: any) {
-  if (confirm(`Are you sure you want to delete this appointment?`)) {
-    try {
-      await appointmentsService.delete(item.id)
-      await loadAppointments()
-      success('Appointment deleted')
-    } catch (err) {
-      error('Failed to delete appointment')
-    }
-  }
-}
-
-function getPaymentColor(status: string | undefined) {
-  if (!status) return 'grey'
-  const colors: Record<string, string> = {
-    PENDING: 'warning',
-    UPLOADED: 'info',
-    VERIFIED: 'success',
-    REJECTED: 'error'
-  }
-  return colors[status] || 'grey'
-}
 </script>
+
 
 <style scoped>
 .letter-spacing-1 { letter-spacing: 1px !important; }

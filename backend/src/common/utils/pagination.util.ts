@@ -1,5 +1,3 @@
-import { PrismaService } from '../../prisma/prisma.service';
-
 export function calculateSkip(page: number, limit: number): number {
   return (page - 1) * limit;
 }

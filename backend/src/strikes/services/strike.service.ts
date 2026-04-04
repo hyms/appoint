@@ -379,8 +379,8 @@ export class StrikeService {
 
   // Only unblock for THIS professional
   private async unblockPatientSlotsForProfessional(
-    patientId: string,
-    professionalId: string,
+    _patientId: string,
+    _professionalId: string,
   ) {
     // No need to unblock slots - they were already made available when cancelled
     // This method is kept for future use if needed

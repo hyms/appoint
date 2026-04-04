@@ -2,7 +2,7 @@ import { NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 
 export async function findEntityOrThrow<T extends { id: string }>(
-  prisma: PrismaService,
+  _prisma: PrismaService,
   modelDelegate: any,
   id: string,
   entityName: string,

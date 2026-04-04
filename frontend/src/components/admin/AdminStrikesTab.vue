@@ -39,7 +39,7 @@
             size="small"
             color="success"
             variant="tonal"
-            @click="resolveStrike(item.id, item.patient?.id)"
+            @click="resolveStrike(item.id)"
           >
             Resolve
           </v-btn>
@@ -53,11 +53,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { strikesService } from '@/services/strikes'
 import { formatDate } from '@/utils/date'
-import BaseButton from '@/components/base/BaseButton.vue'
 
 const { success, error } = useToast()
 
@@ -78,7 +76,7 @@ const headers = [
   { title: 'Actions', key: 'actions', sortable: false },
 ]
 
-async function resolveStrike(strikeId: string, patientId?: string) {
+async function resolveStrike(strikeId: string) {
   const resolution = prompt('Enter resolution notes for this strike:')
   if (!resolution || !resolution.trim()) {
     error('Resolution notes are required to resolve a strike.')

@@ -57,7 +57,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import BaseButton from '@/components/base/BaseButton.vue'
 import BaseInput from '@/components/base/BaseInput.vue'
 
 interface Settings {

@@ -1,7 +1,6 @@
 import {
   IsEmail,
   IsString,
-  MinLength,
   IsOptional,
   IsEnum,
   IsInt,
@@ -13,21 +12,15 @@ import { UserRole } from '@prisma/client';
 
 export class RegisterDto {
   @IsEmail()
-  email: string;
+  email!: string;
 
-  @IsString()
-  @MinLength(6)
-  password: string;
+  password!: string;
 
-  @IsOptional()
-  @IsString()
   phone?: string;
 
-  @IsString()
-  firstName: string;
+  firstName!: string;
 
-  @IsString()
-  lastName: string;
+  lastName!: string;
 
   @IsOptional()
   @IsString()
@@ -40,15 +33,15 @@ export class RegisterDto {
 
 export class LoginDto {
   @IsEmail()
-  email: string;
+  email!: string;
 
   @IsString()
-  password: string;
+  password!: string;
 }
 
 export class MagicLinkDto {
   @IsString()
-  phone: string;
+  phone!: string;
 }
 
 export class UpdateUserDto {
@@ -83,16 +76,20 @@ export class UpdateUserDto {
   @IsOptional()
   @IsString()
   oneSignalPlayerId?: string;
+
+  @IsOptional()
+  @IsString()
+  password?: string;
 }
 
 export class UpdateTelegramChatIdDto {
   @IsString()
-  telegramChatId: string;
+  telegramChatId!: string;
 }
 
 export class ValidateMagicLinkDto {
   @IsString()
-  token: string;
+  token!: string;
 }
 
 export class GetUsersQueryDto {
@@ -113,5 +110,5 @@ export class GetUsersQueryDto {
 
 export class UserIdParamDto {
   @IsUUID('4')
-  id: string;
+  id!: string;
 }

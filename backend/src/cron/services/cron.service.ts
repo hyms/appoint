@@ -24,22 +24,11 @@ export class CronService {
     }
   }
 
-  private logWarn(message: string): void {
-    if (!this.isProduction()) {
-      this.logger.warn(message);
-    }
-  }
-
-  private logError(message: string, error?: unknown): void {
-    this.logger.error(message, error);
-  }
-
   @Cron(CronExpression.EVERY_HOUR)
   async processAppointmentReminders() {
     this.logInfo('Running appointment reminder cron job...');
 
     const now = new Date();
-    const twentyFourHoursLater = new Date(now.getTime() + 24 * 60 * 60 * 1000);
     const sixHoursLater = new Date(now.getTime() + 6 * 60 * 60 * 1000);
 
     const pendingAppointments = await this.prisma.appointment.findMany({

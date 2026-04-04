@@ -2,12 +2,12 @@ import { IsString, IsOptional, IsEnum } from 'class-validator';
 
 export class UploadPaymentDto {
   @IsString()
-  appointmentId: string;
+  appointmentId!: string;
 }
 
 export class VerifyPaymentDto {
   @IsEnum(['VERIFIED', 'REJECTED'])
-  status: string;
+  status!: string;
 
   @IsOptional()
   @IsString()

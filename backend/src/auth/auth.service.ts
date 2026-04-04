@@ -445,6 +445,10 @@ export class AuthService {
       changes.isActive = updateUserDto.isActive;
     if (updateUserDto.oneSignalPlayerId)
       changes.oneSignalPlayerId = updateUserDto.oneSignalPlayerId;
+    
+    if (updateUserDto.password) {
+      changes.passwordHash = await bcrypt.hash(updateUserDto.password, 10);
+    }
 
     const profileData: Record<string, any> = {};
     if (updateUserDto.firstName)

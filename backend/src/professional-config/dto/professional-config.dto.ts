@@ -3,21 +3,20 @@ import {
   IsOptional,
   IsInt,
   IsBoolean,
-  IsJSON,
 } from 'class-validator';
 
 export class WorkingHoursDto {
   @IsString()
-  dayOfWeek: string;
+  dayOfWeek!: string;
 
   @IsString()
-  startTime: string;
+  startTime!: string;
 
   @IsString()
-  endTime: string;
+  endTime!: string;
 
   @IsBoolean()
-  isActive: boolean;
+  isActive!: boolean;
 }
 
 export class UpdateProfessionalConfigDto {

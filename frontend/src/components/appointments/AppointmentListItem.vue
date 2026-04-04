@@ -5,7 +5,7 @@
     :class="{ 'border-bottom': !isLast }"
   >
     <template v-slot:prepend>
-      <div class="date-badge mr-4" :class="[`bg-${statusColor}`]">
+      <div class="date-badge mr-4" :class="[`bg-${props.statusColor || defaultColor}`]">
         <span class="day font-weight-black">{{ getDay(appointment.date) }}</span>
         <span class="month font-weight-bold">{{ getMonth(appointment.date) }}</span>
       </div>
@@ -50,11 +50,8 @@ const props = defineProps<{
 }>()
 
 const defaultColor = 'primary'
-
 const getDay = (date: string | Date) => new Date(date).getDate()
 const getMonth = (date: string | Date) => new Date(date).toLocaleString('default', { month: 'short' }).toUpperCase()
-
-const statusColorClass = computed(() => props.statusColor || defaultColor)
 
 const professionalLabel = computed(() => {
   return props.appointment.professional?.profile?.lastName 

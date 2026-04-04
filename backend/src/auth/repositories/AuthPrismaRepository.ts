@@ -1,7 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { UserRole, User, Profile, Prisma } from '@prisma/client';
-import { RegisterDto } from '../dto/auth.dto';
 
 // Define the structure for the sanitized response based on AuthService.sanitizeUser
 export type SanitizedUser = Omit<

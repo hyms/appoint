@@ -29,7 +29,7 @@ export class NotificationsController {
   @Post('bulk')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles(UserRole.ADMIN, UserRole.SECRETARY)
-  async sendBulkNotification(@Body() dto: SendBulkNotificationDto) {
+  async sendBulkNotification(@Body() _dto: SendBulkNotificationDto) {
     return { message: 'Bulk notifications queued' };
   }
 

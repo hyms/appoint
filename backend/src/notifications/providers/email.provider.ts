@@ -70,7 +70,7 @@ export class EmailProvider implements INotificationProvider {
       return { success: true, messageId: info.messageId };
     } catch (error) {
       this.logger.error(`Email send failed for ${recipient}:`, error);
-      return { success: false, error: error.message };
+      return { success: false, error: (error as Error).message };
     }
   }
 

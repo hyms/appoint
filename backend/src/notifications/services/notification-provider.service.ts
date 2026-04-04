@@ -3,8 +3,6 @@ import { PrismaService } from '../../prisma/prisma.service';
 import { NotificationType } from '@prisma/client';
 import { SendNotificationDto, ProviderType } from '../dto/notification.dto';
 import { NotificationProviderRegistry } from './notification-provider.registry';
-import { NotificationConfigService } from './notification-config.service';
-import { SendResult } from '../interfaces/notification-provider.interface';
 
 @Injectable()
 export class NotificationProviderService {
@@ -13,8 +11,8 @@ export class NotificationProviderService {
   constructor(
     private prisma: PrismaService,
     private registry: NotificationProviderRegistry,
-    private configService: NotificationConfigService,
   ) {}
+
 
   async sendNotification(dto: SendNotificationDto) {
     const notification = await this.prisma.notificationLog.create({
@@ -71,7 +69,7 @@ export class NotificationProviderService {
         where: { id: notification.id },
         data: {
           status: 'FAILED',
-          errorMessage: error.message,
+          errorMessage: (error as Error).message,
         },
       });
     }

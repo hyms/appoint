@@ -152,11 +152,13 @@ async function handleLogin() {
   loading.value = true
   try {
     await authStore.login(form.email, form.password)
+    console.log('Login successful');
     success(t('auth.loginSuccess'))
     const redirect = route.query.redirect as string || '/dashboard'
+    console.log('Redirecting to:', redirect);
     router.push(redirect)
   } catch (err: any) {
-    error(err.response?.data?.message || t('auth.loginFailed'))
+    console.error('Login error:', err);
   } finally {
     loading.value = false
   }

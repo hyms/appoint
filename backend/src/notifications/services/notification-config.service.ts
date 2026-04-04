@@ -1,4 +1,4 @@
-import { Injectable, Logger } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 
 interface WhatsAppConfig {
   token: string;
@@ -18,8 +18,6 @@ interface EmailConfig {
 
 @Injectable()
 export class NotificationConfigService {
-  private readonly logger = new Logger(NotificationConfigService.name);
-
   getWhatsAppConfig(): WhatsAppConfig | null {
     const token = process.env.WHATSAPP_TOKEN;
     const phoneId = process.env.WHATSAPP_PHONE_ID;

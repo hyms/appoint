@@ -30,10 +30,10 @@ import { OneSignalProvider } from './providers/onesignal.provider';
 export class NotificationsModule {
   constructor(
     private registry: NotificationProviderRegistry,
-    private whatsapp: WhatsAppProvider,
-    private telegram: TelegramProvider,
-    private email: EmailProvider,
-    private oneSignal: OneSignalProvider,
+    whatsapp: WhatsAppProvider,
+    telegram: TelegramProvider,
+    email: EmailProvider,
+    oneSignal: OneSignalProvider,
   ) {
     this.registry.register(whatsapp);
     this.registry.register(telegram);

@@ -10,20 +10,20 @@ export enum ProviderType {
 
 export class SendNotificationDto {
   @IsString()
-  userId: string;
+  userId!: string;
 
   @IsEnum(NotificationType)
-  type: NotificationType;
+  type!: NotificationType;
 
   @IsString()
-  recipient: string;
+  recipient!: string;
 
   @IsOptional()
   @IsString()
   subject?: string;
 
   @IsString()
-  content: string;
+  content!: string;
 
   @IsOptional()
   @IsEnum(ProviderType)
@@ -35,10 +35,10 @@ export class SendNotificationDto {
 
 export class SendBulkNotificationDto {
   @IsString()
-  type: NotificationType;
+  type!: NotificationType;
 
   @IsString()
-  content: string;
+  content!: string;
 
   @IsOptional()
   @IsString()

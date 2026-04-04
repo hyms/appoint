@@ -81,7 +81,16 @@
     },
     "selectSlot": "Select a time slot",
     "noSlots": "No available slots",
-    "bookingSuccess": "Appointment booked successfully"
+    "bookingSuccess": "Appointment booked successfully",
+    "appointmentDetails": {
+      "id": "ID",
+      "dateAndTime": "Date & Time",
+      "patient": "Patient",
+      "professional": "Professional",
+      "status": "Status",
+      "paymentStatus": "Payment Status",
+      "notes": "Notes"
+    }
   },
   "dashboard": {
     "admin": "Admin Dashboard",

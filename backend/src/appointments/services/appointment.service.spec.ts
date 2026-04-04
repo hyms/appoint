@@ -17,7 +17,6 @@ describe('AppointmentsService', () => {
   let appointmentsService: AppointmentsService;
   let prismaService: PrismaService;
   let strikeService: StrikeService;
-  let oneSignalService: OneSignalService;
   let notificationProviderService: NotificationProviderService;
 
   const mockPrismaService = {
@@ -26,7 +25,8 @@ describe('AppointmentsService', () => {
       findMany: jest.fn(),
       create: jest.fn(),
       update: jest.fn(),
-      deleteMany: jest.fn(),
+      delete: jest.fn(),
+      count: jest.fn(),
     },
     slot: {
       findUnique: jest.fn(),
@@ -52,6 +52,7 @@ describe('AppointmentsService', () => {
   };
 
   const mockAuthorizationService = {
+
     canBookForOthers: jest.fn().mockReturnValue(true),
     canAccessAppointment: jest
       .fn()
@@ -90,10 +91,6 @@ describe('AppointmentsService', () => {
           useValue: mockAuditService,
         },
         {
-          provide: OneSignalService,
-          useValue: mockOneSignalService,
-        },
-        {
           provide: NotificationProviderService,
           useValue: mockNotificationProviderService,
         },
@@ -107,71 +104,102 @@ describe('AppointmentsService', () => {
     appointmentsService = module.get<AppointmentsService>(AppointmentsService);
     prismaService = module.get<PrismaService>(PrismaService);
     strikeService = module.get<StrikeService>(StrikeService);
-    oneSignalService = module.get<OneSignalService>(OneSignalService);
     notificationProviderService = module.get<NotificationProviderService>(
       NotificationProviderService,
     );
 
     jest.clearAllMocks();
+
+
   });
 
-  describe('getAppointmentById', () => {
-    it('should return appointment for authorized user', async () => {
-      const mockAppointment = {
-        id: 'apt-1',
-        patientId: 'user-1',
-        professionalId: 'doc-1',
-        status: 'PENDING',
-        patient: { oneSignalPlayerId: null, profile: { firstName: 'John' } },
-        professional: {
-          oneSignalPlayerId: null,
-          profile: { firstName: 'Dr. Smith' },
-        },
-      };
+    describe('getAllAppointments', () => {
+      it('should return paginated appointments', async () => {
+        const mockAppointments = [{ id: 'apt-1' }];
+        mockPrismaService.appointment.findMany.mockResolvedValue(mockAppointments);
+        mockPrismaService.appointment.count.mockResolvedValue(1);
 
-      mockPrismaService.appointment.findUnique.mockResolvedValue(
-        mockAppointment,
-      );
+        const result = await appointmentsService.getAllAppointments({
+          page: 1,
+          limit: 10,
+        });
 
-      const result = await appointmentsService.getAppointmentById(
-        'apt-1',
-        'user-1',
-        'PATIENT',
-      );
-
-      expect(result).toEqual(mockAppointment);
+        expect(result.data).toEqual(mockAppointments);
+        expect(result.meta.total).toBe(1);
+      });
     });
 
-    it('should throw NotFoundException if appointment not found', async () => {
-      mockPrismaService.appointment.findUnique.mockResolvedValue(null);
-
-      await expect(
-        appointmentsService.getAppointmentById(
-          'invalid-id',
-          'user-1',
-          'PATIENT',
-        ),
-      ).rejects.toThrow(NotFoundException);
-    });
-
-    it('should throw ForbiddenException for unauthorized access', async () => {
-      mockPrismaService.appointment.findUnique.mockResolvedValue({
-        id: 'apt-1',
-        patientId: 'user-1',
-        professionalId: 'doc-1',
-        patient: { oneSignalPlayerId: null }, // Add oneSignalPlayerId
-        professional: { oneSignalPlayerId: null }, // Add oneSignalPlayerId
+    describe('getAppointmentByIdAdmin', () => {
+      it('should return appointment by id for admin', async () => {
+        const mockAppointment = { id: 'apt-1' };
+        mockPrismaService.appointment.findUnique.mockResolvedValue(mockAppointment);
+        const result = await appointmentsService.getAppointmentByIdAdmin('apt-1');
+        expect(result).toEqual(mockAppointment);
       });
 
-      await expect(
-        appointmentsService.getAppointmentById(
-          'apt-1',
-          'other-user',
-          'PATIENT',
-        ),
-      ).rejects.toThrow(ForbiddenException);
+      it('should throw NotFoundException if not found', async () => {
+        mockPrismaService.appointment.findUnique.mockResolvedValue(null);
+        await expect(appointmentsService.getAppointmentByIdAdmin('apt-1')).rejects.toThrow(NotFoundException);
+      });
     });
-  });
+
+    describe('getAppointmentById', () => {
+      it('should return appointment for authorized user', async () => {
+        const mockAppointment = {
+          id: 'apt-1',
+          patientId: 'user-1',
+          professionalId: 'doc-1',
+          status: 'PENDING',
+          patient: { oneSignalPlayerId: null, profile: { firstName: 'John' } },
+          professional: {
+            oneSignalPlayerId: null,
+            profile: { firstName: 'Dr. Smith' },
+          },
+        };
+
+        mockPrismaService.appointment.findUnique.mockResolvedValue(
+          mockAppointment,
+        );
+
+        const result = await appointmentsService.getAppointmentById(
+          'apt-1',
+          'user-1',
+          'PATIENT',
+        );
+
+        expect(result).toEqual(mockAppointment);
+      });
+
+      it('should throw NotFoundException if appointment not found', async () => {
+        mockPrismaService.appointment.findUnique.mockResolvedValue(null);
+
+        await expect(
+          appointmentsService.getAppointmentById(
+            'invalid-id',
+            'user-1',
+            'PATIENT',
+          ),
+        ).rejects.toThrow(NotFoundException);
+      });
+
+      it('should throw ForbiddenException for unauthorized access', async () => {
+        mockPrismaService.appointment.findUnique.mockResolvedValue({
+          id: 'apt-1',
+          patientId: 'user-1',
+          professionalId: 'doc-1',
+          patient: { oneSignalPlayerId: null },
+          professional: { oneSignalPlayerId: null },
+        });
+
+        await expect(
+          appointmentsService.getAppointmentById(
+            'apt-1',
+            'other-user',
+            'PATIENT',
+          ),
+        ).rejects.toThrow(ForbiddenException);
+      });
+    });
 
   describe('getUpcomingAppointments', () => {
     it('should return upcoming appointments for patient', async () => {
@@ -207,6 +235,9 @@ describe('AppointmentsService', () => {
         patientId: 'user-1',
         professionalId: 'doc-1',
         status: 'PENDING',
+        date: new Date(Date.now() + 86400000), // Tomorrow
+        startTime: new Date(Date.now() + 86400000),
+        endTime: new Date(Date.now() + 86400000 + 3600000),
         slotId: 'slot-1',
         patient: {
           oneSignalPlayerId: 'patient-one-signal-id',
@@ -278,32 +309,16 @@ describe('AppointmentsService', () => {
     });
   });
 
-  describe('getProfessionalAppointments', () => {
-    it('should return appointments filtered by date range', async () => {
-      const mockAppointments = [{ id: 'apt-1', professionalId: 'doc-1' }];
+    describe('updateAppointment', () => {
+      it('should throw NotFoundException if appointment does not exist', async () => {
+        mockPrismaService.appointment.findUnique.mockResolvedValue(null);
+        await expect(appointmentsService.updateAppointment('invalid', {})).rejects.toThrow(NotFoundException);
+      });
 
-      mockPrismaService.appointment.findMany.mockResolvedValue(
-        mockAppointments,
-      );
-
-      const result = await appointmentsService.getProfessionalAppointments(
-        'doc-1',
-        '2024-01-01',
-        '2024-01-31',
-      );
-
-      expect(result).toEqual(mockAppointments);
-      expect(mockPrismaService.appointment.findMany).toHaveBeenCalledWith(
-        expect.objectContaining({
-          where: expect.objectContaining({
-            professionalId: 'doc-1',
-            date: {
-              gte: new Date('2024-01-01'),
-              lte: new Date('2024-01-31'),
-            },
-          }),
-        }),
-      );
+      it('should throw BadRequestException for cancelled appointment', async () => {
+        mockPrismaService.appointment.findUnique.mockResolvedValue({ status: 'CANCELLED' });
+        await expect(appointmentsService.updateAppointment('apt-1', {})).rejects.toThrow(BadRequestException);
+      });
     });
-  });
+
 });

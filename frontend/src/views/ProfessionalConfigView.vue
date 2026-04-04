@@ -162,7 +162,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted } from 'vue'
 import { professionalConfigService, type ProfessionalConfig } from '@/services/professional-config'
 import { useToast } from '@/composables/useToast'
 import api from '@/services/api' // Import API service
