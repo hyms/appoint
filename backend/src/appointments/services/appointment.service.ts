@@ -11,7 +11,6 @@ import {
   CancelAppointmentDto,
   UpdateAppointmentDto,
 } from '../dto/appointment.dto';
-import { StrikeService } from '../../strikes/services/strike.service';
 import { AuthorizationService } from '../../common/services/authorization.service';
 import {
   AppointmentAuditService,
@@ -25,7 +24,6 @@ import { NotificationType } from '@prisma/client';
 export class AppointmentsService {
   constructor(
     private prisma: PrismaService,
-    private strikeService: StrikeService,
     private authService: AuthorizationService,
     private auditService: AppointmentAuditService,
     private notificationService: NotificationProviderService,
@@ -143,8 +141,6 @@ export class AppointmentsService {
 
     const updateData: any = {};
     if (dto.patientId) updateData.patientId = dto.patientId;
-    // Doctor Lock: Prohibited to change professional
-    // if (dto.professionalId) updateData.professionalId = dto.professionalId; 
     
     if (dto.slotId) {
       const slot = await this.prisma.slot.findUnique({
@@ -240,17 +236,6 @@ export class AppointmentsService {
       throw new BadRequestException('Slot is not available');
     }
 
-    // Check if patient is blocked with THIS specific professional
-    const isBlocked = await this.strikeService.checkPatientBlocked(
-      patientId,
-      dto.professionalId,
-    );
-    if (isBlocked) {
-      throw new BadRequestException(
-        'Patient is currently blocked with this professional and cannot book appointments',
-      );
-    }
-
     const appointment = await this.prisma.appointment.create({
       data: {
         patientId: patientId,
@@ -287,7 +272,7 @@ export class AppointmentsService {
     if (appointment.professional.oneSignalPlayerId) {
       await this.notificationService.sendNotification({
         userId: appointment.professionalId,
-        type: NotificationType.OTHER, // Or a specific type for professional notifications
+        type: NotificationType.OTHER,
         recipient: appointment.professional.oneSignalPlayerId,
         subject: 'New Appointment Request',
         content: `New appointment request from ${appointment.patient.profile?.firstName} ${appointment.patient.profile?.lastName}`,
@@ -384,12 +369,6 @@ export class AppointmentsService {
           'Please provide a detailed reason for the NO_SHOW (at least 10 characters)',
         );
       }
-
-      await this.strikeService.createStrike(userId, {
-        patientId: appointment.patientId,
-        reason: dto.notes || 'No show for scheduled appointment',
-        appointmentId: appointment.id,
-      });
     }
 
     if (dto.notes) {
@@ -419,7 +398,7 @@ export class AppointmentsService {
         if (updated.patient.oneSignalPlayerId) {
           await this.notificationService.sendNotification({
             userId: updated.patientId,
-            type: NotificationType.APPOINTMENT_REMINDER, // Reusing reminder type, or a new specific type for status updates
+            type: NotificationType.APPOINTMENT_REMINDER,
             recipient: updated.patient.oneSignalPlayerId,
             subject: 'Appointment Status Update',
             content: `Your appointment status has been updated to ${dto.status}`,
@@ -431,11 +410,10 @@ export class AppointmentsService {
         // Also send generic notification via NotificationProviderService
         await this.notificationService.sendNotification({
           userId: updated.patientId,
-          type: NotificationType.APPOINTMENT_REMINDER, // Or a new specific type for status updates
-          recipient: updated.patient.email, // Default to email
+          type: NotificationType.APPOINTMENT_REMINDER,
+          recipient: updated.patient.email,
           subject: 'Appointment Status Update',
           content: `Your appointment with Dr. ${updated.professional.profile?.lastName} on ${new Date(updated.date).toLocaleDateString()} at ${new Date(updated.startTime).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} has been updated to ${dto.status}.`,
-          // provider: ProviderType.EMAIL, // Let the service decide the best provider
         });
 
         return updated;

@@ -5,6 +5,7 @@ import {
   IsEnum,
   IsInt,
   IsBoolean,
+  MinLength,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IsUUID } from 'class-validator';
@@ -14,12 +15,18 @@ export class RegisterDto {
   @IsEmail()
   email!: string;
 
+  @IsString()
+  @MinLength(6)
   password!: string;
 
+  @IsOptional()
+  @IsString()
   phone?: string;
 
+  @IsString()
   firstName!: string;
 
+  @IsString()
   lastName!: string;
 
   @IsOptional()
@@ -66,8 +73,8 @@ export class UpdateUserDto {
   dni?: string;
 
   @IsOptional()
-  @IsEnum(UserRole)
-  role?: UserRole;
+  @IsString()
+  role?: string;
 
   @IsOptional()
   @IsBoolean()
@@ -79,6 +86,7 @@ export class UpdateUserDto {
 
   @IsOptional()
   @IsString()
+  @MinLength(6)
   password?: string;
 }
 

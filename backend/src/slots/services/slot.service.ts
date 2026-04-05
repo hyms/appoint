@@ -231,11 +231,21 @@ export class SlotService {
       },
     });
 
+    const formatTime = (date: Date) => {
+      return date.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit', hour12: false });
+    };
+
+    const formattedSlots = slots.map(slot => ({
+      ...slot,
+      startTime: formatTime(new Date(slot.startTime)),
+      endTime: formatTime(new Date(slot.endTime)),
+    }));
+
     return {
       date,
       availableSlots: slots.length,
       totalSlots: slots.length + blockedSlots,
-      slots,
+      slots: formattedSlots,
     };
   }
 

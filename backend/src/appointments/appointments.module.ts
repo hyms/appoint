@@ -3,12 +3,11 @@ import { AppointmentsController } from './appointments.controller';
 import { AppointmentsService } from './services/appointment.service';
 import { AppointmentAuditService } from './services/appointment-audit.service';
 import { PrismaService } from '../prisma/prisma.service';
-import { StrikesModule } from '../strikes/strikes.module';
 import { NotificationsModule } from '../notifications/notifications.module';
 import { AuthorizationService } from '../common/services/authorization.service';
 
 @Module({
-  imports: [StrikesModule, NotificationsModule],
+  imports: [NotificationsModule],
   controllers: [AppointmentsController],
   providers: [
     AppointmentsService,

@@ -55,6 +55,10 @@ withDefaults(defineProps<Props>(), {
 .base-button[class*='bg-primary'] {
   color: white !important;
 }
+.base-button.bg-success,
+.base-button[class*='bg-success'] {
+  color: white !important;
+}
 .base-button[class*='bg-error'] {
   color: white !important;
 }

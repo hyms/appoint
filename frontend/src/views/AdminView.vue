@@ -19,8 +19,6 @@
           <v-tab value="slots">Horarios</v-tab>
           <v-tab value="users">Usuarios</v-tab>
           <v-tab value="professionals">Profesionales</v-tab>
-          <v-tab value="strikes">Strikes</v-tab>
-          <v-tab value="emergency">Emergencia</v-tab>
         </v-tabs>
 
         <v-divider />
@@ -62,7 +60,6 @@
           <v-window-item value="users" class="pa-4">
             <AdminUsersTab
               v-model="userFilters"
-              @update-list="loadUsers"
               @delete-user="deleteUser"
             />
           </v-window-item>
@@ -73,20 +70,17 @@
               :loading-professionals="loadingProfessionals"
             />
           </v-window-item>
-
-          <v-window-item value="strikes" class="pa-4">
-            <AdminStrikesTab
-              :strikes="strikes"
-              :loading="strikesLoading"
-              @update-list="loadStrikes"
-            />
-          </v-window-item>
-
-          <v-window-item value="emergency" class="pa-4">
-            <AdminEmergencyTab />
-          </v-window-item>
         </v-window>
       </v-card>
+
+      <v-dialog v-model="generateDialog" max-width="600">
+        <GenerateSlotDialog
+          :professionals-list="professionalsList"
+          :loading-professionals="loadingProfessionals"
+          @generate="handleGenerateSlots"
+          @close="generateDialog = false"
+        />
+      </v-dialog>
 
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
@@ -129,8 +123,6 @@
 import { ref, computed, onMounted, reactive } from 'vue'
 import { useAuthStore } from '@/stores/auth'
 import { appointmentsService, type Appointment } from '@/services/appointments'
-import { emergencyService } from '@/services/emergency'
-import { strikesService } from '@/services/strikes'
 import { slotsService } from '@/services/slots'
 import { usersService, type User } from '@/services/users'
 import api from '@/services/api'
@@ -140,8 +132,7 @@ import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab.vue'
 import AdminSlotsTab from '../components/admin/AdminSlotsTab.vue'
 import AdminUsersTab from '../components/admin/AdminUsersTab.vue'
 import AdminProfessionalsTab from '../components/admin/AdminProfessionalsTab.vue'
-import AdminEmergencyTab from '../components/admin/AdminEmergencyTab.vue'
-import AdminStrikesTab from '../components/admin/AdminStrikesTab.vue'
+import GenerateSlotDialog from '../components/admin/GenerateSlotDialog.vue'
 import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue'
 
 const { success, error } = useToast()
@@ -154,8 +145,6 @@ const pageTitle = computed(() => {
     slots: 'Horarios',
     users: 'Usuarios',
     professionals: 'Profesionales',
-    strikes: 'Strikes',
-    emergency: 'Emergencia',
   }
   return titles[adminTab.value] || 'Administración'
 })
@@ -166,8 +155,6 @@ const pageDescription = computed(() => {
     slots: 'Administra los horarios disponibles.',
     users: 'Gestiona los usuarios del sistema.',
     professionals: 'Gestiona los profesionales.',
-    strikes: 'Control de inasistencias.',
-    emergency: 'Control de emergencia del sistema.',
   }
   return descriptions[adminTab.value] || ''
 })
@@ -232,9 +219,6 @@ const loadingProfessionals = ref(false)
 // --- General State ---
 const viewDialog = ref(false)
 const selectedAppointment = ref<Appointment | null>(null)
-const strikes = ref<any[]>([])
-const strikesLoading = ref(false)
-const emergencyStatus = reactive({ isActive: false, message: '' })
 
 // --- Cancel State ---
 const cancelDialog = ref(false)
@@ -249,8 +233,6 @@ onMounted(async () => {
     await loadPatients()
     await loadProfessionalsListForAdmin()
   }
-  await loadEmergencyStatus()
-  await loadStrikes()
 })
 
 // --- Logic ---
@@ -315,6 +297,11 @@ async function loadSlots() {
   }
 }
 
+async function handleGenerateSlots() {
+  await loadSlots()
+  success('Slots generated successfully')
+}
+
 async function blockSlot(slot: any) {
   const reason = prompt('Enter block reason:')
   if (reason) {
@@ -351,7 +338,7 @@ async function deleteSlot(slot: any) {
 }
 
 async function loadUsers() {
-  // Logic not used in AdminView directly, but needed for AdminUsersTab
+  // Handled internally by AdminUsersTab
 }
 
 async function deleteUser(user: User) {
@@ -395,27 +382,6 @@ async function loadPatients() {
     error('Failed to load patients')
   } finally {
     loadingPatients.value = false
-  }
-}
-
-async function loadEmergencyStatus() {
-  try {
-    const status = await emergencyService.getStatus()
-    emergencyStatus.isActive = status.isActive
-    emergencyStatus.message = status.message || ''
-  } catch (e) {
-    error('Could not retrieve emergency status.')
-  }
-}
-
-async function loadStrikes() {
-  strikesLoading.value = true
-  try {
-    strikes.value = await strikesService.getAllStrikes()
-  } catch (e) {
-    error('Failed to load strikes.')
-  } finally {
-    strikesLoading.value = false
   }
 }
 </script>

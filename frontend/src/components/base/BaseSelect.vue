@@ -9,6 +9,7 @@
     :hide-details="hideDetails"
     :item-title="itemTitle"
     :item-value="itemValue"
+    :rules="rules"
     density="comfortable"
     clearable
     class="mt-1"
@@ -27,6 +28,7 @@ defineProps<{
   hideDetails?: boolean
   itemTitle?: string
   itemValue?: string
+  rules?: any
 }>()
 
 // Use defineModel for two-way binding compatibility with v-model

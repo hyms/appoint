@@ -3,16 +3,20 @@ const LOCALE = 'es-ES'
 export function formatDate(date: string | Date | null | undefined): string {
   if (!date) return ''
   const d = typeof date === 'string' ? new Date(date) : date
-  return d.toLocaleDateString(LOCALE, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric'
-  })
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  return `${day}/${month}/${year}`
 }
 
 export function formatTime(time: string | Date | null | undefined): string {
   if (!time) return ''
+  // Handle HH:mm format specifically
+  if (typeof time === 'string' && /^\d{2}:\d{2}$/.test(time)) {
+    return time
+  }
   const d = typeof time === 'string' ? new Date(time) : time
+  if (isNaN(d.getTime())) return '' // Return empty string for Invalid Date
   return d.toLocaleTimeString(LOCALE, {
     hour: '2-digit',
     minute: '2-digit'
@@ -26,13 +30,12 @@ export function formatDateTime(date: string | Date | null | undefined, time?: st
     const t = typeof time === 'string' ? new Date(time) : time
     return `${formatDate(d)} ${formatTime(t)}`
   }
-  return d.toLocaleString(LOCALE, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  })
+  const day = String(d.getDate()).padStart(2, '0')
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const year = d.getFullYear()
+  const hour = String(d.getHours()).padStart(2, '0')
+  const minute = String(d.getMinutes()).padStart(2, '0')
+  return `${day}/${month}/${year} ${hour}:${minute}`
 }
 
 export function formatLongDate(date: string | Date | null | undefined): string {

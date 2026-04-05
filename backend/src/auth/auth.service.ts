@@ -397,11 +397,13 @@ export class AuthService {
 
     const hashedPassword = await bcrypt.hash(createUserDto.password, 10);
 
+    const role = createUserDto.role || UserRole.PATIENT;
+
     const data: CreateUserData = {
       email: createUserDto.email,
       phone: createUserDto.phone,
       passwordHash: hashedPassword,
-      role: createUserDto.role as UserRole,
+      role: typeof role === 'string' ? (role as UserRole) : role,
       isActive: true,
       profile: {
         create: {
@@ -440,7 +442,12 @@ export class AuthService {
       changes.email = updateUserDto.email;
     }
     if (updateUserDto.phone) changes.phone = updateUserDto.phone;
-    if (updateUserDto.role) changes.role = updateUserDto.role;
+    if (updateUserDto.role) {
+      const validRoles = ['ADMIN', 'SECRETARY', 'PROFESSIONAL', 'PATIENT'];
+      if (validRoles.includes(updateUserDto.role)) {
+        changes.role = updateUserDto.role as UserRole;
+      }
+    }
     if (updateUserDto.isActive !== undefined)
       changes.isActive = updateUserDto.isActive;
     if (updateUserDto.oneSignalPlayerId)
@@ -510,7 +517,7 @@ export class AuthService {
       requester.role,
     );
 
-    await this.authPrismaRepository.deleteUser(id);
+    await this.authPrismaRepository.softDeleteUser(id);
     return { success: true };
   }
 

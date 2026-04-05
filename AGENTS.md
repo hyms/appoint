@@ -66,9 +66,9 @@ Este archivo constituye la **Fuente de Verdad** del proyecto. Define las reglas 
 - **Autoría**: Solo el `Professional` puede crear y firmar el resumen de la sesión.
 - **Edición**: El `Professional` dispone de una ventana de **2 horas** post-creación para corregir el resumen. Tras esto, queda sellado.
 
-### C. Sistema de Strikes
-- **No-Show Control**: El sistema debe registrar `strikes` automáticamente en caso de inasistencia.
-- **Bloqueo**: Al alcanzar 3 strikes activos, el paciente queda bloqueado para nuevas reservas.
+### D. MVP2 Features (Planned)
+- **Panic Button / Cancelar citas del día**: Funcionalidad para cancelación masiva.
+- **Sistema de Strikes**: Control de no-show y bloqueo de pacientes.
 
 ---
 
@@ -77,7 +77,7 @@ Este archivo constituye la **Fuente de Verdad** del proyecto. Define las reglas 
 El sistema debe generar reportes dinámicos con filtros de (Date Range, Status, Doctor, Branch):
 
 1. **Ocupación de Agenda**: % de slots utilizados vs disponibles.
-2. **Tasa de Ausentismo**: Reporte de strikes y efectividad de asistencia.
+2. **Tasa de Ausentismo**: Reporte de efectividad de asistencia.
 3. **Ingresos Estimados**: Basado en citas `COMPLETED` con QR verificado.
 4. **Productividad**: Pacientes atendidos vs tiempo promedio de consulta.
 5. **Log de Auditoría**: Quién, qué y cuándo en cada cambio crítico.

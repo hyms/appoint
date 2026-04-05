@@ -17,7 +17,7 @@
                     item-title="text"
                     item-value="value"
                     hide-details
-                    @update:model-value="$emit('updateList')"
+                    @update:model-value="loadUsers"
                 />
             </v-col>
             <v-col cols="12" sm="6" md="3">
@@ -28,14 +28,14 @@
                     item-title="text"
                     item-value="value"
                     hide-details
-                    @update:model-value="$emit('updateList')"
+                    @update:model-value="loadUsers"
                 />
             </v-col>
             <v-col cols="12" md="6" class="d-flex align-center justify-end gap-2 pt-3 pt-md-0">
-                <BaseButton color="primary" variant="text" prepend-icon="mdi-plus" @click="$emit('openUserDialog')">
+                <BaseButton color="primary" variant="text" prepend-icon="mdi-plus" @click="openUserDialog()">
                     New User
                 </BaseButton>
-                <BaseButton color="primary" variant="text" prepend-icon="mdi-refresh" @click="$emit('updateList')" />
+                <BaseButton color="primary" variant="text" prepend-icon="mdi-refresh" @click="loadUsers" />
             </v-col>
         </v-row>
         
@@ -63,15 +63,15 @@
                 {{ formatDate(item.createdAt) }}
             </template>
             <template v-slot:item.actions="{ item }">
-                <v-btn size="small" color="primary" variant="text" @click="$emit('openUserDialog', item)">
+                <v-btn size="small" color="primary" variant="text" @click="openUserDialog(item)">
                   Edit
                 </v-btn>
-                <v-btn size="small" color="error" variant="text" icon="mdi-delete" @click="$emit('deleteUser', item)" />
+                <v-btn size="small" color="error" variant="text" icon="mdi-delete" @click="handleDeleteUser(item)" />
             </template>
         </v-data-table>
     </v-card-text>
 
-    <v-dialog v-model="userDialog" max-width="600">
+    <v-dialog v-model="userDialog" max-width="600" @after-leave="resetForm">
       <v-card>
         <v-card-title>{{ editingUser ? 'Edit User' : 'Create New User' }}</v-card-title>
         <v-card-text>
@@ -101,9 +101,10 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, reactive } from 'vue'
+import { ref, computed, reactive, onMounted, watch } from 'vue'
 import { useToast } from '@/composables/useToast'
 import { useAppColors } from '@/composables/useAppColors'
+import { useAuthStore } from '@/stores/auth'
 import { usersService, type User, type UpdateUserDto, type CreateUserDto } from '@/services/users'
 import { formatDate } from '@/utils/date'
 import BaseButton from '@/components/base/BaseButton.vue'
@@ -112,6 +113,9 @@ import BaseSelect from '@/components/base/BaseSelect.vue'
 
 const { success, error } = useToast()
 const { getRoleColor } = useAppColors()
+const authStore = useAuthStore()
+
+const isAdmin = computed(() => authStore.user?.role === 'ADMIN')
 
 const props = defineProps<{
     modelValue: { role: string, isActive: boolean | undefined }
@@ -137,12 +141,57 @@ const filters = computed({
     set: value => emit('update:modelValue', value)
 })
 
-const roleOptions = [
+async function loadUsers() {
+    loading.value = true
+    try {
+        const data = await usersService.getAll(filters.value.role || undefined)
+        users.value = data
+    } catch (err) {
+        console.error('Failed to load users:', err)
+        error('Error loading users')
+    } finally {
+        loading.value = false
+    }
+}
+
+onMounted(() => {
+    loadUsers()
+})
+
+watch(() => props.modelValue, () => {
+    loadUsers()
+}, { deep: true })
+
+function openUserDialog(user?: User) {
+    if (user) {
+        editingUser.value = user
+        userFormData.email = user.email
+        userFormData.phone = user.phone || ''
+        userFormData.firstName = user.profile?.firstName || ''
+        userFormData.lastName = user.profile?.lastName || ''
+        userFormData.dni = user.profile?.dni || ''
+        userFormData.role = user.role
+        userFormData.isActive = user.isActive
+    } else {
+        editingUser.value = null
+        resetForm()
+    }
+    userDialog.value = true
+}
+
+const allRoleOptions = [
   { text: 'Administrator', value: 'ADMIN' },
   { text: 'Secretary', value: 'SECRETARY' },
   { text: 'Professional', value: 'PROFESSIONAL' },
   { text: 'Patient', value: 'PATIENT' }
 ]
+
+const roleOptions = computed(() => {
+  if (isAdmin.value) {
+    return allRoleOptions
+  }
+  return allRoleOptions.filter(r => r.value !== 'ADMIN')
+})
 const activeOptions = [
   { text: 'Active', value: true },
   { text: 'Inactive', value: false }
@@ -187,6 +236,17 @@ const passwordRules = [
   (v: string) => v.length >= 6 || 'Password must be at least 6 characters',
 ]
 
+function resetForm() {
+  userFormData.email = ''
+  userFormData.password = ''
+  userFormData.phone = ''
+  userFormData.firstName = ''
+  userFormData.lastName = ''
+  userFormData.dni = ''
+  userFormData.role = 'PATIENT'
+  userFormData.isActive = true
+}
+
 
 async function saveUser() {
   if (!userFormRef.value?.validate()) return
@@ -202,7 +262,9 @@ async function saveUser() {
         dni: userFormData.dni,
         role: userFormData.role,
         isActive: userFormData.isActive,
-        password: userFormData.password
+      }
+      if (userFormData.password) {
+        updateData.password = userFormData.password
       }
       console.log('Updating user:', updateData);
       await usersService.update(editingUser.value.id, updateData)
@@ -227,12 +289,25 @@ async function saveUser() {
       success('User created successfully')
     }
     userDialog.value = false
-    emit('updateList')
+    loadUsers()
   } catch (err: any) {
     console.error('Failed to save user:', err)
     error(err.message || 'Error saving user')
   } finally {
     savingUser.value = false
+  }
+}
+
+async function handleDeleteUser(user: User) {
+  if (confirm(`Are you sure you want to delete user ${user.email}?`)) {
+    try {
+      await usersService.delete(user.id)
+      success('User deleted successfully')
+      loadUsers()
+    } catch (err: any) {
+      console.error('Failed to delete user:', err)
+      error(err.message || 'Error deleting user')
+    }
   }
 }
 </script>

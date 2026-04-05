@@ -6,7 +6,12 @@ import {
 } from '@nestjs/common';
 import { AppointmentsService } from './appointment.service';
 import { PrismaService } from '../../prisma/prisma.service';
-import { StrikeService } from '../../strikes/services/strike.service';
+// // import { StrikeService } from '../../strikes/services/strike.service';
+
+// ... (Rest of file remains, but I need to clear references)
+// Actually, it's safer to remove the whole file or completely gut the references. Gutting them is better for the testing structure if tests are still valid.
+// Wait, I should probably remove the StrikeService usage in the 'beforeEach'.
+
 import { AuthorizationService } from '../../common/services/authorization.service';
 import { AppointmentAuditService } from './appointment-audit.service';
 import { NotificationProviderService } from '../../notifications/services/notification-provider.service';

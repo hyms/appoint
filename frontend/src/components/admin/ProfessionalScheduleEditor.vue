@@ -12,18 +12,19 @@
         <v-row v-for="day in currentSchedule" :key="day.dayOfWeek" class="mb-2 align-center">
             <v-col cols="3" md="2">
                 <v-switch
-                    v-model="day.enabled"
+                    :model-value="day.enabled"
                     :label="day.dayOfWeek"
                     color="primary"
                     density="compact"
                     hide-details
+                    @update:model-value="(val) => { day.enabled = val ?? false; emitChange() }"
                 />
             </v-col>
             <v-col cols="9" md="10">
                 <div v-if="!day.enabled" class="text-error font-weight-bold pa-2 rounded-lg" color="surface">
                     Day is disabled. No slots available for booking.
                 </div>
-                <v-chip-group v-else v-model="day.selectedSlots" column multiple mandatory>
+                <v-chip-group v-else :model-value="day.selectedSlots" column multiple mandatory @update:model-value="day.selectedSlots = $event; emitChange()">
                     <v-chip 
                         v-for="slot in day.slots" 
                         :key="slot.id" 
@@ -33,7 +34,7 @@
                         size="small"
                         class="text-caption font-weight-bold"
                     >
-                        {{ formatTime(slot.startTime) }} - {{ formatTime(slot.endTime) }}
+                        {{ slot.startTime }} - {{ slot.endTime }}
                     </v-chip>
                 </v-chip-group>
             </v-col>
@@ -48,7 +49,6 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
-import { formatTime } from '@/utils/date'
 
 interface TimeSlot {
     id: string
@@ -60,12 +60,12 @@ interface ScheduleDay {
     dayOfWeek: string
     enabled: boolean
     slots: TimeSlot[]
-    selectedSlots: string[] // Holds IDs of selected slots
+    selectedSlots: string[]
 }
 
 const props = defineProps<{
     professionalId: string
-    initialSchedule: any // Should be array of ScheduleDay structure
+    initialSchedule: any
 }>()
 
 const emit = defineEmits<{
@@ -74,36 +74,35 @@ const emit = defineEmits<{
 
 const currentSchedule = ref<ScheduleDay[]>([])
 
-// --- Mock Data Mapping (Simulation) ---
-watch(() => props.initialSchedule, (newSchedule) => {
-    if (newSchedule) {
-        currentSchedule.value = mapBackendScheduleToFrontend(props.initialSchedule)
-    }
+// Only initialize schedule if professional ID changes, not on every prop update
+watch(() => props.professionalId, () => {
+    currentSchedule.value = mapBackendScheduleToFrontend(props.initialSchedule)
 }, { immediate: true })
 
 function mapBackendScheduleToFrontend(backendData: any): ScheduleDay[] {
-    // This structure represents the *desired* state for editing.
-    if (!backendData || !Array.isArray(backendData.days)) {
-        return [
-            { dayOfWeek: 'Monday', enabled: true, slots: [{ id: 'm1', startTime: '09:00', endTime: '10:00' }, { id: 'm2', startTime: '10:00', endTime: '11:00' }, { id: 'm3', startTime: '11:00', endTime: '12:00' }], selectedSlots: ['m1', 'm2'] },
-            { dayOfWeek: 'Tuesday', enabled: true, slots: [{ id: 't1', startTime: '09:00', endTime: '10:00' }, { id: 't2', startTime: '10:00', endTime: '11:00' }, { id: 't3', startTime: '11:00', endTime: '12:00' }], selectedSlots: ['t1', 't2', 't3'] },
-            { dayOfWeek: 'Wednesday', enabled: false, slots: [{ id: 'w1', startTime: '09:00', endTime: '10:00' }], selectedSlots: [] },
-            { dayOfWeek: 'Thursday', enabled: true, slots: [{ id: 'th1', startTime: '14:00', endTime: '15:00' }], selectedSlots: ['th1'] },
-            { dayOfWeek: 'Friday', enabled: true, slots: [{ id: 'f1', startTime: '09:00', endTime: '10:00' }, { id: 'f2', startTime: '10:00', endTime: '11:00' }], selectedSlots: ['f1', 'f2'] },
-            { dayOfWeek: 'Saturday', enabled: false, slots: [], selectedSlots: [] },
-            { dayOfWeek: 'Sunday', enabled: false, slots: [], selectedSlots: [] },
-        ]
-    }
-    
-    // Real transformation logic would go here
-    return backendData.days || []
+    const rawWorkingHours = (backendData && backendData.workingHours) ? backendData.workingHours : [
+        { dayOfWeek: 'MONDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        { dayOfWeek: 'TUESDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        { dayOfWeek: 'WEDNESDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        { dayOfWeek: 'THURSDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        { dayOfWeek: 'FRIDAY', startTime: '09:00', endTime: '17:00', isActive: true },
+        { dayOfWeek: 'SATURDAY', startTime: '09:00', endTime: '13:00', isActive: false },
+        { dayOfWeek: 'SUNDAY', startTime: '09:00', endTime: '13:00', isActive: false },
+    ]
+
+    return rawWorkingHours.map((wh: any) => ({
+        dayOfWeek: wh.dayOfWeek.charAt(0) + wh.dayOfWeek.slice(1).toLowerCase(),
+        enabled: wh.isActive,
+        slots: [{ id: `${wh.dayOfWeek.toLowerCase()}_1`, startTime: wh.startTime, endTime: wh.endTime }],
+        selectedSlots: wh.isActive ? [`${wh.dayOfWeek.toLowerCase()}_1`] : []
+    }))
 }
 
-// Emit data whenever the local schedule changes
-watch(currentSchedule, (newSchedule) => {
-    emit('update:schedule', newSchedule)
-}, { deep: true })
-
+function emitChange() {
+    // Clone to prevent direct mutation references from reaching the parent/prop
+    const payload = JSON.parse(JSON.stringify(currentSchedule.value))
+    emit('update:schedule', payload)
+}
 </script>
 
 <style scoped>

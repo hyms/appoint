@@ -97,7 +97,7 @@ const configTab = ref('schedule')
 const scheduleData = ref<any>(null)
 const settingsData = ref<any>(null)
 
-const professionalConfigEndpoint = computed(() => selectedProfessionalId.value ? `/admin/professionals/${selectedProfessionalId.value}/config` : null)
+const professionalConfigEndpoint = computed(() => selectedProfessionalId.value ? `/professional-config/${selectedProfessionalId.value}` : null)
 
 watch(selectedProfessionalId, (newId) => {
     if (newId) {
@@ -112,8 +112,12 @@ async function loadProfessionalConfiguration() {
     loadingProfessionalData.value = true
     try {
         const response = await api.get(professionalConfigEndpoint.value!)
-        scheduleData.value = response.data.schedule
-        settingsData.value = response.data.settings
+        // Backend returns config with `workingHours`, `slotDurationMinutes`, etc.
+        scheduleData.value = { workingHours: response.data.workingHours }
+        settingsData.value = { 
+            slotDurationMinutes: response.data.slotDurationMinutes, 
+            breakBetweenSlotsMinutes: response.data.breakBetweenSlotsMinutes 
+        }
     } catch (err) {
         error('Failed to load professional configuration')
         console.error(err)
@@ -126,9 +130,17 @@ async function saveConfiguration() {
     if (!selectedProfessionalId.value) return
     savingConfig.value = true
     try {
+        // Transform scheduleData back to backend format
+        const workingHours = scheduleData.value.map((day: any) => ({
+            dayOfWeek: day.dayOfWeek.toUpperCase(),
+            startTime: day.slots[0]?.startTime || '09:00',
+            endTime: day.slots[0]?.endTime || '17:00',
+            isActive: day.enabled
+        }))
+        
         await api.patch(professionalConfigEndpoint.value!, {
-            schedule: scheduleData.value,
-            settings: settingsData.value
+            workingHours: workingHours,
+            ...settingsData.value
         })
         success('Professional configuration saved successfully!')
     } catch (err) {

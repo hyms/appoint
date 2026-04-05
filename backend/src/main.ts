@@ -67,8 +67,6 @@ async function bootstrap() {
     .addTag('auth', 'Authentication endpoints')
     .addTag('appointments', 'Appointment management')
     .addTag('slots', 'Slot management')
-    .addTag('emergency', 'Emergency button')
-    .addTag('strikes', 'Strike system')
     .addTag('payments', 'Payment processing')
     .addTag('notifications', 'Notification logs')
     .build();
@@ -76,6 +74,6 @@ async function bootstrap() {
   const document = SwaggerModule.createDocument(app, config);
   SwaggerModule.setup('api', app, document);
 
-  await app.listen(process.env.PORT ?? 3000);
+  await app.listen(process.env.PORT ?? 3000, '0.0.0.0');
 }
 bootstrap();

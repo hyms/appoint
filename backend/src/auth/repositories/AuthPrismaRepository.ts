@@ -146,6 +146,19 @@ export class AuthPrismaRepository {
     return this.prisma.user.delete({ where: { id } });
   }
 
+  async softDeleteUser(id: string): Promise<SanitizedUser | null> {
+    const existingUser = await this.prisma.user.findUnique({ where: { id } });
+    if (!existingUser) {
+      return null;
+    }
+    const user = await this.prisma.user.update({
+      where: { id },
+      data: { isActive: false, email: `deleted_${Date.now()}_${existingUser.email}` },
+      include: { profile: true },
+    });
+    return this.sanitizeUser(user);
+  }
+
   // --- Utility ---
   private sanitizeUser(user: any): SanitizedUser {
     const { passwordHash, magicToken, magicExpiresAt, ...sanitized } = user;
