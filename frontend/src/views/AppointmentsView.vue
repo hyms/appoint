@@ -6,7 +6,7 @@
           {{ $t('appointments.title') }}
         </h1>
         <p class="text-body-1 text-medium-emphasis mb-6">
-          Manage all your scheduled appointments here.
+          {{ $t('appointmentsView.manageDescription') }}
         </p>
       </v-col>
     </v-row>
@@ -30,7 +30,7 @@
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
-            <span>Appointment Details</span>
+            <span>{{ $t('admin.appointmentDetails') }}</span>
             <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" :aria-label="$t('common.close')" />
           </v-card-title>
           <v-card-text>
@@ -42,20 +42,20 @@
       <!-- Cancel Appointment Dialog (Keeping here for dependency reasons until componentized) -->
       <v-dialog v-model="cancelDialog" max-width="400">
         <v-card>
-          <v-card-title>Cancel Appointment</v-card-title>
+          <v-card-title>{{ $t('admin.cancelAppointment') }}</v-card-title>
           <v-card-text>
-            <p class="mb-4">Are you sure you want to cancel this appointment?</p>
+            <p class="mb-4">{{ $t('admin.confirmCancelAppointmentQuestion') }}</p>
             <v-textarea
               v-model="cancelReason"
-              label="Cancellation Reason"
+              :label="$t('admin.cancellationReason')"
               rows="3"
-              placeholder="Enter reason for cancellation"
+              :placeholder="$t('admin.enterCancellationReason')"
             />
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn @click="cancelDialog = false">No</v-btn>
-            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">Yes, Cancel</v-btn>
+            <v-btn @click="cancelDialog = false">{{ $t('admin.no') }}</v-btn>
+            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">{{ $t('admin.yesCancel') }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -64,9 +64,9 @@
     <!-- PATIENT/PROFESSIONAL VIEW -->
     <template v-else>
       <v-tabs v-model="tab" color="primary" class="mb-6" grow>
-        <v-tab value="upcoming">Próximas</v-tab>
-        <v-tab value="past">Pasadas</v-tab>
-        <v-tab value="payments" v-if="showPaymentTab">Pagos</v-tab>
+        <v-tab value="upcoming">{{ $t('appointmentsView.upcoming') }}</v-tab>
+        <v-tab value="past">{{ $t('appointmentsView.past') }}</v-tab>
+        <v-tab value="payments" v-if="showPaymentTab">{{ $t('appointmentsView.payments') }}</v-tab>
       </v-tabs>
 
       <v-window v-model="tab">
@@ -91,7 +91,7 @@
         <v-window-item value="payments" v-if="showPaymentTab">
           <!-- Payment Tracking Table (Will be componentized later if needed) -->
           <v-card flat>
-            <v-card-title>Seguimiento de Pagos</v-card-title>
+            <v-card-title>{{ $t('appointmentsView.paymentTracking') }}</v-card-title>
             <v-card-text>
               <v-data-table
                 :headers="paymentHeaders"
@@ -111,7 +111,7 @@
                     variant="text"
                     @click="openPaymentDialog(item.appointment)"
                   >
-                    Subir Pago
+                    {{ $t('appointmentsView.uploadPayment') }}
                   </v-btn>
                   <v-btn
                     v-if="item.status === 'UPLOADED'"
@@ -120,7 +120,7 @@
                     variant="text"
                     @click="viewPayment(item)"
                   >
-                    Ver
+                    {{ $t('appointmentsView.viewDetails') }}
                   </v-btn>
                 </template>
               </v-data-table>
@@ -133,14 +133,14 @@
     <!-- Modals remain here for now -->
     <v-dialog v-model="paymentDialog" max-width="500">
         <v-card class="pa-4">
-          <v-card-title>Subir Comprobante de Pago</v-card-title>
+          <v-card-title>{{ $t('appointmentsView.uploadProof') }}</v-card-title>
           <v-card-text>
             <p class="mb-4">
-              Cita: {{ selectedAppointment ? formatDate(selectedAppointment.date) : '' }}
+              {{ $t('appointmentsView.appointment') }} {{ selectedAppointment ? formatDate(selectedAppointment.date) : '' }}
             </p>
             <v-file-input
               v-model="paymentFile"
-              label="Subir captura de pantalla del pago"
+              :label="$t('appointmentsView.uploadScreenshot')"
               accept="image/*"
               prepend-icon="mdi-camera"
             />
@@ -153,14 +153,14 @@
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn @click="paymentDialog = false">Cancelar</v-btn>
+            <v-btn @click="paymentDialog = false">{{ $t('common.cancel') }}</v-btn>
             <v-btn
               color="primary"
               :loading="uploading"
               :disabled="!paymentFile"
               @click="uploadPayment"
             >
-              Subir
+              {{ $t('appointmentsView.upload') }}
             </v-btn>
           </v-card-actions>
         </v-card>
@@ -168,7 +168,7 @@
 
     <v-dialog v-model="paymentViewDialog" max-width="500">
       <v-card class="pa-4">
-        <v-card-title>Detalles del Pago</v-card-title>
+        <v-card-title>{{ $t('appointmentsView.paymentDetails') }}</v-card-title>
         <v-card-text v-if="selectedPayment">
           <v-img
             :src="selectedPayment.qrImageUrl"
@@ -179,7 +179,7 @@
             {{ selectedPayment.status }}
           </v-chip>
           <p v-if="selectedPayment.uploadedAt" class="mt-2">
-            Subido: {{ new Date(selectedPayment.uploadedAt).toLocaleString() }}
+            {{ $t('appointmentsView.uploadedAt') }} {{ new Date(selectedPayment.uploadedAt).toLocaleString() }}
           </p>
         </v-card-text>
       </v-card>
@@ -200,9 +200,11 @@ import { useAppColors } from '@/composables/useAppColors'
 import AppointmentList from '@/components/appointments/AppointmentList.vue'
 import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue'
 import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab.vue'
+import { useI18n } from 'vue-i18n'
 
 const { success, error } = useToast()
 const { getPaymentStatusColor } = useAppColors()
+const { t } = useI18n()
 
 
 const authStore = useAuthStore()
@@ -224,12 +226,12 @@ const uploading = ref(false)
 
 const showPaymentTab = computed(() => authStore.user?.role === 'PATIENT')
 
-const paymentHeaders = [
-  { title: 'Fecha', key: 'appointment.date' },
-  { title: 'Profesional', key: 'appointment.professional.profile.firstName' },
-  { title: 'Estado', key: 'status' },
-  { title: 'Acciones', key: 'actions', sortable: false }
-]
+const paymentHeaders = computed(() => [
+  { title: t('appointmentsView.appointment') + ':', key: 'appointment.date' },
+  { title: t('admin.professional'), key: 'appointment.professional.profile.firstName' },
+  { title: t('admin.status'), key: 'status' },
+  { title: t('admin.actions'), key: 'actions', sortable: false }
+])
 
 // Admin state
 const adminAppointments = ref<any[]>([])
@@ -248,20 +250,20 @@ const adminFilters = reactive({
   professionalId: ''
 })
 const statusOptions = [
-  { text: 'Pendiente', value: 'PENDING' },
-  { text: 'Confirmada', value: 'CONFIRMED' },
-  { text: 'Completada', value: 'COMPLETED' },
-  { text: 'Cancelada', value: 'CANCELLED' },
-  { text: 'No Asistió', value: 'NO_SHOW' }
+  { text: t('appointments.status.pending'), value: 'PENDING' },
+  { text: t('appointments.status.confirmed'), value: 'CONFIRMED' },
+  { text: t('appointments.status.completed'), value: 'COMPLETED' },
+  { text: t('appointments.status.cancelled'), value: 'CANCELLED' },
+  { text: t('appointments.status.noShow'), value: 'NO_SHOW' }
 ]
 const adminHeaders = [
-  { title: 'Fecha', key: 'date' },
-  { title: 'Hora', key: 'startTime' },
-  { title: 'Paciente', key: 'patient' },
-  { title: 'Profesional', key: 'professional' },
-  { title: 'Estado', key: 'status' },
-  { title: 'Pago', key: 'paymentStatus' },
-  { title: 'Acciones', key: 'actions', sortable: false }
+  { title: t('admin.date'), key: 'date' },
+  { title: t('admin.time'), key: 'startTime' },
+  { title: t('admin.patient'), key: 'patient' },
+  { title: t('admin.professional'), key: 'professional' },
+  { title: t('admin.status'), key: 'status' },
+  { title: t('admin.paymentStatus'), key: 'paymentStatus' },
+  { title: t('admin.actions'), key: 'actions', sortable: false }
 ]
 
 // Dialogs
@@ -272,7 +274,7 @@ const cancelling = ref(false)
 async function confirmCancelAppointment() {
   if (!selectedAppointment.value) return
   if (!cancelReason.value.trim()) {
-    error('Please enter a cancellation reason')
+    error(t('admin.enterCancellationReason'))
     return
   }
   cancelling.value = true
@@ -280,9 +282,9 @@ async function confirmCancelAppointment() {
     await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
     cancelDialog.value = false
     await loadAppointments()
-    success('Appointment cancelled')
+    success(t('admin.appointmentCancelledSuccess'))
   } catch (err) {
-    error('Failed to cancel appointment')
+    error(t('admin.failedToCancelAppointment'))
   } finally {
     cancelling.value = false
   }
@@ -308,8 +310,8 @@ async function loadPatients() {
       label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
     }))
   } catch (err) {
-    console.error('Failed to load patients:', error)
-    error('Failed to load patients')
+    console.error('Failed to load patients:', err)
+    error(t('admin.failedToLoadPatients'))
   } finally {
     loadingPatients.value = false
   }
@@ -325,8 +327,8 @@ async function loadProfessionals() {
       label: `${u.firstName || ''} ${u.lastName || ''} (${u.email})`.trim()
     }))
   } catch (err) {
-    console.error('Failed to load professionals:', error)
-    error('Failed to load professionals')
+    console.error('Failed to load professionals:', err)
+    error(t('admin.failedToLoadProfessionals'))
   } finally {
     loadingProfessionals.value = false
     loadingProfessionalsForFilter.value = false
@@ -346,8 +348,8 @@ async function loadAdminAppointments() {
     const response = await appointmentsService.getAll(params)
     adminAppointments.value = response.data || response
   } catch (err) {
-    console.error('Failed to load admin appointments:', error)
-    error('Error loading admin appointments')
+    console.error('Failed to load admin appointments:', err)
+    error(t('admin.errorLoadingAppointments'))
   } finally {
     loadingAdmin.value = false
   }
@@ -379,8 +381,8 @@ async function loadAppointments() {
     )
     await loadPaymentRecords()
   } catch (err) {
-    console.error('Failed to load appointments:', error)
-    error('Failed to load appointments')
+    console.error('Failed to load appointments:', err)
+    error(t('appointmentsView.failedToLoadAppointments'))
   } finally {
     loadingAppointments.value = false
   }
@@ -391,8 +393,8 @@ async function loadPaymentRecords() {
   try {
     paymentRecords.value = await paymentsService.getMyPayments()
   } catch (err) {
-    console.error('Failed to load payments:', error)
-    error('Failed to load payment records')
+    console.error('Failed to load payments:', err)
+    error(t('appointmentsView.failedToLoadPaymentRecords'))
   } finally {
     loadingPayments.value = false
   }
@@ -415,11 +417,11 @@ async function uploadPayment() {
   uploading.value = true
   try {
     await paymentsService.uploadPayment(selectedAppointment.value.id, paymentFile.value)
-    success('Payment uploaded successfully!')
+    success(t('appointmentsView.paymentUploadedSuccess'))
     paymentDialog.value = false
     await loadPaymentRecords()
   } catch (err) {
-    error('Failed to upload payment')
+    error(t('appointmentsView.failedToUploadPayment'))
   } finally {
     uploading.value = false
   }

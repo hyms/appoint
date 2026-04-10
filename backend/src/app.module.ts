@@ -14,6 +14,7 @@ import { ProfessionalConfigModule } from './professional-config/professional-con
 import { NotificationSettingsModule } from './notification-settings/notification-settings.module';
 import { LocationModule } from './locations/locations.module';
 import { CronModule } from './cron/cron.module';
+import { AnalyticsModule } from './analytics/analytics.module';
 
 @Module({
   imports: [
@@ -39,6 +40,7 @@ import { CronModule } from './cron/cron.module';
     NotificationSettingsModule,
     CronModule,
     LocationModule,
+    AnalyticsModule,
   ],
   controllers: [AppController],
   providers: [

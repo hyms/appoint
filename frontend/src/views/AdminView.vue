@@ -16,9 +16,9 @@
       <v-card variant="flat">
         <v-tabs v-model="adminTab" color="primary" grow>
           <v-tab value="appointments">{{ $t('appointments.title') }}</v-tab>
-          <v-tab value="slots">Horarios</v-tab>
-          <v-tab value="users">Usuarios</v-tab>
-          <v-tab value="professionals">Profesionales</v-tab>
+          <v-tab value="slots">{{ $t('admin.schedules') }}</v-tab>
+          <v-tab value="users">{{ $t('admin.users') }}</v-tab>
+          <v-tab value="professionals">{{ $t('admin.professionals') }}</v-tab>
         </v-tabs>
 
         <v-divider />
@@ -85,7 +85,7 @@
       <v-dialog v-model="viewDialog" max-width="600">
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
-            <span>Appointment Details</span>
+            <span>{{ $t('admin.appointmentDetails') }}</span>
             <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" :aria-label="$t('common.close')" />
           </v-card-title>
           <v-card-text>
@@ -96,21 +96,21 @@
 
       <v-dialog v-model="cancelDialog" max-width="400">
         <v-card>
-          <v-card-title>Cancel Appointment</v-card-title>
+          <v-card-title>{{ $t('admin.cancelAppointment') }}</v-card-title>
           <v-card-text>
-            <p class="mb-4">Are you sure you want to cancel this appointment?</p>
+            <p class="mb-4">{{ $t('admin.confirmCancelAppointmentQuestion') }}</p>
             <v-textarea
               v-model="cancelReason"
-              label="Cancellation Reason"
+              :label="$t('admin.cancellationReason')"
               rows="3"
-              placeholder="Enter reason for cancellation"
+              :placeholder="$t('admin.enterCancellationReason')"
             />
           </v-card-text>
           <v-card-actions>
             <v-spacer />
-            <v-btn @click="cancelDialog = false">No</v-btn>
+            <v-btn @click="cancelDialog = false">{{ $t('admin.no') }}</v-btn>
             <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling"
-              >Yes, Cancel</v-btn
+              >{{ $t('admin.yesCancel') }}</v-btn
             >
           </v-card-actions>
         </v-card>
@@ -139,22 +139,26 @@ const { success, error } = useToast()
 const authStore = useAuthStore()
 const adminTab = ref('appointments')
 
+// Use i18n for computed properties
+import { useI18n } from 'vue-i18n'
+const { t } = useI18n()
+
 const pageTitle = computed(() => {
   const titles: Record<string, string> = {
-    appointments: 'Administración',
-    slots: 'Horarios',
-    users: 'Usuarios',
-    professionals: 'Profesionales',
+    appointments: t('admin.administration'),
+    slots: t('admin.schedules'),
+    users: t('admin.users'),
+    professionals: t('admin.professionals'),
   }
-  return titles[adminTab.value] || 'Administración'
+  return titles[adminTab.value] || t('admin.administration')
 })
 
 const pageDescription = computed(() => {
   const descriptions: Record<string, string> = {
-    appointments: 'Gestiona todas las citas programadas.',
-    slots: 'Administra los horarios disponibles.',
-    users: 'Gestiona los usuarios del sistema.',
-    professionals: 'Gestiona los profesionales.',
+    appointments: t('admin.manageAppointments'),
+    slots: t('admin.manageSchedules'),
+    users: t('admin.manageUsers'),
+    professionals: t('admin.manageProfessionals'),
   }
   return descriptions[adminTab.value] || ''
 })
@@ -173,15 +177,15 @@ const appointmentFilters = reactive({
   patientId: '',
   professionalId: '',
 })
-const appointmentHeaders = [
-  { title: 'Date', key: 'date' },
-  { title: 'Time', key: 'startTime' },
-  { title: 'Patient', key: 'patient' },
-  { title: 'Professional', key: 'professional' },
-  { title: 'Status', key: 'status' },
-  { title: 'Payment', key: 'paymentStatus' },
-  { title: 'Actions', key: 'actions', sortable: false },
-]
+const appointmentHeaders = computed(() => [
+  { title: t('admin.date'), key: 'date' },
+  { title: t('admin.time'), key: 'startTime' },
+  { title: t('admin.patient'), key: 'patient' },
+  { title: t('admin.professional'), key: 'professional' },
+  { title: t('admin.status'), key: 'status' },
+  { title: t('admin.paymentStatus'), key: 'paymentStatus' },
+  { title: t('admin.actions'), key: 'actions', sortable: false },
+])
 const statusOptions = [
   { text: 'Pendiente', value: 'PENDING' },
   { text: 'Confirmada', value: 'CONFIRMED' },
@@ -194,18 +198,18 @@ const statusOptions = [
 const slots = ref<any[]>([])
 const slotsLoading = ref(false)
 const slotFilters = reactive({ date: '', isBooked: undefined as boolean | undefined })
-const slotHeaders = [
-  { title: 'Date', key: 'date' },
-  { title: 'Start', key: 'startTime' },
-  { title: 'End', key: 'endTime' },
-  { title: 'Status', key: 'isBooked' },
-  { title: 'Blocked', key: 'isBlocked' },
-  { title: 'Professional', key: 'professional.profile.lastName' },
-  { title: 'Actions', key: 'actions', sortable: false },
-]
+const slotHeaders = computed(() => [
+  { title: t('admin.date'), key: 'date' },
+  { title: t('admin.start'), key: 'startTime' },
+  { title: t('admin.end'), key: 'endTime' },
+  { title: t('admin.status'), key: 'isBooked' },
+  { title: t('admin.blocked'), key: 'isBlocked' },
+  { title: t('admin.professional'), key: 'professional.profile.lastName' },
+  { title: t('admin.actions'), key: 'actions', sortable: false },
+])
 const slotStatusOptions = [
-  { text: 'Available', value: false },
-  { text: 'Booked', value: true },
+  { text: t('admin.available'), value: false },
+  { text: t('admin.booked'), value: true },
 ]
 const generateDialog = ref(false)
 
@@ -251,7 +255,7 @@ async function loadAppointments() {
     appointments.value = response.data || response
   } catch (err) {
     console.error('Failed to load admin appointments:', err)
-    error('Error loading admin appointments')
+    error(t('admin.errorLoadingAppointments'))
   } finally {
     appointmentsLoading.value = false
   }
@@ -265,7 +269,7 @@ function viewAppointmentAdmin(item: any) {
 async function confirmCancelAppointment() {
   if (!selectedAppointment.value) return
   if (!cancelReason.value.trim()) {
-    error('Please enter a cancellation reason')
+    error(t('admin.enterCancellationReason'))
     return
   }
   cancelling.value = true
@@ -273,9 +277,9 @@ async function confirmCancelAppointment() {
     await appointmentsService.cancel(selectedAppointment.value.id, cancelReason.value)
     cancelDialog.value = false
     await loadAppointments()
-    success('Appointment cancelled')
+    success(t('admin.appointmentCancelledSuccess'))
   } catch (err) {
-    error('Failed to cancel appointment')
+    error(t('admin.failedToCancelAppointment'))
   } finally {
     cancelling.value = false
   }
@@ -291,7 +295,7 @@ async function loadSlots() {
     slots.value = response.data || response
   } catch (err) {
     console.error('Failed to load slots:', err)
-    error('Error loading slots')
+    error(t('admin.errorLoadingSlots'))
   } finally {
     slotsLoading.value = false
   }
@@ -299,18 +303,18 @@ async function loadSlots() {
 
 async function handleGenerateSlots() {
   await loadSlots()
-  success('Slots generated successfully')
+  success(t('admin.slotsGeneratedSuccess'))
 }
 
 async function blockSlot(slot: any) {
-  const reason = prompt('Enter block reason:')
+  const reason = prompt(t('admin.enterBlockReason'))
   if (reason) {
     try {
       await slotsService.block(slot.id, reason)
       await loadSlots()
-      success('Slot blocked')
+      success(t('admin.slotBlockedSuccess'))
     } catch (err) {
-      error('Failed to block slot')
+      error(t('admin.failedToBlockSlot'))
     }
   }
 }
@@ -319,20 +323,20 @@ async function unblockSlot(slot: any) {
   try {
     await slotsService.unblock(slot.id)
     await loadSlots()
-    success('Slot unblocked')
+    success(t('admin.slotUnblockedSuccess'))
   } catch (err) {
-    error('Failed to unblock slot')
+    error(t('admin.failedToUnblockSlot'))
   }
 }
 
 async function deleteSlot(slot: any) {
-  if (confirm(`Are you sure you want to delete the slot from ${formatDate(slot.date)}?`)) {
+  if (confirm(t('admin.confirmDeleteSlot', { date: formatDate(slot.date) }))) {
     try {
       await slotsService.delete(slot.id)
       await loadSlots()
-      success('Slot deleted')
+      success(t('admin.slotDeletedSuccess'))
     } catch (err) {
-      error('Failed to delete slot')
+      error(t('admin.failedToDeleteSlot'))
     }
   }
 }
@@ -342,13 +346,13 @@ async function loadUsers() {
 }
 
 async function deleteUser(user: User) {
-  if (confirm(`Are you sure you want to delete user ${user.email}?`)) {
+  if (confirm(t('admin.confirmDeleteUser', { email: user.email }))) {
     try {
       await usersService.delete(user.id)
-      success('User deleted')
+      success(t('admin.userDeletedSuccess'))
       await loadUsers()
     } catch (e) {
-      error('Failed to delete user')
+      error(t('admin.failedToDeleteUser'))
     }
   }
 }
@@ -363,7 +367,7 @@ async function loadProfessionalsListForAdmin() {
     }))
   } catch (err) {
     console.error('Failed to load professionals:', err)
-    error('Failed to load professionals')
+    error(t('admin.failedToLoadProfessionals'))
   } finally {
     loadingProfessionals.value = false
   }
@@ -379,7 +383,7 @@ async function loadPatients() {
     }))
   } catch (err) {
     console.error('Failed to load patients:', err)
-    error('Failed to load patients')
+    error(t('admin.failedToLoadPatients'))
   } finally {
     loadingPatients.value = false
   }

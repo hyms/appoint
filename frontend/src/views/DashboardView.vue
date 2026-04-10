@@ -5,7 +5,7 @@
       <v-col cols="12">
         <div class="d-flex align-end justify-space-between mb-sm">
           <div>
-            <span class="text-overline text-primary font-weight-medium">SYSTEM STATUS</span>
+            <span class="text-overline text-primary font-weight-medium">{{ $t('dashboard.systemStatus') }}</span>
             <h1 class="text-h4 font-weight-bold mt-n1">
               {{ $t('nav.dashboard') }}
             </h1>
@@ -23,7 +23,7 @@
         <div class="d-flex align-center mt-2">
           <div class="status-dot mr-2 pulse-success"></div>
           <p class="text-body-1 text-medium-emphasis">
-            User: <span class="font-weight-bold text-primary">{{ user?.profile?.firstName || 'User' }}</span>
+            {{ $t('common.user') }}: <span class="font-weight-bold text-primary">{{ user?.profile?.firstName || $t('common.user') }}</span>
           </p>
         </div>
       </v-col>
@@ -45,8 +45,8 @@
           :loading="loading"
           view-all-route="/appointments"
           :has-action="true"
-          empty-message="You don't have any scheduled appointments. Book one now!"
-          action-label="Book Appointment"
+          empty-message="{{ $t('dashboard.noScheduledAppointments') }}"
+          action-label="{{ $t('dashboard.bookAppointment') }}"
           action-to="/book"
         />
       </v-col>
@@ -55,27 +55,27 @@
       <v-col cols="12" lg="4">
         <v-card class="fill-height d-flex flex-column justify-center align-center text-center rounded-xl" elevation="2" :style="{ padding: 'var(--space-xl)' }">
           <div class="text-h1 font-weight-black text-primary opacity-10 mb-n4">360</div>
-          <div class="text-overline font-weight-bold mb-md">PLATFORM MONITOR</div>
+          <div class="text-overline font-weight-bold mb-md">{{ $t('dashboard.platformMonitor') }}</div>
           <v-icon icon="mdi-shield-check" size="64" color="success" class="mb-4" />
-          <div class="text-h6 font-weight-bold">ALL SYSTEMS NOMINAL</div>
+          <div class="text-h6 font-weight-bold">{{ $t('dashboard.allSystemsNominal') }}</div>
           <p class="text-body-2 text-medium-emphasis px-4 mt-2">
-            Secure connection established. All appointment data is encrypted and backed up.
+            {{ $t('dashboard.secureConnection') }}
           </p>
           <v-divider class="w-100 my-lg" />
           <div class="d-flex w-100 justify-space-around">
             <div class="text-center">
               <div class="text-h5 font-weight-bold">{{ upcomingAppointments.length }}</div>
-              <div class="text-caption font-weight-medium text-medium-emphasis">ACTIVE</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">{{ $t('dashboard.active') }}</div>
             </div>
             <v-divider vertical inset />
             <div class="text-center">
               <div class="text-h5 font-weight-bold">0</div>
-              <div class="text-caption font-weight-medium text-medium-emphasis">ALERTS</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">{{ $t('dashboard.alerts') }}</div>
             </div>
             <v-divider vertical inset />
             <div class="text-center">
               <div class="text-h5 font-weight-bold">100%</div>
-              <div class="text-caption font-weight-medium text-medium-emphasis">UPTIME</div>
+              <div class="text-caption font-weight-medium text-medium-emphasis">{{ $t('dashboard.uptime') }}</div>
             </div>
           </div>
         </v-card>

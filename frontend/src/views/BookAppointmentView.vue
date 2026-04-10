@@ -7,7 +7,7 @@
           {{ $t('appointments.book') }}
         </h1>
         <p class="text-body-1 text-medium-emphasis">
-          Select your appointment details below.
+          {{ $t('book.selectDetails') }}
         </p>
       </v-col>
     </v-row>
@@ -16,23 +16,23 @@
       <v-tabs v-model="tab" color="primary" bg-color="transparent" grow>
         <v-tab v-if="locations.length > 1" value="location">
           <v-icon start>mdi-map-marker</v-icon>
-          Location
+          {{ $t('book.location') }}
         </v-tab>
         <v-tab value="professional" :disabled="!selectedLocation && locations.length > 1">
           <v-icon start>mdi-doctor</v-icon>
-          Practitioner
+          {{ $t('book.practitioner') }}
         </v-tab>
         <v-tab value="date" :disabled="!selectedProfessional && professionals.length > 1">
           <v-icon start>mdi-calendar</v-icon>
-          Date
+          {{ $t('book.date') }}
         </v-tab>
         <v-tab value="time" :disabled="!selectedDate">
           <v-icon start>mdi-clock</v-icon>
-          Time
+          {{ $t('book.time') }}
         </v-tab>
         <v-tab value="confirm" :disabled="!selectedSlotId">
           <v-icon start>mdi-check-all</v-icon>
-          Confirm
+          {{ $t('book.confirm') }}
         </v-tab>
       </v-tabs>
 
@@ -42,13 +42,13 @@
         <v-window v-model="tab">
           <!-- Tab 1: Location Selection -->
           <v-window-item v-if="locations.length > 1" value="location">
-            <h2 class="text-h5 font-weight-bold mb-4">Select Location</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">{{ $t('book.selectLocation') }}</h2>
             <BaseSelect
               v-model="selectedLocation"
               :items="locations"
               item-title="name"
               item-value="id"
-              label="Choose Location"
+              :label="$t('book.chooseLocation')"
               prepend-inner-icon="mdi-map-marker"
               :loading="loadingLocations"
               variant="outlined"
@@ -63,20 +63,20 @@
                 :disabled="!selectedLocation"
                 @click="tab = 'professional'"
               >
-                Next
+                {{ $t('common.next') }}
               </BaseButton>
             </div>
           </v-window-item>
 
           <!-- Tab 2: Professional Selection -->
           <v-window-item v-if="locations.length > 1 || selectedLocation" value="professional">
-            <h2 class="text-h5 font-weight-bold mb-4">Select Practitioner</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">{{ $t('book.selectPractitioner') }}</h2>
             <BaseSelect
               v-model="selectedProfessional"
               :items="professionals"
               item-title="label"
               item-value="id"
-              label="Choose Practitioner"
+              :label="$t('book.choosePractitioner')"
               prepend-inner-icon="mdi-doctor"
               :loading="loadingProfessionals"
               variant="outlined"
@@ -86,7 +86,7 @@
             />
             <div class="mt-6 d-flex justify-space-between">
               <BaseButton v-if="locations.length > 1" color="medium-emphasis" variant="text" prepend-icon="mdi-arrow-left" @click="tab = 'location'">
-                Back
+                {{ $t('common.back') }}
               </BaseButton>
               <div v-else />
               <BaseButton
@@ -95,14 +95,14 @@
                 :disabled="!selectedProfessional"
                 @click="tab = 'date'"
               >
-                Next
+                {{ $t('common.next') }}
               </BaseButton>
             </div>
           </v-window-item>
 
           <!-- Tab 3: Date Selection -->
           <v-window-item v-if="selectedProfessional" value="date">
-            <h2 class="text-h5 font-weight-bold mb-4">Select Date</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">{{ $t('book.selectDate') }}</h2>
             <v-date-picker
               v-model="selectedDate"
               color="primary"
@@ -115,7 +115,7 @@
             />
             <div class="mt-6 d-flex justify-space-between">
               <BaseButton color="medium-emphasis" variant="text" prepend-icon="mdi-arrow-left" @click="tab = 'professional'">
-                Back
+                {{ $t('common.back') }}
               </BaseButton>
               <BaseButton
                 color="primary"
@@ -123,20 +123,20 @@
                 :disabled="!selectedDate"
                 @click="tab = 'time'"
               >
-                Next
+                {{ $t('common.next') }}
               </BaseButton>
             </div>
           </v-window-item>
           
           <!-- Tab 4: Time Slot Selection -->
           <v-window-item value="time">
-            <h2 class="text-h5 font-weight-bold mb-4">Select Time Slot</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">{{ $t('book.selectTimeSlot') }}</h2>
             <div v-if="loadingSlots" class="text-center py-12">
-              <IndustrialLoader message="CALCULATING SLOTS" />
+              <IndustrialLoader :message="$t('book.calculatingSlots')" />
             </div>
             <div v-else-if="availableSlots.length === 0" class="text-center py-12">
               <v-icon icon="mdi-calendar-remove" size="64" color="error" class="mb-2" />
-              <p class="mt-2 text-h6 font-weight-bold">No Slots Found</p>
+              <p class="mt-2 text-h6 font-weight-bold">{{ $t('book.noSlotsFound') }}</p>
             </div>
               <div v-else>
               <v-chip-group mandatory v-model="selectedSlotId" column>
@@ -156,7 +156,7 @@
             </div>
             <div class="mt-6 d-flex justify-space-between">
               <BaseButton color="medium-emphasis" variant="text" prepend-icon="mdi-arrow-left" @click="tab = 'date'">
-                Back
+                {{ $t('common.back') }}
               </BaseButton>
               <BaseButton
                 color="primary"
@@ -164,26 +164,26 @@
                 :disabled="!selectedSlotId"
                 @click="tab = 'confirm'"
               >
-                Next
+                {{ $t('common.next') }}
               </BaseButton>
             </div>
           </v-window-item>
 
           <!-- Tab 5: Confirmation -->
           <v-window-item value="confirm">
-            <h2 class="text-h5 font-weight-bold mb-4">Review & Book</h2>
+            <h2 class="text-h5 font-weight-bold mb-4">{{ $t('book.reviewAndBook') }}</h2>
             <v-list density="comfortable" class="rounded-lg mb-6 border-thin" color="surface">
-              <v-list-item title="Location" :subtitle="selectedLocationName" prepend-icon="mdi-map-marker" />
-              <v-list-item title="Practitioner" :subtitle="selectedProfessionalName" prepend-icon="mdi-doctor" />
-              <v-list-item title="Date" :subtitle="selectedDate ? formatDate(selectedDate) : 'N/A'" prepend-icon="mdi-calendar" />
-              <v-list-item title="Time" :subtitle="selectedSlot?.startTime || 'N/A'" prepend-icon="mdi-clock" />
+              <v-list-item :title="$t('book.location')" :subtitle="selectedLocationName" prepend-icon="mdi-map-marker" />
+              <v-list-item :title="$t('book.practitioner')" :subtitle="selectedProfessionalName" prepend-icon="mdi-doctor" />
+              <v-list-item :title="$t('book.date')" :subtitle="selectedDate ? formatDate(selectedDate) : 'N/A'" prepend-icon="mdi-calendar" />
+              <v-list-item :title="$t('book.time')" :subtitle="selectedSlot?.startTime || 'N/A'" prepend-icon="mdi-clock" />
             </v-list>
             <div class="mt-6 d-flex justify-space-between">
               <BaseButton color="medium-emphasis" variant="text" prepend-icon="mdi-arrow-left" @click="tab = 'time'">
-                Back
+                {{ $t('common.back') }}
               </BaseButton>
               <BaseButton color="success" size="large" @click="confirmBooking" :loading="booking">
-                CONFIRM & BOOK
+                {{ $t('book.confirmAndBook') }}
               </BaseButton>
             </div>
           </v-window-item>
@@ -204,9 +204,11 @@ import { formatDate } from '@/utils/date'
 import BaseSelect from '@/components/base/BaseSelect.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
 import IndustrialLoader from '@/components/base/IndustrialLoader.vue'
+import { useI18n } from 'vue-i18n'
 
 const router = useRouter()
 const { success, error } = useToast()
+const { t } = useI18n()
 
 const tab = ref('location')
 
@@ -228,12 +230,12 @@ const selectedSlot = computed(() => availableSlots.value.find(slot => slot.id ==
 
 const selectedProfessionalName = computed(() => {
   const found = professionals.value.find(p => p.id === selectedProfessional.value)
-  return found?.label || 'Not Selected'
+  return found?.label || 'No seleccionado'
 })
 
 const selectedLocationName = computed(() => {
     const found = locations.value.find(l => l.id === selectedLocation.value)
-    return found?.name || 'Not Selected'
+    return found?.name || 'No seleccionado'
 })
 
 const minDate = computed(() => new Date())
@@ -259,7 +261,7 @@ async function loadLocations() {
       await loadProfessionals()
     }
   } catch (err) {
-    error('Failed to load locations')
+    error(t('book.failedToLoadLocations'))
   } finally {
     loadingLocations.value = false
   }
@@ -282,7 +284,7 @@ async function loadProfessionals() {
       tab.value = 'professional'
     }
   } catch (err) {
-    error('Failed to load practitioners')
+    error(t('book.failedToLoadPractitioners'))
   } finally {
     loadingProfessionals.value = false
   }
@@ -309,7 +311,7 @@ async function loadAvailableSlots() {
     availableSlots.value = response.slots || []
   } catch (err: any) {
     console.error('Failed to load slots:', err)
-    error('Failed to load available slots')
+    error(t('book.failedToLoadSlots'))
   } finally {
     loadingSlots.value = false
   }
@@ -345,7 +347,7 @@ function onDateSelect() {
 
 async function confirmBooking() {
   if (!selectedSlotId.value || !selectedProfessional.value || !selectedDate.value || !selectedLocation.value) {
-    error('Please complete all steps before confirming.')
+    error(t('book.completeAllSteps'))
     return
   }
 
@@ -357,11 +359,11 @@ async function confirmBooking() {
       locationId: selectedLocation.value,
       notes: notes.value
     })
-    success('Appointment booked successfully! Check your appointments tab.')
+    success(t('book.bookingSuccess'))
     router.push('/appointments')
   } catch (err: any) {
     console.error('Booking error:', err)
-    error(err.response?.data?.message || 'Failed to book appointment. Slot might be taken.')
+    error(err.response?.data?.message || t('book.bookingFailed'))
   } finally {
     booking.value = false
   }
