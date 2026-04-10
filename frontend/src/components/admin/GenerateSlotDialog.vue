@@ -86,7 +86,6 @@ async function submit() {
       startDate: formData.startDate,
       endDate: formData.endDate
     }
-    console.log('Generating slots with payload:', payload)
     await slotsService.generate(payload)
     success('Slots generated successfully')
     emit('generate', { ...formData })

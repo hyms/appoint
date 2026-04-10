@@ -1,22 +1,24 @@
 import api from '@/services/api'
 
-const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || 'PLACEHOLDER_APP_ID'
+const ONESIGNAL_APP_ID = import.meta.env.VITE_ONESIGNAL_APP_ID || ''
 
 export function useOneSignal() {
   const initOneSignal = async () => {
-    try {
+    return new Promise<void>((resolve) => {
       if (typeof window.OneSignal !== 'undefined') {
-        await window.OneSignal.init({
-          appId: ONESIGNAL_APP_ID,
-          allowLocalhostAsSecureOrigin: true,
+        window.OneSignalDeferred = window.OneSignalDeferred || []
+        window.OneSignalDeferred.push(async (OneSignal) => {
+          await OneSignal.init({
+            appId: ONESIGNAL_APP_ID,
+            notifyButton: { enable: true },
+          })
+          resolve()
         })
-        console.log('OneSignal Initialized via CDN.')
       } else {
         console.warn('OneSignal SDK not loaded from CDN.')
+        resolve()
       }
-    } catch (err) {
-      console.error('OneSignal initialization error:', err)
-    }
+    })
   }
 
   const loginToOneSignal = async (userId: string) => {
@@ -26,10 +28,7 @@ export function useOneSignal() {
         const playerId = await window.OneSignal.User.PushSubscription.id
         if (playerId) {
           await api.post('/auth/one-signal-id', { playerId })
-          console.log('OneSignal Player ID linked to user:', userId)
         }
-      } else {
-        console.warn('OneSignal not available for login.')
       }
     } catch (err) {
       console.error('OneSignal login error:', err)
@@ -50,5 +49,11 @@ export function useOneSignal() {
     initOneSignal,
     loginToOneSignal,
     logoutFromOneSignal,
+  }
+}
+
+declare global {
+  interface Window {
+    OneSignalDeferred: any[]
   }
 }

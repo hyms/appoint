@@ -182,6 +182,16 @@
     "standardBookingConfirmation": "Standard booking confirmation applies.",
     "allowSelfResolutionStrikes": "Allow Self-Resolution of Strikes",
     "allowSelfResolutionStrikesHint": "If true, the professional can manually clear their own strikes (use with caution).",
-    "rememberSave": "Remember to click 'Save All Changes' in the parent tab to apply modifications."
+    "rememberSave": "Remember to click 'Save All Changes' in the parent tab to apply modifications.",
+    "patient": {
+      "detailCardTitle": "PATIENT DETAILS",
+      "totalAppointments": "Total",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "activeStrikes": "Strikes",
+      "appointmentHistory": "Appointment History",
+      "noAppointments": "No appointments recorded",
+      "notFound": "Patient not found"
+    }
   }
 }

@@ -38,7 +38,7 @@
     "validateToken": "Validar Token",
     "invalidOrExpiredToken": "Token inválido o expirado",
     "securePortal": "Portal Seguro",
-    "emailPlaceholder": "correo@ejemplo.com",
+    "emailPlaceholder": "correo\\@ejemplo.com",
     "passwordPlaceholder": "••••••••",
     "firstName": "Nombre",
     "lastName": "Apellido",
@@ -74,7 +74,9 @@
     "filterByRole": "Filtrar por rol",
     "itemsPerPage": "Elementos por página:",
     "view": "Ver",
-    "viewAll": "Ver todos"
+    "viewAll": "Ver todos",
+    "active": "Activo",
+    "inactive": "Inactivo"
   },
   "appointments": {
     "title": "Mis Citas",
@@ -247,7 +249,17 @@
     "standardBookingConfirmation": "Se aplica la confirmación de reserva estándar.",
     "allowSelfResolutionStrikes": "Permitir autorresolución de strikes",
     "allowSelfResolutionStrikesHint": "Si está activo, el profesional puede eliminar manualmente sus propios strikes (usar con precaución).",
-    "rememberSave": "Recuerda hacer clic en 'Guardar todos los cambios' en la pestaña principal para aplicar las modificaciones."
+    "rememberSave": "Recuerda hacer clic en 'Guardar todos los cambios' en la pestaña principal para aplicar las modificaciones.",
+    "patient": {
+      "detailCardTitle": "DATOS DEL PACIENTE",
+      "totalAppointments": "Total Citas",
+      "completed": "Completadas",
+      "cancelled": "Canceladas",
+      "activeStrikes": "Strikes",
+      "appointmentHistory": "Historial de Citas",
+      "noAppointments": "Sin citas registradas",
+      "notFound": "Paciente no encontrado"
+    }
   },
   "book": {
     "selectDetails": "Selecciona los detalles de tu cita a continuación.",

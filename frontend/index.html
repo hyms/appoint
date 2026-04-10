@@ -9,7 +9,23 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,100..900;1,100..900&family=Roboto+Mono:ital,wght@0,100..700;1,100..700&display=swap" rel="stylesheet">
     <title>Appointments 360</title>
     <!-- OneSignal CDN for PWA Push Notifications -->
-    <script src="https://cdn.onesignal.com/sdks/OneSignalSDK.js" async></script>
+    <script src="https://cdn.onesignal.com/sdks/web/v16/OneSignalSDK.page.js" defer></script>
+    <script>
+      (function() {
+        var appId = "%VITE_ONESIGNAL_APP_ID%";
+        if (!appId) {
+          console.warn('OneSignal App ID not configured. Push notifications disabled.');
+          return;
+        }
+        window.OneSignalDeferred = window.OneSignalDeferred || [];
+        OneSignalDeferred.push(async function(OneSignal) {
+          await OneSignal.init({
+            appId: appId,
+            notifyButton: { enable: true },
+          });
+        });
+      })();
+    </script>
   </head>
   <body>
     <div id="app"></div>

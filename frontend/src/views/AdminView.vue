@@ -37,6 +37,7 @@
               :professionals-list="professionalsList"
               @update-list="loadAppointments"
               @view-details="viewAppointmentAdmin"
+              @view-patient="viewPatient"
             />
           </v-window-item>
 
@@ -96,6 +97,23 @@
         </v-card>
       </v-dialog>
 
+      <v-dialog v-model="patientDialog" max-width="600">
+        <v-card v-if="selectedPatientId">
+          <v-card-title class="d-flex justify-space-between">
+            <span>{{ $t('admin.patient.detailCardTitle') }}</span>
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              @click="patientDialog = false"
+              :aria-label="$t('common.close')"
+            />
+          </v-card-title>
+          <v-card-text>
+            <PatientDetailCard :patient-id="selectedPatientId" />
+          </v-card-text>
+        </v-card>
+      </v-dialog>
+
       <v-dialog v-model="cancelDialog" max-width="400">
         <v-card>
           <v-card-title>{{ $t('admin.cancelAppointment') }}</v-card-title>
@@ -134,6 +152,7 @@ import AdminAppointmentsTab from '../components/admin/AdminAppointmentsTab.vue'
 import AdminSlotsTab from '../components/admin/AdminSlotsTab.vue'
 import AdminUsersTab from '../components/admin/AdminUsersTab.vue'
 import AdminProfessionalsTab from '../components/admin/AdminProfessionalsTab.vue'
+import PatientDetailCard from '../components/appointments/PatientDetailCard.vue'
 import GenerateSlotDialog from '../components/admin/GenerateSlotDialog.vue'
 import AppointmentDetailCard from '@/components/appointments/AppointmentDetailCard.vue'
 
@@ -225,6 +244,8 @@ const loadingProfessionals = ref(false)
 // --- General State ---
 const viewDialog = ref(false)
 const selectedAppointment = ref<Appointment | null>(null)
+const patientDialog = ref(false)
+const selectedPatientId = ref<string | null>(null)
 
 // --- Cancel State ---
 const cancelDialog = ref(false)
@@ -266,6 +287,11 @@ async function loadAppointments() {
 function viewAppointmentAdmin(item: any) {
   selectedAppointment.value = item
   viewDialog.value = true
+}
+
+function viewPatient(patientId: string) {
+  selectedPatientId.value = patientId
+  patientDialog.value = true
 }
 
 async function confirmCancelAppointment() {

@@ -159,6 +159,77 @@ export class AuthPrismaRepository {
     return this.sanitizeUser(user);
   }
 
+  async getPatientDetails(patientId: string) {
+    console.log('AuthPrismaRepository - Attempting to find patient with ID:', patientId);
+    const user = await this.prisma.user.findUnique({
+      where: { id: patientId },
+      include: { profile: true },
+    });
+
+    if (!user) {
+      console.log('AuthPrismaRepository - User not found for ID:', patientId);
+      return null;
+    }
+
+    if (!user.isActive) {
+      console.log('AuthPrismaRepository - User found but is inactive for ID:', patientId);
+      return null;
+    }
+    console.log('AuthPrismaRepository - User found and is active.');
+
+    const appointments = await this.prisma.appointment.findMany({
+      where: { patientId },
+      include: {
+        professional: { include: { profile: true } },
+      },
+      orderBy: { date: 'desc' },
+      take: 20,
+    });
+
+    const strikes = await this.prisma.strike.findMany({
+      where: { patientId, isActive: true },
+      include: {
+        professional: { include: { profile: true } },
+      },
+      orderBy: { strikeDate: 'desc' },
+    });
+
+    const stats = {
+      totalAppointments: appointments.length,
+      completed: appointments.filter(a => a.status === 'COMPLETED').length,
+      cancelled: appointments.filter(a => a.status === 'CANCELLED').length,
+      noShow: appointments.filter(a => a.status === 'NO_SHOW').length,
+      activeStrikes: strikes.length,
+    };
+
+    return {
+      user: this.sanitizeUser(user),
+      appointments: appointments.map(apt => ({
+        id: apt.id,
+        date: apt.date,
+        startTime: apt.startTime,
+        endTime: apt.endTime,
+        status: apt.status,
+        professional: {
+          id: apt.professional.id,
+          firstName: apt.professional.profile?.firstName,
+          lastName: apt.professional.profile?.lastName,
+        },
+      })),
+      strikes: strikes.map(s => ({
+        id: s.id,
+        reason: s.reason,
+        strikeDate: s.strikeDate,
+        blockedUntil: s.blockedUntil,
+        professional: {
+          firstName: s.professional.profile?.firstName,
+          lastName: s.professional.profile?.lastName,
+        },
+      })),
+      stats,
+    };
+  }
+
   // --- Utility ---
   private sanitizeUser(user: any): SanitizedUser {
     const { passwordHash, magicToken, magicExpiresAt, ...sanitized } = user;

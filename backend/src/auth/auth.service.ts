@@ -600,6 +600,37 @@ export class AuthService {
     return user;
   }
 
+  async getPatientDetails(patientId: string, requesterId: string) {
+    console.log('Fetching patient details for ID:', patientId);
+    const requester = await this.authPrismaRepository.findUserById(requesterId);
+    if (!requester) {
+      throw new NotFoundException('Requester not found');
+    }
+
+    const canView = 
+      requester.role === 'ADMIN' ||
+      requester.role === 'SECRETARY' ||
+      (requester.role === 'PROFESSIONAL');
+
+    if (!canView) {
+      throw new ForbiddenException('No permission to view patient details.');
+    }
+
+    const patient = await this.authPrismaRepository.getPatientDetails(patientId);
+    console.log('AuthService - Patient found in repository:', !!patient);
+    if (!patient) {
+      console.log('AuthService - Patient not found or not active in repository for ID:', patientId);
+      throw new NotFoundException('Patient not found');
+    }
+
+    // Additional check for active status
+    if (!patient.user.isActive) {
+      console.log('AuthService - Patient is inactive for ID:', patientId);
+      throw new NotFoundException('Patient not found');
+    }
+    return patient;
+  }
+
   // --- Utilities ---
   private generateToken(userId: string, email: string, role: UserRole): string {
     const payload = { sub: userId, email, role };

@@ -71,6 +71,15 @@
               >
                 {{ $t('common.view') }}
               </v-btn>
+              <v-btn
+                v-if="item.patient"
+                size="small"
+                color="info"
+                variant="text"
+                prepend-icon="mdi-account"
+                @click="$emit('viewPatient', item.patient.id)"
+              >
+              </v-btn>
             </template>
         </v-data-table>
     </v-card-text>
@@ -103,6 +112,7 @@ const emit = defineEmits<{
   (e: 'update:filters', value: any): void
   (e: 'updateList'): void
   (e: 'viewDetails', appointment: Appointment): void
+  (e: 'viewPatient', patientId: string): void
 }>()
 
 const filters = computed({

@@ -148,6 +148,13 @@ export class AuthController {
     return this.authService.getUserById(params.id);
   }
 
+  @Get('patients/:id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN', 'SECRETARY', 'PROFESSIONAL')
+  async getPatientDetails(@Param('id') id: string, @CurrentUser() user: any) {
+    return this.authService.getPatientDetails(id, user.id);
+  }
+
   @Post('users')
   @UseGuards(JwtAuthGuard, RolesGuard)
   @Roles('ADMIN')
