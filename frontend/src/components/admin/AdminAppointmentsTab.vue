@@ -110,7 +110,7 @@ const filters = computed({
     set: value => emit('update:filters', value)
 })
 
-const { getPaymentStatusColor } = useAppColors()
+const { getPaymentStatusColor: _ } = useAppColors()
 </script>
 
 <style scoped>
