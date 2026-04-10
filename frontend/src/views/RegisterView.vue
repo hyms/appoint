@@ -8,12 +8,12 @@
           <div class="d-flex align-center mb-4">
             <v-icon icon="mdi-account-plus" size="48" color="primary" class="mr-4" />
             <div>
-              <span class="text-overline font-weight-black text-primary letter-spacing-2">NEW OPERATOR</span>
+              <span class="text-overline font-weight-black text-primary letter-spacing-2">{{ $t('auth.newOperator') }}</span>
               <h1 class="text-h3 font-weight-black text-uppercase mt-n1">{{ $t('nav.register') }}</h1>
             </div>
           </div>
           <p class="text-body-1 text-medium-emphasis font-weight-medium">
-            Create a new account to join the <span class="text-primary font-weight-bold">{{ $t('app.title') }}</span> network.
+            {{ $t('auth.createAccountText') }} <span class="text-primary font-weight-bold">{{ $t('app.title') }}</span>.
           </p>
         </div>
 
@@ -25,7 +25,7 @@
                 required
                 :label="$t('auth.firstName')"
                 prepend-inner-icon="mdi-account-outline"
-                placeholder="Jane"
+                :placeholder="$t('auth.firstNamePlaceholder')"
               />
             </v-col>
             <v-col cols="12" sm="6">
@@ -34,7 +34,7 @@
                 required
                 :label="$t('auth.lastName')"
                 prepend-inner-icon="mdi-account-outline"
-                placeholder="Doe"
+                :placeholder="$t('auth.lastNamePlaceholder')"
               />
             </v-col>
           </v-row>
@@ -47,7 +47,7 @@
               :label="$t('auth.email')"
               prepend-inner-icon="mdi-email-outline"
               :rules="emailRules"
-              placeholder="jane.doe@system360.com"
+              :placeholder="$t('auth.emailPlaceholder')"
             />
           </div>
 
@@ -57,7 +57,7 @@
               type="tel"
               :label="$t('auth.phone')"
               prepend-inner-icon="mdi-phone-outline"
-              placeholder="+1 (555) 000-0000"
+              :placeholder="$t('auth.phonePlaceholder')"
             />
           </div>
 
@@ -69,7 +69,7 @@
               :label="$t('auth.password')"
               prepend-inner-icon="mdi-lock-outline"
               :rules="passwordRules"
-              placeholder="••••••••"
+              :placeholder="$t('auth.passwordPlaceholder')"
             />
           </div>
 

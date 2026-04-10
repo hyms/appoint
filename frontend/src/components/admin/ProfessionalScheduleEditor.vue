@@ -1,13 +1,13 @@
 <template>
   <v-card variant="outlined" class="admin-tab-card">
     <v-card-title class="py-3 px-4 border-bottom-thick">
-        <span class="text-overline font-weight-black letter-spacing-1">WEEKLY SCHEDULE EDITOR</span>
+        <span class="text-overline font-weight-black letter-spacing-1">{{ $t('admin.weeklyScheduleEditor') }}</span>
     </v-card-title>
     <v-card-text>
         <p class="text-body-1 font-weight-bold mb-4">
-            Editing Schedule for: <span class="text-primary">{{ professionalId }}</span>
+            {{ $t('admin.editingScheduleFor') }} <span class="text-primary">{{ professionalId }}</span>
         </p>
-        <p class="text-caption mb-6">Define the practitioner's standard weekly working hours. Days not listed are considered unavailable.</p>
+        <p class="text-caption mb-6">{{ $t('admin.weeklyHoursInstruction') }}</p>
         
         <v-row v-for="day in currentSchedule" :key="day.dayOfWeek" class="mb-2 align-center">
             <v-col cols="3" md="2">
@@ -22,7 +22,7 @@
             </v-col>
             <v-col cols="9" md="10">
                 <div v-if="!day.enabled" class="text-error font-weight-bold pa-2 rounded-lg" color="surface">
-                    Day is disabled. No slots available for booking.
+                    {{ $t('admin.dayDisabled') }}
                 </div>
                 <v-chip-group v-else :model-value="day.selectedSlots" column multiple mandatory @update:model-value="day.selectedSlots = $event; emitChange()">
                     <v-chip 
@@ -41,7 +41,7 @@
         </v-row>
 
         <v-alert type="info" variant="tonal" rounded="md" class="mt-6">
-            Note: This only sets the *standard* schedule. Slots will be generated from this template.
+            {{ $t('admin.standardScheduleNote') }}
         </v-alert>
     </v-card-text>
   </v-card>
@@ -49,6 +49,9 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+
+const { t } = useI18n()
 
 interface TimeSlot {
     id: string

@@ -1,7 +1,7 @@
 import { useI18n } from 'vue-i18n'
 
 export function useAppColors() {
-  useI18n()
+  const { t } = useI18n()
 
   const getStatusColor = (status: string) => {
     const colors: Record<string, string> = {
@@ -36,7 +36,14 @@ export function useAppColors() {
   }
 
   const formatStatus = (status: string) => {
-    return status.toLowerCase().replace('_', ' ')
+    const statusKeys: Record<string, string> = {
+      PENDING: 'appointments.status.pending',
+      CONFIRMED: 'appointments.status.confirmed',
+      COMPLETED: 'appointments.status.completed',
+      CANCELLED: 'appointments.status.cancelled',
+      NO_SHOW: 'appointments.status.noShow',
+    }
+    return statusKeys[status] ? t(statusKeys[status]) : status
   }
 
   return {

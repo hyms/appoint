@@ -262,7 +262,6 @@ const adminHeaders = [
   { title: t('admin.patient'), key: 'patient' },
   { title: t('admin.professional'), key: 'professional' },
   { title: t('admin.status'), key: 'status' },
-  { title: t('admin.paymentStatus'), key: 'paymentStatus' },
   { title: t('admin.actions'), key: 'actions', sortable: false }
 ]
 

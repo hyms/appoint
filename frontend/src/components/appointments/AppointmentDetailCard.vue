@@ -32,15 +32,6 @@
         </v-chip>
       </v-list-item-subtitle>
     </v-list-item>
-    <v-divider />
-    <v-list-item class="py-3">
-      <v-list-item-title class="text-caption text-medium-emphasis">{{ $t('appointments.appointmentDetails.paymentStatus') }}</v-list-item-title>
-      <v-list-item-subtitle>
-        <v-chip :color="getPaymentStatusColor(appointment.paymentStatus || '')" size="small">
-          {{ appointment.paymentStatus || 'N/A' }}
-        </v-chip>
-      </v-list-item-subtitle>
-    </v-list-item>
     <v-divider v-if="appointment.notes" />
     <v-list-item v-if="appointment.notes" class="py-3">
       <v-list-item-title class="text-caption text-medium-emphasis">{{ $t('appointments.appointmentDetails.notes') }}</v-list-item-title>
@@ -58,7 +49,7 @@ const props = defineProps<{
   appointment: Appointment
 }>()
 
-const { getStatusColor, getPaymentStatusColor } = useAppColors()
+const { getStatusColor } = useAppColors()
 </script>
 
 <style scoped>

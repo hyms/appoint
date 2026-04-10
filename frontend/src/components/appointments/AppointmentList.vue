@@ -2,7 +2,7 @@
   <v-card variant="outlined" class="appointment-list-card">
     <v-card-title class="d-flex align-center py-3 px-4 border-bottom">
       <v-icon icon="mdi-calendar-clock" class="mr-2" color="primary" />
-      <span class="text-overline font-weight-black letter-spacing-1">Appointments</span>
+      <span class="text-overline font-weight-black letter-spacing-1">{{ $t('appointments.title') }}</span>
       <v-spacer />
       <v-btn
         variant="text"
@@ -12,7 +12,7 @@
         prepend-icon="mdi-eye"
         class="text-none"
       >
-        View All
+        {{ $t('common.viewAll') }}
       </v-btn>
     </v-card-title>
 
@@ -28,7 +28,7 @@
     <EmptyState
       v-else-if="!appointments || appointments.length === 0"
       icon="mdi-calendar-remove"
-      title="No Scheduled Appointments"
+      :title="$t('dashboard.noScheduledTitle')"
       :description="emptyMessage"
       :action-label="actionLabel"
       :action-to="actionTo"

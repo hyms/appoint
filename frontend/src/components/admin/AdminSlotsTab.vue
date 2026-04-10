@@ -1,18 +1,18 @@
 <template>
   <v-card variant="outlined" class="admin-tab-card">
     <v-card-title class="py-3 px-4 border-bottom-thick">
-        <span class="text-overline font-weight-black letter-spacing-1">SLOT AVAILABILITY MANAGEMENT</span>
+        <span class="text-overline font-weight-black letter-spacing-1">{{ $t('admin.slotAvailabilityManagement') }}</span>
     </v-card-title>
     <v-card-text>
         <v-alert type="info" variant="tonal" rounded="md" class="mb-6">
-            Manage the availability calendar for all practitioners here. Slots must be generated before they can be booked.
+            {{ $t('admin.manageSlotsInstruction') }}
         </v-alert>
 
         <v-row class="mb-4">
             <v-col cols="12" sm="4" md="3">
                 <BaseInput
                     v-model="filters.date"
-                    label="Filter by Date"
+                    :label="$t('admin.filterByDate')"
                     type="date"
                     hide-details
                     @update:model-value="$emit('updateList')"
@@ -21,7 +21,7 @@
             <v-col cols="12" sm="4" md="3">
                 <BaseSelect
                     v-model="filters.isBooked"
-                    label="Filter by Status"
+                    :label="$t('admin.filterByStatus')"
                     :items="slotStatusOptions"
                     item-title="text"
                     item-value="value"
@@ -31,7 +31,7 @@
             </v-col>
             <v-col cols="12" md="6" class="d-flex align-center justify-end gap-2 pt-3 pt-md-0">
                  <BaseButton variant="text" color="primary" prepend-icon="mdi-plus" @click="$emit('openGenerateDialog')">
-                    Generate
+                    {{ $t('admin.generate') }}
                  </BaseButton>
                  <BaseButton variant="text" color="primary" prepend-icon="mdi-refresh" @click="$emit('updateList')" />
             </v-col>
@@ -42,6 +42,7 @@
             :items="slots"
             :loading="loading"
             :items-per-page="10"
+            :items-per-page-text="$t('common.itemsPerPage')"
             class="data-table-industrial"
         >
             <template v-slot:item.date="{ item }">
@@ -55,12 +56,12 @@
             </template>
             <template v-slot:item.isBooked="{ item }">
                 <v-chip :color="item.isBooked ? 'warning' : 'success'" size="small" :variant="item.isBooked ? 'flat' : 'tonal'">
-                    {{ item.isBooked ? 'Booked' : 'Available' }}
+                    {{ item.isBooked ? $t('admin.booked') : $t('admin.available') }}
                 </v-chip>
             </template>
             <template v-slot:item.isBlocked="{ item }">
                 <v-chip :color="item.isBlocked ? 'error' : 'success'" size="small" :variant="item.isBlocked ? 'flat' : 'tonal'">
-                    {{ item.isBlocked ? 'Blocked' : 'Open' }}
+                    {{ item.isBlocked ? $t('admin.blocked') : $t('admin.open') }}
                 </v-chip>
             </template>
             <template v-slot:item.professional.profile.lastName="{ item }">
@@ -74,7 +75,7 @@
                     variant="tonal"
                     @click="$emit('blockSlot', item)"
                 >
-                    Block
+                    {{ $t('admin.block') }}
                 </v-btn>
                 <v-btn
                     v-else-if="item.isBlocked"
@@ -83,7 +84,7 @@
                     variant="tonal"
                     @click="$emit('unblockSlot', item)"
                 >
-                    Unblock
+                    {{ $t('admin.unblock') }}
                 </v-btn>
                 <v-btn
                     size="small"
@@ -101,10 +102,13 @@
 
 <script setup lang="ts">
 import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { formatTime, formatDate } from '@/utils/date'
 import BaseInput from '@/components/base/BaseInput.vue'
 import BaseSelect from '@/components/base/BaseSelect.vue'
 import BaseButton from '@/components/base/BaseButton.vue'
+
+const { t } = useI18n()
 
 const props = defineProps<{
   slots: any[]
@@ -130,10 +134,10 @@ const filters = computed({
     set: value => emit('update:filters', value)
 })
 
-const slotStatusOptions = [
-    { text: 'Available', value: false },
-    { text: 'Booked', value: true }
-]
+const slotStatusOptions = computed(() => [
+    { text: t('admin.available'), value: false },
+    { text: t('admin.booked'), value: true }
+])
 
 </script>
 

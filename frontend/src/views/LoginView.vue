@@ -10,7 +10,7 @@
             </v-avatar>
             <h1 class="text-h4 font-weight-bold text-primary">{{ $t('nav.login') }}</h1>
             <p class="text-body-1 text-medium-emphasis mt-1">
-              {{ $t('app.title') }} Secure Portal
+              {{ $t('app.title') }} {{ $t('auth.securePortal') }}
             </p>
           </div>
 
@@ -25,7 +25,7 @@
                 :label="$t('auth.email')"
                 prepend-inner-icon="mdi-email-outline"
                 :rules="emailRules"
-                placeholder="email@example.com"
+                :placeholder="$t('auth.emailPlaceholder')"
               />
             </div>
             
@@ -38,7 +38,7 @@
                 :label="$t('auth.password')"
                 prepend-inner-icon="mdi-lock-outline"
                 :rules="passwordRules"
-                placeholder="••••••••"
+                :placeholder="$t('auth.passwordPlaceholder')"
               />
             </div>
 
@@ -152,13 +152,10 @@ async function handleLogin() {
   loading.value = true
   try {
     await authStore.login(form.email, form.password)
-    console.log('Login successful');
     success(t('auth.loginSuccess'))
     const redirect = route.query.redirect as string || '/dashboard'
-    console.log('Redirecting to:', redirect);
     router.push(redirect)
   } catch (err: any) {
-    console.error('Login error:', err);
   } finally {
     loading.value = false
   }

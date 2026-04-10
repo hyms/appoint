@@ -108,10 +108,12 @@
               color="primary"
               :min="minDate"
               :max="maxDate"
+              locale="es"
               @update:modelValue="onDateSelect"
               full-width
               show-adjacent-months
               rounded="lg"
+              :title="$t('book.selectDate')"
             />
             <div class="mt-6 d-flex justify-space-between">
               <BaseButton color="medium-emphasis" variant="text" prepend-icon="mdi-arrow-left" @click="tab = 'professional'">

@@ -6,7 +6,7 @@
         icon="mdi-calendar-plus"
         icon-color="success"
         :title="$t('appointments.book')"
-        subtitle="Schedule a new appointment"
+        :subtitle="$t('dashboard.scheduleNewAppointment')"
         class="h-100 action-card"
       />
     </v-col>
@@ -16,7 +16,7 @@
         icon="mdi-calendar-check"
         icon-color="primary"
         :title="$t('appointments.title')"
-        subtitle="View and manage your appointments"
+        :subtitle="$t('dashboard.viewManageAppointments')"
         class="h-100 action-card"
       />
     </v-col>
@@ -26,7 +26,7 @@
         icon="mdi-shield-account"
         icon-color="warning"
         :title="$t('dashboard.admin') || 'Admin'"
-        subtitle="Administrative tools"
+        :subtitle="$t('dashboard.adminTools')"
         class="h-100 action-card"
       />
     </v-col>
@@ -35,8 +35,8 @@
         to="/professional-config"
         icon="mdi-account-cog"
         icon-color="info"
-        title="Herramientas Administrativas"
-        subtitle="Configurar horario y preferencias"
+        :title="$t('nav.administrativeTools')"
+        :subtitle="$t('dashboard.configSchedulePrefs')"
         class="h-100 action-card"
       />
     </v-col>

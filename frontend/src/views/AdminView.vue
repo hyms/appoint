@@ -58,10 +58,7 @@
           </v-window-item>
 
           <v-window-item value="users" class="pa-4">
-            <AdminUsersTab
-              v-model="userFilters"
-              @delete-user="deleteUser"
-            />
+            <AdminUsersTab v-model="userFilters" @delete-user="deleteUser" />
           </v-window-item>
 
           <v-window-item value="professionals" class="pa-4">
@@ -86,7 +83,12 @@
         <v-card v-if="selectedAppointment">
           <v-card-title class="d-flex justify-space-between">
             <span>{{ $t('admin.appointmentDetails') }}</span>
-            <v-btn icon="mdi-close" variant="text" @click="viewDialog = false" :aria-label="$t('common.close')" />
+            <v-btn
+              icon="mdi-close"
+              variant="text"
+              @click="viewDialog = false"
+              :aria-label="$t('common.close')"
+            />
           </v-card-title>
           <v-card-text>
             <AppointmentDetailCard :appointment="selectedAppointment" />
@@ -109,9 +111,9 @@
           <v-card-actions>
             <v-spacer />
             <v-btn @click="cancelDialog = false">{{ $t('admin.no') }}</v-btn>
-            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling"
-              >{{ $t('admin.yesCancel') }}</v-btn
-            >
+            <v-btn color="error" @click="confirmCancelAppointment" :loading="cancelling">{{
+              $t('admin.yesCancel')
+            }}</v-btn>
           </v-card-actions>
         </v-card>
       </v-dialog>
@@ -229,11 +231,11 @@ const cancelDialog = ref(false)
 const cancelReason = ref('')
 const cancelling = ref(false)
 
-
 // --- Life Cycle & Fetching ---
 onMounted(async () => {
   if (authStore.user?.role === 'ADMIN') {
     await loadAppointments()
+    await loadSlots()
     await loadPatients()
     await loadProfessionalsListForAdmin()
   }
@@ -250,7 +252,7 @@ async function loadAppointments() {
     if (appointmentFilters.status) params.status = appointmentFilters.status
     if (appointmentFilters.patientId) params.patientId = appointmentFilters.patientId
     if (appointmentFilters.professionalId) params.professionalId = appointmentFilters.professionalId
-    
+
     const response = await appointmentsService.getAll(params)
     appointments.value = response.data || response
   } catch (err) {
@@ -379,7 +381,7 @@ async function loadPatients() {
     const response = await api.get('/auth/users?role=PATIENT')
     patientsList.value = response.data.map((u: any) => ({
       id: u.id,
-      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim()
+      label: `${u.profile?.firstName || ''} ${u.profile?.lastName || ''} (${u.email})`.trim(),
     }))
   } catch (err) {
     console.error('Failed to load patients:', err)

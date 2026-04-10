@@ -1,14 +1,14 @@
 <template>
   <v-card variant="outlined" class="admin-tab-card">
     <v-card-title class="py-3 px-4 border-bottom-thick">
-        <span class="text-overline font-weight-black letter-spacing-1">APPOINTMENT LOGS</span>
+        <span class="text-overline font-weight-black letter-spacing-1">{{ $t('appointments.appointmentLogs') }}</span>
     </v-card-title>
     <v-card-text>
         <v-row class="mb-6">
              <v-col cols="12" sm="4" md="3">
                 <BaseInput
                     v-model="filters.date"
-                    label="Filter by Date"
+                    :label="$t('common.filterByDate')"
                     type="date"
                     hide-details
                     @update:model-value="$emit('updateList')"
@@ -17,7 +17,7 @@
             <v-col cols="12" sm="4" md="3">
                 <BaseSelect
                     v-model="filters.status"
-                    label="Filter by Status"
+                    :label="$t('common.filterByStatus')"
                     :items="statusOptions"
                     item-title="text"
                     item-value="value"
@@ -35,6 +35,7 @@
             :items="appointments"
             :loading="loading"
             :items-per-page="10"
+            :items-per-page-text="$t('common.itemsPerPage')"
             class="data-table-industrial"
         >
             <template v-slot:item.date="{ item }">
@@ -60,11 +61,6 @@
             <template v-slot:item.status="{ item }">
               <AppointmentStatusChip :status="item.status" size="small" />
             </template>
-            <template v-slot:item.paymentStatus="{ item }">
-              <v-chip :color="getPaymentStatusColor(item.paymentStatus)" size="x-small" variant="outlined">
-                {{ item.paymentStatus || 'N/A' }}
-              </v-chip>
-            </template>
             <template v-slot:item.actions="{ item }">
               <v-btn
                 size="small"
@@ -73,7 +69,7 @@
                 prepend-icon="mdi-eye"
                 @click="$emit('viewDetails', item)"
               >
-                View
+                {{ $t('common.view') }}
               </v-btn>
             </template>
         </v-data-table>

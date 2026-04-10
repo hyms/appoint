@@ -45,8 +45,8 @@
           :loading="loading"
           view-all-route="/appointments"
           :has-action="true"
-          empty-message="{{ $t('dashboard.noScheduledAppointments') }}"
-          action-label="{{ $t('dashboard.bookAppointment') }}"
+          :empty-message="$t('dashboard.noScheduledAppointments')"
+          :action-label="$t('dashboard.bookAppointment')"
           action-to="/book"
         />
       </v-col>
